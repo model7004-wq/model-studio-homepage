@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>갤러리 | 문경 모델스튜디오</title>
+  <meta name="description" content="문경 모델스튜디오 촬영 사진 갤러리. 가족사진, 증명사진, 프로필, 아기사진.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="gallery.html">
+
+<main>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Gallery</span>
+        <h1 style="font-size:clamp(28px,4vw,42px);margin-bottom:14px">갤러리</h1>
+        <p>모델스튜디오에서 촬영한 사진들이에요. 사진을 누르면 크게 볼 수 있고, 휴대폰에서는 옆으로 밀어서 넘길 수 있어요.</p>
+      </div>
+
+      <div class="filter" data-target="#gallery">
+        <button class="on" data-cat="all">전체</button>
+        <button data-cat="family">가족사진</button>
+        <button data-cat="profile">증명·프로필</button>
+        <button data-cat="baby">아기사진</button>
+      </div>
+
+      <!--
+        ▶ 사진 추가 방법
+        images 폴더에 사진을 넣고, 아래 한 줄을 복사해서 파일 이름과 설명만 바꾸세요.
+        data-cat 은 family(가족) / profile(증명·프로필) / baby(아기) 중 하나로 적습니다.
+        <figure class="g-item" data-cat="family"><img src="images/파일이름.jpg" alt="사진 설명" loading="lazy"><figcaption>사진 설명</figcaption></figure>
+      -->
+      <div class="gallery" id="gallery">
+        <figure class="g-item" data-cat="family"><img src="images/family-main.jpg" alt="반려견과 함께한 3대 가족사진" loading="lazy"><figcaption>반려견과 함께한 3대 가족</figcaption></figure>
+        <figure class="g-item" data-cat="family"><img src="images/family-anniversary.webp" alt="꽃다발을 든 기념 가족사진" loading="lazy"><figcaption>부모님 칠순 기념</figcaption></figure>
+        <figure class="g-item" data-cat="family"><img src="images/family-love.jpg" alt="LOVE 소품 가족사진" loading="lazy"><figcaption>컨셉 가족사진</figcaption></figure>
+        <figure class="g-item" data-cat="family"><img src="images/family-natural.jpg" alt="자연스럽게 웃는 가족" loading="lazy"><figcaption>자연스러운 순간</figcaption></figure>
+        <figure class="g-item" data-cat="family"><img src="images/family-bigfamily.webp" alt="핑크 톤 대가족 사진" loading="lazy"><figcaption>핑크 톤 3대 가족</figcaption></figure>
+
+        <figure class="g-item is-ph" data-cat="profile"><div class="ph" data-ph="증명사진"></div></figure>
+        <figure class="g-item is-ph" data-cat="profile"><div class="ph" data-ph="프로필"></div></figure>
+        <figure class="g-item is-ph" data-cat="baby"><div class="ph" data-ph="백일 사진"></div></figure>
+        <figure class="g-item is-ph" data-cat="baby"><div class="ph" data-ph="돌 사진"></div></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <div class="container">
+      <h2>마음에 드는 사진이 있으셨나요?</h2>
+      <p>원하는 분위기의 사진을 보여주시면 비슷한 느낌으로 촬영해 드려요.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" data-link="tel" href="#">📞 전화 문의</a>
+        <a class="btn btn-line" data-link="kakao" href="#">카카오톡 상담</a>
+        <a class="btn btn-line" href="location.html#reserve">예약 문의 남기기</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="js/main.js"></script>
+</body>
+</html>

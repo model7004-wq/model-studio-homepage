@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>오시는 길 · 예약 | 문경 모델스튜디오</title>
+  <meta name="description" content="문경 모델스튜디오 위치, 영업시간, 주차 안내와 예약 문의.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="location.html">
+
+<main>
+  <!-- 오시는 길 -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Location</span>
+        <h1 style="font-size:clamp(28px,4vw,42px);margin-bottom:14px">오시는 길</h1>
+        <p>편하게 찾아오실 수 있도록 안내해 드려요.</p>
+      </div>
+      <div class="info-grid">
+        <!--
+          ▶ 지도 넣는 방법
+          네이버지도 또는 카카오맵에서 사진관을 검색 → [공유] → [지도 퍼가기(HTML 태그 복사)]
+          복사한 코드를 아래 map-box 안의 내용과 바꿔 넣으면 실제 지도가 보입니다.
+        -->
+        <div class="map-box">
+          <div style="font-size:40px">📍</div>
+          <strong style="font-family:var(--serif);font-size:20px" data-studio="name"></strong>
+          <p data-studio="address" style="color:var(--ink-soft)"></p>
+          <div class="btn-row" style="justify-content:center">
+            <a class="btn btn-dark" data-link="naver-map" href="#">네이버 지도</a>
+            <a class="btn btn-line" data-link="kakao-map" href="#">카카오맵</a>
+          </div>
+        </div>
+        <dl class="info-list" style="margin:0">
+          <div><dt>주소</dt><dd class="value" style="margin:0"><span data-studio="address"></span><small data-studio="addressNote"></small></dd></div>
+          <div><dt>영업시간</dt><dd class="value" style="margin:0"><span data-studio="hours"></span><small data-studio="hoursNote"></small></dd></div>
+          <div><dt>전화</dt><dd class="value" style="margin:0"><a data-link="tel" href="#" data-studio="phone"></a><small>촬영 중에는 받기 어려울 수 있어요. 카카오톡이나 문자를 남겨주세요.</small></dd></div>
+          <div><dt>주차</dt><dd class="value" style="margin:0">건물 앞 무료 주차<small>대가족은 차량 대수를 미리 알려주세요.</small></dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- 예약 방법 -->
+  <section class="section soft" id="reserve">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Reservation</span>
+        <h2>예약 · 문의하기</h2>
+        <p>가장 편한 방법으로 연락주세요. 촬영 가능한 날짜와 상품을 친절히 안내해 드립니다.</p>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <div class="icon">📞</div><h3>전화 문의</h3>
+          <p>가장 빠르게 상담받을 수 있어요.<br><b data-studio="phone"></b></p>
+          <a class="btn btn-dark" data-link="tel" href="#">전화 걸기</a>
+        </div>
+        <div class="contact-card">
+          <div class="icon">💬</div><h3>카카오톡 상담</h3>
+          <p>원하는 사진이나 의상 사진을 보내며 편하게 상담하세요.</p>
+          <a class="btn" style="background:#fee500;color:#3a1d1d" data-link="kakao" href="#">카카오톡 채널</a>
+        </div>
+        <div class="contact-card">
+          <div class="icon">🗓️</div><h3>네이버 예약</h3>
+          <p>원하는 날짜와 시간을 바로 골라 예약할 수 있어요.</p>
+          <a class="btn btn-primary" data-link="naver" href="#">네이버 예약하기</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 문의 남기기 -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Inquiry</span>
+        <h2>간편 문의 남기기</h2>
+        <p>아래 내용을 적고 버튼을 누르면 휴대폰 문자 창이 열려요. 그대로 보내주시면 확인 후 연락드립니다.</p>
+      </div>
+      <form class="form" id="reserve-form">
+        <div class="row">
+          <label>이름<input name="name" required placeholder="홍길동"></label>
+          <label>연락처<input name="phone" type="tel" required placeholder="010-1234-5678"></label>
+        </div>
+        <div class="row">
+          <label>촬영 종류
+            <select name="type">
+              <option>가족사진</option>
+              <option>칠순·회갑 기념사진</option>
+              <option>증명사진</option>
+              <option>프로필</option>
+              <option>아기사진 (50일·백일·돌)</option>
+              <option>기타</option>
+            </select>
+          </label>
+          <label>희망 날짜<input name="date" type="date"></label>
+        </div>
+        <label>인원 (반려동물 포함)<input name="people" placeholder="예: 어른 6명, 아이 2명, 강아지 1마리"></label>
+        <label>문의 내용<textarea name="memo" placeholder="원하시는 분위기나 궁금한 점을 적어주세요."></textarea></label>
+        <button class="btn btn-primary" type="submit">문자로 문의 보내기</button>
+        <p class="hint">컴퓨터에서는 내용이 복사되니 카카오톡이나 문자로 붙여넣어 보내주세요.</p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<script src="js/main.js"></script>
+</body>
+</html>
