@@ -4,17 +4,17 @@
 const STUDIO = {
   name: "모델스튜디오",
   nameEn: "MODEL STUDIO",
-  phone: "054-000-0000",                         // 대표 전화번호
-  mobile: "010-0000-0000",                       // 문자 받을 휴대폰 번호
-  kakao: "https://pf.kakao.com/",                // 카카오톡 채널 주소
-  naverBooking: "https://booking.naver.com/",    // 네이버 예약 주소
-  instagram: "https://www.instagram.com/",       // 인스타그램 주소
-  address: "경상북도 문경시 ○○로 00, 0층",      // 주소
-  addressNote: "문경시청 인근 · 건물 앞 주차 가능", // 찾아오는 방법 한 줄
-  hours: "평일 10:00 – 19:00",
-  hoursNote: "주말·공휴일은 예약제로 운영 · 매주 화요일 휴무",
-  mapQuery: "문경 모델스튜디오",                 // 지도 검색어
-  bizInfo: "대표 ○○○ · 사업자등록번호 000-00-00000",
+  phone: "054-554-0824",                          // 대표 전화번호
+  mobile: "010-2813-9182",                        // 문자 받을 휴대폰 번호
+  kakao: "https://pf.kakao.com/_xfcigxb",         // 카카오톡 채널 주소
+  naverPlace: "https://map.naver.com/p/entry/place/36513112", // 네이버 지도(플레이스) 주소
+  instagram: "",                                  // 인스타그램 주소 (없으면 비워두세요)
+  address: "경북 문경시 상신로 36 모델스튜디오",  // 주소
+  addressNote: "도로변 주차 가능",                // 주차 안내
+  hours: "오전 9:30 – 오후 7:00",
+  hoursNote: "주말 촬영 가능 · 예약 후 방문해 주세요",
+  mapQuery: "문경 모델스튜디오 상신로 36",        // 지도 검색어
+  bizInfo: "모델스튜디오 · 대표 방상은 · 사업자등록번호 511-01-06388",
 };
 
 /* 메뉴 목록 */
@@ -31,6 +31,7 @@ const MENU = [
 /* ========================================================= */
 
 const telHref = "tel:" + STUDIO.phone.replace(/[^0-9]/g, "");
+const smsHref = "sms:" + STUDIO.mobile.replace(/[^0-9]/g, "");
 const page = document.body.dataset.page || "index.html";
 
 /* 머리글 */
@@ -54,15 +55,16 @@ document.body.insertAdjacentHTML("beforeend", `
   <div class="container">
     <div>
       <a class="logo" href="index.html"><strong>${STUDIO.name}</strong><small>${STUDIO.nameEn} · MUNGYEONG</small></a>
-      <p style="margin-top:16px">문경에서 가족의 오늘을 따뜻하게 남기는 사진관<br>가족사진 · 증명사진 · 프로필 · 아기사진</p>
+      <p style="margin-top:16px">미국 PPA MASTER 사진명장의 문경 사진관<br>가족 · 증명·여권 · 프로필 · 베이비 · 주니어 · 웨딩</p>
     </div>
     <div>
       <h4>문의·예약</h4>
       <ul>
         <li>전화 <a href="${telHref}">${STUDIO.phone}</a></li>
         <li><a href="${STUDIO.kakao}" target="_blank" rel="noopener">카카오톡 상담</a></li>
-        <li><a href="${STUDIO.naverBooking}" target="_blank" rel="noopener">네이버 예약</a></li>
-        <li><a href="${STUDIO.instagram}" target="_blank" rel="noopener">인스타그램</a></li>
+        <li>문자 <a href="${smsHref}">${STUDIO.mobile}</a></li>
+        <li><a href="${STUDIO.naverPlace}" target="_blank" rel="noopener">네이버 지도·리뷰</a></li>
+        ${STUDIO.instagram ? `<li><a href="${STUDIO.instagram}" target="_blank" rel="noopener">인스타그램</a></li>` : ""}
       </ul>
     </div>
     <div>
@@ -71,6 +73,7 @@ document.body.insertAdjacentHTML("beforeend", `
         <li>${STUDIO.address}</li>
         <li>${STUDIO.hours}</li>
         <li>${STUDIO.hoursNote}</li>
+        <li>${STUDIO.addressNote}</li>
       </ul>
     </div>
     <p class="copy">${STUDIO.bizInfo}<br>© ${new Date().getFullYear()} ${STUDIO.name}. All rights reserved.</p>
@@ -95,9 +98,10 @@ document.querySelectorAll("[data-studio]").forEach((el) => {
   if (STUDIO[key]) el.textContent = STUDIO[key];
 });
 document.querySelectorAll('[data-link="tel"]').forEach((a) => (a.href = telHref));
+document.querySelectorAll('[data-link="sms"]').forEach((a) => (a.href = smsHref));
 document.querySelectorAll('[data-link="kakao"]').forEach((a) => { a.href = STUDIO.kakao; a.target = "_blank"; a.rel = "noopener"; });
-document.querySelectorAll('[data-link="naver"]').forEach((a) => { a.href = STUDIO.naverBooking; a.target = "_blank"; a.rel = "noopener"; });
-document.querySelectorAll('[data-link="naver-map"]').forEach((a) => { a.href = "https://map.naver.com/p/search/" + encodeURIComponent(STUDIO.mapQuery); a.target = "_blank"; a.rel = "noopener"; });
+document.querySelectorAll('[data-link="naver"]').forEach((a) => { a.href = STUDIO.naverPlace; a.target = "_blank"; a.rel = "noopener"; });
+document.querySelectorAll('[data-link="naver-map"]').forEach((a) => { a.href = STUDIO.naverPlace; a.target = "_blank"; a.rel = "noopener"; });
 document.querySelectorAll('[data-link="kakao-map"]').forEach((a) => { a.href = "https://map.kakao.com/?q=" + encodeURIComponent(STUDIO.mapQuery); a.target = "_blank"; a.rel = "noopener"; });
 
 /* 샘플 사진이 아직 없는 자리 표시 */
