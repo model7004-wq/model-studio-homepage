@@ -40,6 +40,9 @@ const THEMES = {
   premium: { no: '12', name: '프리미엄 네이처', dots: ['#6E8A68', '#A3B58F', '#2F4A35'], bg: 'premium',
     vars: { paper: '#F8F7EF', ink: '#24382A', soft: '#62745F', gold: '#4A6A4C', goldSoft: '#B7C6A6', empty: '#E6EADC', g1: '#2F4A35', g2: '#7E9A6E', title: NSERIF, script: PINYON, en: JOST, body: NSERIF, cap: NSERIF },
     pal: { blush: '#BFD0AE', peach: '#CCD9B6', butter: '#DFE5C6', sage: '#9DBB8E', mint: '#A6C7A6', sky: '#B6CFB6', lavender: '#BCCDB2', rose: '#C6D4B4', leaf: '#5F8558', leaf2: '#44693F', leaf3: '#86A777', stem: '#3F5C3C', gold: '#A8B883' } },
+  simple: { no: '13', name: '심플 라인', dots: ['#222222', '#9A9A9A', '#E2E2E2'], bg: 'simple', flat: 1, plain: 1,
+    vars: { paper: '#FFFFFF', ink: '#222222', soft: '#767676', gold: '#333333', goldSoft: '#BDBDBD', empty: '#EFEFEF', g1: '#222222', g2: '#555555', title: SANS, script: JOST, en: JOST, body: SANS, cap: SANS },
+    pal: { blush: '#EEEEEE', peach: '#F0F0F0', butter: '#F3F3F3', sage: '#ECECEC', mint: '#EDEDED', sky: '#EBEBEB', lavender: '#EEEEEE', rose: '#F0F0F0', leaf: '#BDBDBD', leaf2: '#9A9A9A', leaf3: '#D0D0D0', stem: '#8A8A8A', gold: '#555555' } },
 };
 const THEME_VAR = { paper: '--paper', ink: '--ink', soft: '--ink-soft', gold: '--gold', goldSoft: '--gold-soft', empty: '--photo-empty', g1: '--g1', g2: '--g2', title: '--f-title', script: '--f-script', en: '--f-en', body: '--f-body', cap: '--f-cap' };
 let themeBasePal = null, themeGridDone = false;
@@ -166,12 +169,19 @@ function themeBg(kind, tone, seed) {
     case 'draw':
       s += themeLineSprig(X(.02) * W, .03 * H, .3 * W, left ? 55 : 125, col, rng, sw) + themeLineFlower(X(.12) * W, .1 * H, W * .045, col, rng, sw) + themeLineSprig(X(.98) * W, .97 * H, .32 * W, left ? -125 : -55, col, rng, sw) + themeLineFlower(X(.86) * W, .91 * H, W * .05, col, rng, sw);
       break;
+    case 'simple': {      // 흰 바탕에 위 · 아래 가는 선, 바깥쪽 위에 짧고 굵은 선 하나
+      const a = left ? 0 : W * .05, b = left ? W * .95 : W, y1 = H * .045, y2 = H * .956, hair = sw * .7;
+      s += `<rect x="${a}" y="${y1}" width="${b - a}" height="${hair}" fill="${t.vars.ink}"/><rect x="${a}" y="${y2}" width="${b - a}" height="${hair}" fill="${t.vars.goldSoft}"/>`;
+      s += `<rect x="${left ? W * .06 : W * .86}" y="${y1 - sw * 1.6}" width="${W * .08}" height="${sw * 2.2}" fill="${t.vars.ink}"/>`;
+      break;
+    }
     case 'premium':
       s += wsh([{ x: X(.02), y: .01, r: .24, c: 'leaf', a: .75 }, { x: X(.22), y: -.03, r: .18, c: 'leaf2', a: .55 }, { x: X(.98), y: 1, r: .26, c: 'leaf', a: .7 }, { x: X(.78), y: 1.03, r: .16, c: 'leaf2', a: .5 }]);
       s += sprig(X(.03) * W, .02 * H, .3 * W, left ? 55 : 125, rng, {}) + sprig(X(.97) * W, .98 * H, .3 * W, left ? 235 : -55, rng, {});
       s += `<rect x="${W * .025}" y="${W * .025}" width="${W * .95}" height="${H - W * .05}" fill="none" stroke="${t.vars.g1}" stroke-opacity=".28" stroke-width="${sw}"/>`;
       break;
   }
-  s += `<rect width="${W}" height="${H}" filter="url(#paper)" opacity=".28" style="mix-blend-mode:multiply"/>${extra}`;
+  if (!t.plain) s += `<rect width="${W}" height="${H}" filter="url(#paper)" opacity=".28" style="mix-blend-mode:multiply"/>`;     // plain 테마는 종이 질감 없이 깨끗하게
+  s += extra;
   return `<svg class="bg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${s}</svg>`;
 }

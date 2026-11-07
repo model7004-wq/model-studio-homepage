@@ -602,6 +602,23 @@ body.pg-open .pages{margin-right:calc(196px / var(--zoom,.6))}
 .th-flat .rule::after{display:none}
 .th-flat .h-ko{letter-spacing:.1em;font-weight:500}
 .th-flat .script{font-size:1.5cqw;letter-spacing:.34em;text-transform:uppercase;color:var(--ink-soft);line-height:1.6}
+/* 13 심플 라인: 둥근 모서리 · 그림자 · 색 면 대신 가는 선 */
+#pages[data-theme="simple"]{--hair:.12cqw}
+#pages[data-theme="simple"] .lf.r .photo,#pages[data-theme="simple"] .gframe .photo{border-radius:0}
+#pages[data-theme="simple"] .lf.line{padding:.4cqw;border:var(--hair) solid var(--ink)}
+#pages[data-theme="simple"] .lf.card{padding:.5cqw;background:#fff;box-shadow:none;border:var(--hair) solid var(--ink)}
+#pages[data-theme="simple"] .lf.lf-oval{border:var(--hair) solid var(--ink)}
+#pages[data-theme="simple"] .gframe{border:var(--hair) solid var(--ink)}
+#pages[data-theme="simple"] .lt.lpanel{background:#fff;border:var(--hair) solid var(--ink)}
+#pages[data-theme="simple"] .lletter{background:none;border-left:.35cqw solid var(--ink)}
+#pages[data-theme="simple"] .lt.lword{background:none;border-radius:0;border-top:var(--hair) solid var(--ink)}
+#pages[data-theme="simple"] .lt.lmotto-box{background:none;border-top:var(--hair) solid var(--ink);border-bottom:var(--hair) solid var(--ink)}
+#pages[data-theme="simple"] .lt.lhist-box{background:rgba(255,255,255,.9);border-radius:0;border:var(--hair) solid var(--ink)}
+#pages[data-theme="simple"] .lhead{display:inline-block;padding-bottom:.5cqw;border-bottom:var(--hair) solid var(--ink);font-weight:700;letter-spacing:.06em}
+#pages[data-theme="simple"] .cover-frame{border:.1cqw solid var(--ink)}
+#pages[data-theme="simple"] .cover-frame::after{border-color:var(--gold-soft)}
+#pages[data-theme="simple"] .leader-div{height:var(--hair);background:var(--ink)}
+#pages[data-theme="simple"] .rule{background:var(--ink)}
 #pages[data-theme="frame"] .script{font-size:4.4cqw;letter-spacing:0;text-transform:none;color:var(--gold);line-height:1.1}
 /* 필름 테마: 사진을 흰 인화지처럼 */
 .th-print .gframe,.th-print .cover-photo{background:#fff;border:0;box-shadow:0 .3cqw 1.2cqw rgba(70,50,30,.2)}
