@@ -145,21 +145,20 @@ function studentPages(c, ci, tone) {
         ${studentGrid(COL_R, low?.rows || [[51.8, 68.3], [72.4, 88.9]], chunk, 'po', ci, { cls: 'line', ratio: low?.ratio })}`),
     );
     // 펼침면을 같은 크기 칸으로 나눔 (쪽마다 2줄). 사진이 들어가고 남는 칸은 가운데부터 글자 칸으로
-    if (S.outdoorTwo && S.outdoorDiamond) {     // 앨범 설정 outdoorDiamond: 위에서부터 1 · 1 · 2 · 3 · 2칸. 맨 위는 단체사진, 3칸 줄 가운데는 학교와 졸업생 이름
-      // 쪽 가득: 3칸 줄이 쪽 폭을, 다섯 줄이 쪽 높이를 꽉 채움 (모든 칸 같은 폭, 맨 위 단체사진만 두 칸 폭)
-      // 위아래 여백도 좌우 여백(2.2cqw)과 같게: 세로로도 안내선까지 가득
-      const counts = [1, 1, 2, 3, 2], nameRow = 3, top = 2.2 / G.aspect, bottom = 100 - top, gap = 1 / G.aspect, gx = 1, h = (bottom - top - gap * 4) / 5, w = (95.6 - gx * 2) / 3;
+    if (S.outdoorTwo && S.outdoorDiamond) {     // 앨범 설정 outdoorDiamond: 위에서부터 1 · 2 · 2 · 2칸. 셋째 줄 두 사진 사이 가운데는 학교와 졸업생 이름 (단체사진 없음)
+      // 12쪽에서 직접 맞춘 배치를 그대로: 칸 크기 28.3 × 29.9cqw, 줄 위치 7.3 · 38.5 · 69.8 · 101.1cqw (세로 % = cqw ÷ 쪽 비율)
+      const w = 28.3, hq = 29.9, ys = [7.3, 38.5, 69.8, 101.1], rowsX = [[36.1], [21.4, 50.7], [6.8, null, 65.2], [21.4, 50.7]];
       const names = chunk.map(x => esc(x.s.name)).join(' · ');
-      const diamond = (code, topKey) => {
+      const diamond = code => {
         let n = 0, html = '';
-        counts.forEach((cnt, r) => {
-          const y0 = top + r * (h + gap), cw = r ? w : 2 * w + gx, rowW = cnt * cw + (cnt - 1) * gx;
-          for (let i = 0; i < cnt; i++) {
-            const x0 = 50 - rowW / 2 + i * (cw + gx), box = [x0, y0, x0 + cw, y0 + h];
-            if (!r) html += LF(topKey, box, 'line');
-            else if (r === nameRow && i === 1) html += LT(box, `<div class="lpanel-school">${esc(S.school)}</div><div class="lpanel-names">${names}</div>`, 'lpanel lpanel-sm');
-            else if (chunk[n]) html += LF(`c${ci}-${code}${chunk[n++].i}`, box, 'line');
-          }
+        rowsX.forEach((xs, r) => {
+          const y0 = ys[r] / G.aspect, y1 = (ys[r] + hq) / G.aspect;
+          xs.forEach(x0 => {
+            if (x0 === null) {      // 이름 칸: 양옆 사진 사이 한가운데, 같은 줄 높이
+              const mid = (xs[0] + w + xs[2]) / 2;
+              html += LT([mid - w / 2, y0, mid + w / 2, y1], `<div class="lpanel-school">${esc(S.school)}</div><div class="lpanel-names">${names}</div>`, 'lpanel lpanel-sm lpanel-beige');
+            } else if (chunk[n]) html += LF(`c${ci}-${code}${chunk[n++].i}`, [x0, y0, x0 + w, y1], 'line');
+          });
         });
         return html;
       };

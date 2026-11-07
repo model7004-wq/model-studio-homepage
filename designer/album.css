@@ -711,3 +711,50 @@ body.fr-marqueeing,body.fr-marqueeing *{user-select:none!important;cursor:crossh
 .lpanel-sm .lpanel-names{font-size:1.3cqw;line-height:1.6}
 .lpanel-names{font-family:var(--f-title);font-size:1.7cqw;line-height:1.8;color:var(--ink);word-break:keep-all}
 .lgal-add{position:absolute;top:auto;right:0;bottom:-2cqw;z-index:6}
+
+/* ============ 유치원앨범 (kinder.js) ============ */
+.lt.lright{text-align:right}
+.k-orn{position:absolute;z-index:3;pointer-events:none}
+.k-orn svg{display:block;width:100%;height:100%;overflow:visible}
+.k-line{position:absolute;left:-1.1cqw;top:-1.1cqw;width:calc(100% + 2.2cqw);height:calc(100% + 2.2cqw);overflow:visible;pointer-events:none;z-index:2}
+.k-line path{fill:none;stroke-width:1.3px;vector-effect:non-scaling-stroke}
+.k-tape{position:absolute;top:-1.3cqw;width:10cqw;height:2.6cqw;z-index:3;pointer-events:none;box-shadow:0 .1cqw .3cqw rgba(0,0,0,.08)}
+.lf.k-round{padding:.6cqw;background:#fff;border:.22cqw solid var(--k-l,#D3C3B0);border-radius:2.2cqw}
+.lf.k-round .photo{border-radius:1.6cqw}
+.lf.k-round.k-sq{padding:.4cqw;border-width:.18cqw;border-radius:1.4cqw;box-shadow:0 .15cqw .5cqw rgba(120,90,60,.12)}
+.lf.k-round.k-sq .photo{border-radius:1cqw}
+.lf.k-ci{padding:.6cqw;background:#fff;border:.22cqw solid var(--k-l,#D3C3B0);border-radius:50%}
+.lf.k-ci .photo{border-radius:50%}
+.lf.k-sk .photo{border-radius:1.4cqw}
+.lf.k-ticket{padding:1cqw;background:#fff;border:.2cqw solid #CDB197;border-radius:.8cqw}
+.lf.k-ticket::before{content:'';position:absolute;inset:.4cqw;border:.12cqw solid #DCC7B2;border-radius:.5cqw;pointer-events:none}
+.lf.k-torn{padding:2.2cqw;background:#FBF8F0}
+.k-l-beige{--k-l:#D9C7B4}.k-l-slate{--k-l:#8E99A6}.k-l-sage{--k-l:#A4B3A2}.k-l-white{--k-l:#FFFFFF}.k-l-ice{--k-l:#D5E1EC}
+.lt.k-tag{display:flex;align-items:center;justify-content:center;gap:.7cqw;padding:.3cqw 1cqw;color:#5A4A3C;box-shadow:0 .2cqw .5cqw rgba(0,0,0,.12);overflow:visible}
+.k-tag-t{font-family:'Nanum Pen Script',cursive;font-size:2.5cqw;line-height:1.05;text-align:center}
+.k-heart{font-size:1.3cqw;color:#7E6B5B}
+.k-sage{background:#C8D6BF}.k-tan{background:#E2D0B6}.k-beige{background:#EEE6DA}.k-gray{background:#DCDEE0}.k-peach{background:#F6D8CD}.k-yellow{background:#F6DF8A}
+.k-cover-title{font-family:'Jua',sans-serif;font-size:6.2cqw;color:#1F1F1F;letter-spacing:.02em}
+.k-end-title{color:#6A4E3A}
+.k-cover-school{font-family:'Jua',sans-serif;font-size:4.6cqw;color:#1F1F1F}
+.k-emb{display:block;width:100%;height:auto}
+.k-emb-y{font-family:'Jua',sans-serif;font-size:2.6cqw;color:#2F4A5C;margin-top:-.6cqw}
+.k-en{font-family:'Cormorant Garamond',serif;font-size:2cqw;letter-spacing:.28em;color:#6B5E52}
+.k-en-s{font-size:1.6cqw;margin-top:.6cqw;border-top:.12cqw solid #CDB9A3;padding-top:.6cqw;display:inline-block}
+.k-en-l{font-size:2.2cqw;letter-spacing:.16em}
+.k-thanks{font-size:1.9cqw;letter-spacing:.5em;border-bottom:.12cqw solid #CDB9A3;display:inline-block;padding-bottom:.4cqw}
+.k-year{font-family:'Gowun Batang',serif;font-size:3.2cqw;color:#4A3F36}
+.k-year-s{font-family:'Gowun Batang',serif;font-size:2.4cqw;color:#8A6A4E;padding-left:6cqw}
+.k-name{font-family:'Gowun Batang',serif;font-weight:700;font-size:5.6cqw;color:#3E342C;line-height:1.3;word-break:keep-all}
+.k-class-name{font-family:'Gowun Batang',serif;font-weight:700;font-size:5.2cqw;color:#6A4A30;line-height:1.25;word-break:keep-all}
+.k-rule{height:.15cqw;width:45%;margin:1.6cqw auto 0;background:#BFAE9C}
+.k-script{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:5.4cqw;line-height:1.05;color:#4A3F36}
+.k-script-s{font-size:4.4cqw}
+.k-heart-big{font-size:3cqw;color:#4A3F36}
+.k-pen{font-family:'Nanum Pen Script',cursive;font-size:3.6cqw;line-height:1.2;color:#7A5A3C}
+.k-pen-big{font-family:'Gowun Batang',serif;font-weight:700;font-size:4.6cqw;line-height:1.55;color:#4A3F36}
+.k-msg{font-family:'Gowun Batang',serif;font-size:3.3cqw;line-height:1.85;color:#4A3F36}
+.k-sname{font-family:'Gowun Batang',serif;font-size:1.75cqw;color:#5A4A3C;white-space:nowrap}
+/* 야외 프로필 이름 칸: 베이지 바탕 */
+#pages .lt.lpanel.lpanel-beige{background:#EFE3CF}
+.k-emb.k-emb-s{width:62%;margin:0 auto}

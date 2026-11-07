@@ -11,6 +11,7 @@ const SIZES = {
   b5:     { name: '4×6배판 (188×257mm)', w: 188, h: 257 },
   large:  { name: '대형 앨범 (240×320mm)', w: 240, h: 320 },
   in810:  { name: '8×10 inch (203×254mm)', w: 203.2, h: 254 },
+  in911:  { name: '9×11 inch (229×279mm)', w: 228.6, h: 279.4 },
   in912:  { name: '9×12 inch (229×305mm)', w: 228.6, h: 304.8 },
   in1011: { name: '10×11 inch (254×279mm)', w: 254, h: 279.4 },
   sinsa:  { name: '신사절 (250×315mm)', w: 250, h: 315 },
@@ -379,6 +380,7 @@ function bgSpec(kind, tone) {
   }
 }
 function bgSVG(kind, tone, seed) {
+  if (String(kind).startsWith('k-')) return kinderBg(kind, tone, seed);     // 유치원앨범 배경 (kinder.js)
   const themed = themeBg(kind, tone, seed);
   if (themed) return themed;
   const { W, H } = G, rng = rngOf(seed), sp = bgSpec(kind, tone);
@@ -826,15 +828,19 @@ function render() {
   for (let p = 0; p < galleryCount(); p++) for (let k = 0; k < GALLERY_PER; k++) galleryKeys.push({ key: `g${p}-${k}`, name: '' });
 
   // 선생님 명렬을 켜면 뒤쪽 좌우가 바뀌지 않게 짝수 쪽으로 맞춤
-  const faculty = S.useFaculty === false ? [] : facultyPages(teachers);
-  if (faculty.length % 2) faculty.push(memoPage(9));
-  const front = S.frontLayout === 'spread' ? spreadFrontPages() : [...campusPages(), leadersPage(), symbolPage()];
-  const pages = [coverPage(), ...front, ...faculty];
-  classes.forEach((c, ci) => {
-    const tone = TONES[ci % TONES.length];
-    pages.push(...classIntroPages(c, ci, tone), ...studentPages(c, ci, tone));
-  });
-  pages.push(...scenePages(), ...galleryPages(), ...wordsPages(classes), ...Array.from({ length: rollingCount() }, (_, i) => messagesPage(i)));
+  let pages;
+  if (S.albumType === 'kinder') pages = kinderPages(classes);      // 유치원앨범 (kinder.js)
+  else {
+    const faculty = S.useFaculty === false ? [] : facultyPages(teachers);
+    if (faculty.length % 2) faculty.push(memoPage(9));
+    const front = S.frontLayout === 'spread' ? spreadFrontPages() : [...campusPages(), leadersPage(), symbolPage()];
+    pages = [coverPage(), ...front, ...faculty];
+    classes.forEach((c, ci) => {
+      const tone = TONES[ci % TONES.length];
+      pages.push(...classIntroPages(c, ci, tone), ...studentPages(c, ci, tone));
+    });
+    pages.push(...scenePages(), ...galleryPages(), ...wordsPages(classes), ...Array.from({ length: rollingCount() }, (_, i) => messagesPage(i)));
+  }
   applyPageEdits(pages);     // 페이지 패널: 쪽 번호표를 붙이고 추가 · 삭제한 쪽을 반영
   if (S.pad4) { let i = 0; while (pages.length % 4) { const m = memoPage(i++); m.pid = `memo-${i}`; pages.push(m); } }
 
