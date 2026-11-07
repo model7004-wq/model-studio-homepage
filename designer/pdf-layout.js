@@ -145,6 +145,28 @@ function studentPages(c, ci, tone) {
         ${studentGrid(COL_R, low?.rows || [[51.8, 68.3], [72.4, 88.9]], chunk, 'po', ci, { cls: 'line', ratio: low?.ratio })}`),
     );
     // 펼침면을 같은 크기 칸으로 나눔 (쪽마다 2줄). 사진이 들어가고 남는 칸은 가운데부터 글자 칸으로
+    if (S.outdoorTwo && S.outdoorDiamond) {     // 앨범 설정 outdoorDiamond: 1 · 2 · 3 · 2 · 1층. 1층은 단체사진, 3층 가운데는 학교와 졸업생 이름
+      const counts = [1, 2, 3, 2, 1], top = 8.5, bottom = 95, gap = 1, gx = 1.2, h = (bottom - top - gap * 4) / 5, w = h * G.aspect / 1.25;
+      const names = chunk.map(x => esc(x.s.name)).join(' · ');
+      const diamond = (code, topKey) => {
+        let n = 0, html = '';
+        counts.forEach((cnt, r) => {
+          const y0 = top + r * (h + gap), cw = r ? w : 2 * w + gx, rowW = cnt * cw + (cnt - 1) * gx;
+          for (let i = 0; i < cnt; i++) {
+            const x0 = 50 - rowW / 2 + i * (cw + gx), box = [x0, y0, x0 + cw, y0 + h];
+            if (!r) html += LF(topKey, box, 'line');
+            else if (r === 2 && i === 1) html += LT(box, `<div class="lpanel-school">${esc(S.school)}</div><div class="lpanel-names">${names}</div>`, 'lpanel lpanel-sm');
+            else if (chunk[n]) html += LF(`c${ci}-${code}${chunk[n++].i}`, box, 'line');
+          }
+        });
+        return html;
+      };
+      pages.push(
+        layPage('outdoor', `${c.name} · 야외 프로필${tag}`, ['soft', tone], diamond('o', name('otop', j))),
+        layPage('outdoor', `${c.name} · 야외 프로필${tag}`, ['soft', tone], diamond('ox', name('xtop', j))),
+      );
+      continue;
+    }
     if (S.outdoorTwo) {     // 앨범 설정 outdoorTwo: 쪽마다 반 전체 (왼쪽 야외 프로필, 오른쪽 작은 프로필 사진), 세로 틀 아래 이름
       const per = Math.max(3, Math.ceil(chunk.length / 2)), w = (94 - .9 * (per - 1)) / per, h = Math.min(w * 1.6 / G.aspect, 36), y0 = (100 - (2 * h + 8)) / 2 + 2;
       const rows = [[y0, y0 + h], [y0 + h + 4.5, y0 + 2 * h + 4.5]], grid = code => studentGrid(COL_L, rows, chunk, code, ci, { names: true, cls: 'line', ratio: 1.6 });

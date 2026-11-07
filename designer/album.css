@@ -695,5 +695,8 @@ body.pg-open .pages{margin-right:calc(196px / var(--zoom,.6))}
 .lroll-title{font-family:var(--f-title);font-weight:800;font-size:2.8cqw;color:var(--ink)}
 .lt.lpanel{display:flex;flex-direction:column;justify-content:center;gap:1.4cqw;padding:2.6cqw;background:rgba(190,215,160,.55);text-align:center}
 .lpanel-school{font-family:var(--f-title);font-weight:800;font-size:3.1cqw;color:var(--ink)}
+.lt.lpanel.lpanel-sm{gap:.8cqw;padding:1.2cqw}
+.lpanel-sm .lpanel-school{font-size:1.9cqw}
+.lpanel-sm .lpanel-names{font-size:1.3cqw;line-height:1.6}
 .lpanel-names{font-family:var(--f-title);font-size:1.7cqw;line-height:1.8;color:var(--ink);word-break:keep-all}
 .lgal-add{position:absolute;top:auto;right:0;bottom:-2cqw;z-index:6}
