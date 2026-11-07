@@ -42,6 +42,7 @@ function pgBuild() {
   rb.hidden = !hid;
   rb.textContent = `삭제한 쪽 되돌리기 (${hid})`;
   document.getElementById('pg-del').disabled = !pgSel;
+  document.getElementById('pg-del2').disabled = !pgSel;
 }
 function pagePanelSoon() {
   clearTimeout(pgTimer);
@@ -52,6 +53,7 @@ function pgSelect(pid, scroll) {
   framePage = pid;
   document.querySelectorAll('#pg-list .pg-page').forEach(b => b.classList.toggle('on', b.dataset.pid === pid));
   document.getElementById('pg-del').disabled = !pid;
+  document.getElementById('pg-del2').disabled = !pid;
   if (!scroll) return;
   // 누른 쪽이 든 펼침면을 화면 위쪽에 맞추고, 어느 쪽인지 잠깐 테두리로 표시
   const page = document.querySelector(`#pages .page[data-pid="${CSS.escape(pid)}"]`);
@@ -135,6 +137,7 @@ function bindPagePanel() {
     <div id="pg-list"></div>
     <p id="pg-note" role="status"></p>
     <div class="pg-tools"><button type="button" id="pg-ph">+ 사진틀</button><button type="button" id="pg-tx">+ 글자틀</button></div>
+    <div class="pg-tools"><button type="button" id="pg-add2" title="고른 쪽 뒤에 새 쪽 추가">+ 페이지 추가</button><button type="button" id="pg-del2" class="pg-danger" title="고른 쪽 삭제 (Delete 키)" disabled>− 페이지 삭제</button></div>
     <button type="button" id="pg-restore" hidden></button>
     <div class="pg-foot"><span id="pg-count"></span><button type="button" id="pg-add" title="고른 쪽 뒤에 새 쪽 추가">＋</button><button type="button" id="pg-del" title="고른 쪽 삭제" disabled>🗑</button></div>
   </aside><button type="button" id="pg-show" hidden title="페이지 패널 열기">« 페이지</button>`);
@@ -150,6 +153,35 @@ function bindPagePanel() {
   document.getElementById('pg-list').addEventListener('click', e => { const b = e.target.closest('.pg-page'); if (b) pgSelect(b.dataset.pid, true); });
   document.getElementById('pg-add').addEventListener('click', pgAdd);
   document.getElementById('pg-del').addEventListener('click', pgDelete);
+  document.getElementById('pg-add2').addEventListener('click', pgAdd);
+  document.getElementById('pg-del2').addEventListener('click', pgDelete);
+  // 썸네일 오른쪽 클릭 메뉴: 이 페이지 삭제 · 뒤에 새 페이지 추가
+  document.body.insertAdjacentHTML('beforeend', '<div id="pg-menu" role="menu" hidden><button type="button" data-act="del">이 페이지 삭제</button><button type="button" data-act="add">뒤에 새 페이지 추가</button></div>');
+  const menu = document.getElementById('pg-menu');
+  document.getElementById('pg-list').addEventListener('contextmenu', e => {
+    const b = e.target.closest('.pg-page');
+    if (!b) return;
+    e.preventDefault();
+    pgSelect(b.dataset.pid, true);
+    menu.hidden = false;
+    menu.style.left = `${Math.min(e.clientX, innerWidth - menu.offsetWidth - 6)}px`;
+    menu.style.top = `${Math.min(e.clientY, innerHeight - menu.offsetHeight - 6)}px`;
+  });
+  menu.addEventListener('click', e => { const a = e.target.closest('button')?.dataset.act; menu.hidden = true; if (a === 'del') pgDelete(); else if (a === 'add') pgAdd(); });
+  // 페이지 패널에서 쪽을 고른 뒤 Delete(또는 Backspace) 키로 삭제
+  let panelFocus = false;
+  addEventListener('pointerdown', e => {
+    panelFocus = !!e.target.closest?.('#pg-list');
+    if (!e.target.closest?.('#pg-menu')) menu.hidden = true;
+  }, true);
+  addEventListener('keydown', e => {
+    if (e.key === 'Escape') menu.hidden = true;
+    if (!panelFocus || !pgSel || !(e.key === 'Delete' || e.key === 'Backspace')) return;
+    if (e.target.closest?.('input,textarea,select,[contenteditable]') || document.querySelector('dialog[open]')) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    pgDelete();
+  }, true);
   document.getElementById('pg-restore').addEventListener('click', pgRestore);
   document.getElementById('pg-ph').addEventListener('click', pgAddPhotoFrame);
   document.getElementById('pg-tx').addEventListener('click', pgAddTextFrame);
