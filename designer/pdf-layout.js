@@ -146,7 +146,9 @@ function studentPages(c, ci, tone) {
     );
     // 펼침면을 같은 크기 칸으로 나눔 (쪽마다 2줄). 사진이 들어가고 남는 칸은 가운데부터 글자 칸으로
     if (S.outdoorTwo && S.outdoorDiamond) {     // 앨범 설정 outdoorDiamond: 위에서부터 1 · 1 · 2 · 3 · 2칸. 맨 위는 단체사진, 3칸 줄 가운데는 학교와 졸업생 이름
-      const counts = [1, 1, 2, 3, 2], nameRow = 3, top = 8.5, bottom = 95, gap = 1, gx = 1.2, h = (bottom - top - gap * 4) / 5, w = h * G.aspect / 1.25;
+      // 쪽 가득: 3칸 줄이 쪽 폭을, 다섯 줄이 쪽 높이를 꽉 채움 (모든 칸 같은 폭, 맨 위 단체사진만 두 칸 폭)
+      // 위아래 여백도 좌우 여백(2.2cqw)과 같게: 세로로도 안내선까지 가득
+      const counts = [1, 1, 2, 3, 2], nameRow = 3, top = 2.2 / G.aspect, bottom = 100 - top, gap = 1 / G.aspect, gx = 1, h = (bottom - top - gap * 4) / 5, w = (95.6 - gx * 2) / 3;
       const names = chunk.map(x => esc(x.s.name)).join(' · ');
       const diamond = (code, topKey) => {
         let n = 0, html = '';
@@ -162,8 +164,8 @@ function studentPages(c, ci, tone) {
         return html;
       };
       pages.push(
-        layPage('outdoor', `${c.name} · 야외 프로필${tag}`, ['soft', tone], diamond('o', name('otop', j))),
-        layPage('outdoor', `${c.name} · 야외 프로필${tag}`, ['soft', tone], diamond('ox', name('xtop', j))),
+        layPage('outdoor', `${c.name} · 야외 프로필${tag}`, ['soft', tone], diamond('o', name('otop', j)), { run: false }),
+        layPage('outdoor', `${c.name} · 야외 프로필${tag}`, ['soft', tone], diamond('ox', name('xtop', j)), { run: false }),
       );
       continue;
     }

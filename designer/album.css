@@ -89,6 +89,8 @@ body{background:#E7E1D8;color:var(--ink);font-family:var(--f-body);-webkit-font-
 .photo{position:relative;overflow:hidden;background:var(--photo-empty) center/cover no-repeat;cursor:pointer;user-select:none;touch-action:none}
 .photo.has-img{cursor:grab}
 .photo.is-fit{background-color:transparent}
+.page.pg-flash{animation:pgFlash 1.3s ease-out}
+@keyframes pgFlash{0%,40%{box-shadow:0 0 0 6px #4C8DF6,0 14px 40px rgba(80,60,40,.14)}100%{box-shadow:0 0 0 0 rgba(76,141,246,0),0 14px 40px rgba(80,60,40,.14)}}
 body.hand-tool,body.hand-tool *{cursor:grab!important;user-select:none}
 body.hand-pan,body.hand-pan *{cursor:grabbing!important}
 .photo.dragging{cursor:grabbing}

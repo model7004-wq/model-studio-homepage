@@ -52,7 +52,15 @@ function pgSelect(pid, scroll) {
   framePage = pid;
   document.querySelectorAll('#pg-list .pg-page').forEach(b => b.classList.toggle('on', b.dataset.pid === pid));
   document.getElementById('pg-del').disabled = !pid;
-  if (scroll) document.querySelector(`#pages .page[data-pid="${CSS.escape(pid)}"]`)?.closest('.sheet')?.scrollIntoView({ block: 'center', inline: 'center' });
+  if (!scroll) return;
+  // 누른 쪽이 든 펼침면을 화면 위쪽에 맞추고, 어느 쪽인지 잠깐 테두리로 표시
+  const page = document.querySelector(`#pages .page[data-pid="${CSS.escape(pid)}"]`);
+  if (!page) return;
+  page.closest('.spread')?.scrollIntoView({ block: 'start', inline: 'center' });
+  page.classList.remove('pg-flash');
+  void page.offsetWidth;
+  page.classList.add('pg-flash');
+  setTimeout(() => page.classList.remove('pg-flash'), 1300);
 }
 const pgCurrent = () => pgSel || framePage;
 function pgAdd() {
