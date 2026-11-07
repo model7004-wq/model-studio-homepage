@@ -995,7 +995,7 @@ function bindPhotoEvents() {
     if (!el || e.button !== 0) return;
     const key = el.dataset.photo;
     if (e.target.closest('.ph-remove')) { e.preventDefault(); removePhoto(key); return; }
-    drag = { el, key, x0: e.clientX, y0: e.clientY, moved: false, start: photos[key] ? { x: photos[key].x, y: photos[key].y } : null };
+    drag = { el, key, shift: e.shiftKey, x0: e.clientX, y0: e.clientY, moved: false, start: photos[key] ? { x: photos[key].x, y: photos[key].y } : null };
     el.setPointerCapture(e.pointerId);
   });
   root.addEventListener('pointermove', e => {
@@ -1018,7 +1018,7 @@ function bindPhotoEvents() {
     if (!drag) return;
     const d = drag; drag = null;
     d.el.classList.remove('dragging');
-    if (!d.moved) frameClick(d.el, d.key);
+    if (!d.moved) frameClick(d.el, d.key, d.shift);
     else { persistPos(d.key); applyKey(d.key); }     // 펼침면 사진은 좌우 쪽이 같은 사진
   };
   root.addEventListener('dblclick', e => {     // 틀을 두 번 누르면 사진 넣기 · 바꾸기
@@ -1198,16 +1198,24 @@ function makeTextsEditable() {
     walk(root);
   });
 }
-function frameClick(el, key) {
+function frameClick(el, key, shift) {
   if (!el.closest('.trim')) { pickPhoto(key); return; }     // 표지 전개도 등은 예전처럼
   const page = el.closest('.page');
   framePage = page.dataset.pid;
+  if (shift && (frameMulti.length || frameSel)) {          // Shift+클릭: 여러 틀 고르기에 더하거나 빼기
+    const list = frameMulti.length ? frameMulti : frameSel.kind === 'text' ? [] : [frameSel];
+    const at = list.findIndex(s => s.pid === page.dataset.pid && s.key === key);
+    setFrameMulti(at < 0 ? [...list, { key, pid: page.dataset.pid }] : list.filter((_, i) => i !== at));
+    return;
+  }
+  frameMulti = [];
   frameSel = { key, pid: page.dataset.pid };
   syncFrameSel();
 }
 function frameNote(msg) { const n = $('#fr-note'); if (n) n.textContent = msg; }
 const hiddenFrames = () => [...Object.entries(S.frameEdits?.over || {}), ...Object.entries(S.frameEdits?.text || {})].filter(([, b]) => b.hidden);
 function syncFrameSel() {
+  syncFrameMulti();
   const ui = $('#fr-sel');
   if (!ui) return;
   const rb = $('#fr-restore'), hid = hiddenFrames().length;
@@ -1396,6 +1404,138 @@ function restoreFrames() {
   saveState();
   render();
 }
+/* ============================================================
+   여러 사진틀 함께 편집 (인디자인처럼): 빈 곳에서 끌면 선택 상자가 그려지고 닿은 틀이 모두 골라짐.
+   Shift+클릭으로 더하거나 빼기. 묶음 테두리의 손잡이를 끌면 고른 틀이 함께 늘거나 줄고, 테두리 · ✥ 를 끌면 함께 옮겨짐.
+   ============================================================ */
+let frameMulti = [];
+const multiEls = () => frameMulti.map(s => ({ ...s, fr: frameElOf(s.pid, s.key) })).filter(s => s.fr && !s.fr.closest('.fr-hidden') && s.fr.isConnected);
+function setFrameMulti(list) {
+  const seen = new Set();
+  frameMulti = list.filter(s => { const id = `${s.pid}|${s.key}`; if (seen.has(id)) return false; seen.add(id); return true; });
+  if (frameMulti.length === 1) { frameSel = frameMulti[0]; frameMulti = []; }
+  else if (frameMulti.length) frameSel = null;
+  if (frameMulti.length) frameNote(`사진틀 ${frameMulti.length}개를 골랐습니다. 모서리 손잡이를 끌면 함께 크기가 바뀝니다 (Shift: 비율 유지).`);
+  syncFrameSel();
+}
+function multiRect(list) {
+  const rs = list.map(s => s.fr.getBoundingClientRect());
+  const l = Math.min(...rs.map(r => r.left)), t = Math.min(...rs.map(r => r.top));
+  return { l, t, w: Math.max(...rs.map(r => r.right)) - l, h: Math.max(...rs.map(r => r.bottom)) - t, rs };
+}
+function syncFrameMulti() {
+  const ui = $('#fr-multi');
+  if (!ui) return;
+  const list = multiEls();
+  if (list.length < frameMulti.length) frameMulti = list.map(({ key, pid }) => ({ key, pid }));    // 다시 그려져 사라진 틀은 뺌
+  ui.hidden = list.length < 2;
+  if (ui.hidden) return;
+  const m = multiRect(list), box = ui.querySelector('.fr-box');
+  Object.assign(box.style, { left: `${m.l}px`, top: `${m.t}px`, width: `${m.w}px`, height: `${m.h}px` });
+  ui.querySelector('.fm-outs').innerHTML = m.rs.map(r => `<i class="fm-out" style="left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px"></i>`).join('');
+  const tag = ui.querySelector('.fm-tag');
+  tag.textContent = `사진틀 ${list.length}개 · 손잡이를 끌면 함께 크기 변경`;
+  tag.style.left = `${Math.max(($('.panel')?.getBoundingClientRect().right || 0) + 6, m.l)}px`;
+  tag.style.top = `${m.t - 34 >= 6 ? m.t - 34 : m.t + m.h + 8}px`;
+}
+function bindMultiFrames() {
+  document.body.insertAdjacentHTML('beforeend', `<div id="fr-multi" hidden><div class="fm-outs"></div>
+    <div class="fr-box fm-box">${['t', 'r', 'b', 'l'].map(s => `<i class="fr-edge fr-edge-${s}" data-h="move" title="끌어서 함께 옮기기"></i>`).join('')}<button type="button" class="fr-grip" title="함께 옮기기" data-h="move">✥</button>${['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map(h => `<i class="fr-h fr-${h}" data-h="${h}"></i>`).join('')}</div>
+    <div class="fm-tag"></div></div><div id="fr-marquee" hidden></div>`);
+  const ui = $('#fr-multi'), box = ui.querySelector('.fr-box'), mq = $('#fr-marquee');
+
+  // 묶음 크기 바꾸기 · 옮기기
+  let g = null;
+  box.addEventListener('pointerdown', e => {
+    const h = e.target.dataset.h, list = multiEls();
+    if (!h || list.length < 2) return;
+    e.preventDefault(); e.stopPropagation();
+    list.forEach(s => placeFrame(s.fr, frameBox(s.fr)));
+    const m = multiRect(list);
+    g = { h, m, x0: e.clientX, y0: e.clientY, items: list.map((s, i) => { const t = s.fr.closest('.trim').getBoundingClientRect(); return { ...s, r: m.rs[i], t, cq: t.width / 100 }; }) };
+    e.target.setPointerCapture(e.pointerId);
+  });
+  box.addEventListener('pointermove', e => {
+    if (!g) return;
+    const { m, h } = g, dx = e.clientX - g.x0, dy = e.clientY - g.y0, min = 20;
+    let l = m.l, t = m.t, w = m.w, hh = m.h;
+    if (h === 'move') { l += dx; t += dy; }
+    else {
+      if (h.includes('e')) w = Math.max(min, m.w + dx);
+      if (h.includes('s')) hh = Math.max(min, m.h + dy);
+      if (h.includes('w')) { w = Math.max(min, m.w - dx); l = m.l + m.w - w; }
+      if (h.includes('n')) { hh = Math.max(min, m.h - dy); t = m.t + m.h - hh; }
+      if (e.shiftKey && h.length === 2) {
+        const k = Math.max(w / m.w, hh / m.h);
+        w = m.w * k; hh = m.h * k;
+        if (h.includes('w')) l = m.l + m.w - w;
+        if (h.includes('n')) t = m.t + m.h - hh;
+      }
+    }
+    const sx = w / m.w, sy = hh / m.h;
+    g.items.forEach(it => {
+      const nl = l + (it.r.left - m.l) * sx, nt = t + (it.r.top - m.t) * sy;
+      it.box = { x: (nl - it.t.left) / it.cq, y: (nt - it.t.top) / it.cq, w: Math.max(FRAME_MIN, it.r.width * sx / it.cq), h: Math.max(FRAME_MIN, it.r.height * sy / it.cq) };
+      setFrameStyle(it.fr, it.box);
+      it.fr.querySelectorAll('.photo').forEach(applyPhoto);
+    });
+    syncFrameMulti();
+  });
+  const finish = () => {
+    if (!g) return;
+    const d = g; g = null;
+    d.items.forEach(it => {
+      if (!it.box) return;
+      const x = frameExtra(it.key);
+      if (x) Object.assign(x, it.box);
+      else frameData().over[`${it.pid}|${it.key}`] = { ...(frameData().over[`${it.pid}|${it.key}`] || {}), ...it.box };
+    });
+    saveState();
+    syncFrameSel();
+  };
+  box.addEventListener('pointerup', finish);
+  box.addEventListener('pointercancel', finish);
+
+  // 빈 곳에서 끌어 선택 상자 그리기
+  let sel = null;
+  $('#pages').addEventListener('pointerdown', e => {
+    if (e.button !== 0 || e.target.closest('.photo,[contenteditable],button,input,select,textarea,a,.gal-add,.gal-shape')) return;
+    sel = { x0: e.clientX, y0: e.clientY, on: false, add: e.shiftKey, id: e.pointerId };
+  });
+  addEventListener('pointermove', e => {
+    if (!sel) return;
+    if (!sel.on) {
+      if (Math.hypot(e.clientX - sel.x0, e.clientY - sel.y0) < 5) return;
+      sel.on = true;
+      document.body.classList.add('fr-marqueeing');
+      getSelection()?.removeAllRanges();
+    }
+    e.preventDefault();
+    const l = Math.min(sel.x0, e.clientX), t = Math.min(sel.y0, e.clientY);
+    sel.r = { l, t, r: Math.max(sel.x0, e.clientX), b: Math.max(sel.y0, e.clientY) };
+    Object.assign(mq.style, { left: `${l}px`, top: `${t}px`, width: `${sel.r.r - l}px`, height: `${sel.r.b - t}px` });
+    mq.hidden = false;
+  });
+  const done = () => {
+    if (!sel) return;
+    const s = sel; sel = null;
+    mq.hidden = true;
+    document.body.classList.remove('fr-marqueeing');
+    if (!s.on || !s.r) return;
+    const hit = [...document.querySelectorAll('#pages .trim .photo[data-photo]')].map(p => ({ p, fr: p.closest(FRAME_SEL) })).filter(({ fr }) => {
+      if (!fr || fr.closest('.fr-hidden,.fr-ghost')) return false;
+      const r = fr.getBoundingClientRect();
+      return r.width && r.right > s.r.l && r.left < s.r.r && r.bottom > s.r.t && r.top < s.r.b;
+    }).map(({ p, fr }) => ({ key: p.dataset.photo, pid: fr.closest('.page').dataset.pid }));
+    const base = s.add ? (frameMulti.length ? frameMulti : frameSel && frameSel.kind !== 'text' ? [frameSel] : []) : [];
+    if (!hit.length && !base.length) return;
+    framePage = hit[0]?.pid || framePage;
+    frameSel = null; frameMulti = [];
+    setFrameMulti([...base, ...hit]);
+  };
+  addEventListener('pointerup', done);
+  addEventListener('pointercancel', done);
+}
 function resetFrame() {
   if (!frameSel) return;
   delete (frameSel.kind === 'text' ? textOver() : frameData().over)[`${frameSel.pid}|${frameSel.key}`];
@@ -1499,17 +1639,18 @@ function bindFrameEditor() {
   ui.querySelector('.fr-box').addEventListener('pointercancel', finish);
 
   document.addEventListener('pointerdown', e => {
-    if (e.target.closest?.('#fr-sel')) return;
+    if (e.target.closest?.('#fr-sel,#fr-multi')) return;
     const page = e.target.closest?.('.page');
     if (page) framePage = page.dataset.pid;
+    if (frameMulti.length && !e.shiftKey) { frameMulti = []; frameNote(''); syncFrameSel(); }    // 여러 틀 고르기는 다른 곳을 누르면 풀림 (Shift는 더하기)
     const txt = e.target.closest?.('.trim [contenteditable][data-key]');
     if (txt) { frameSel = { kind: 'text', key: txt.dataset.key, pid: page.dataset.pid }; syncFrameSel(); return; }
-    if (!e.target.closest?.('.trim .photo') && frameSel) { frameSel = null; syncFrameSel(); }
+    if (!e.target.closest?.('.trim .photo') && frameSel && !e.shiftKey) { frameSel = null; syncFrameSel(); }
   }, true);
   $('#pages').addEventListener('input', syncFrameSel);    // 글을 쓰면 틀 크기가 변하므로 테두리도 따라감
   document.addEventListener('keydown', e => {
     if (e.target.closest?.('input,textarea,select,[contenteditable]') || document.querySelector('dialog[open]') || document.querySelector('#photo-room:not([hidden])')) return;
-    if (e.key === 'Escape') { frameSel = null; frameClip = null; frameNote(''); syncFrameSel(); return; }
+    if (e.key === 'Escape') { frameSel = null; frameMulti = []; frameClip = null; frameNote(''); syncFrameSel(); return; }
     if (frameSel?.kind === 'text' && !(e.key === 'Delete' || e.key === 'Backspace')) return;
     if ((e.key === 'Delete' || e.key === 'Backspace') && frameSel) { e.preventDefault(); deleteFrame(); return; }
     if (!(e.ctrlKey || e.metaKey)) return;
@@ -1537,6 +1678,7 @@ function bindFrameEditor() {
     run();
   });
   $('#fr-restore')?.addEventListener('click', restoreFrames);
+  bindMultiFrames();
   syncFrameSel();
   addEventListener('scroll', syncFrameSel, { passive: true, capture: true });
   addEventListener('resize', syncFrameSel);

@@ -475,7 +475,16 @@ body.pg-open .pages{margin-right:calc(196px / var(--zoom,.6))}
 .fr-bar button:hover:not(:disabled){background:#2f7de1}
 .fr-bar button:disabled{color:#777;cursor:default}
 .fr-bar button[hidden]{display:none}
-@media print{#fr-sel{display:none!important}}
+@media print{#fr-sel,#fr-multi,#fr-marquee{display:none!important}}
+/* 여러 사진틀 고르기: 끌어서 그리는 선택 상자와 묶음 테두리 */
+#fr-marquee{position:fixed;z-index:10;border:1px dashed #2f7de1;background:rgba(47,125,225,.1);pointer-events:none}
+#fr-marquee[hidden],#fr-multi[hidden]{display:none}
+#fr-multi{position:fixed;inset:0;z-index:9;pointer-events:none}
+.fm-out{position:fixed;outline:1px solid #2f7de1;background:rgba(47,125,225,.08)}
+.fm-box{outline:1px dashed #2f7de1}
+.fm-box .fr-grip{top:calc(50% - 13px)}
+.fm-tag{position:fixed;padding:5px 10px;background:#2b2b2b;color:#fff;border-radius:6px;font:12px/1.2 system-ui,'Malgun Gothic',sans-serif;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.35)}
+body.fr-marqueeing,body.fr-marqueeing *{user-select:none!important;cursor:crosshair!important}
 /* 교가 — 악보가 있으면 쪽을 채우고, 가사만 있으면 가사를 가운데로 */
 .leader-solo .leader{flex:none}
 .sym-col{gap:2.4cqw}
