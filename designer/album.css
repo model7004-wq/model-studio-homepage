@@ -88,6 +88,7 @@ body{background:#E7E1D8;color:var(--ink);font-family:var(--f-body);-webkit-font-
 /* ---------------- 사진 칸 ---------------- */
 .photo{position:relative;overflow:hidden;background:var(--photo-empty) center/cover no-repeat;cursor:pointer;user-select:none;touch-action:none}
 .photo.has-img{cursor:grab}
+.photo.is-fit{background-color:transparent}
 .photo.dragging{cursor:grabbing}
 .photo.drop{box-shadow:inset 0 0 0 .5cqw var(--gold-soft)}
 .ph-hint{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6cqw;color:#BFA98F;font-family:var(--f-en);font-size:1.15cqw;letter-spacing:.2em;pointer-events:none}

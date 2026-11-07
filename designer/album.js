@@ -881,6 +881,7 @@ function applyPhoto(el) {
   el.style.backgroundImage = `url("${rec.url}")`;
   el.style.backgroundSize = `${f(rec.w * s / rw * 100)}% ${f(rec.h * s / rh * 100)}%`;
   el.style.backgroundPosition = `${f(rec.x)}% ${f(rec.y)}%`;
+  el.classList.toggle('is-fit', rec.w * s < rw - .5 || rec.h * s < rh - .5);     // 사진 전체 보이기로 틀이 남으면 빈 바탕은 투명하게
   const pg = el.closest('.page');      // 페이지 실제 폭(mm) 기준 → 미리보기 배율과 무관
   const dpi = pg ? Math.round(pg.offsetWidth * 25.4 / (s * G.pageMm)) : 300;
   if (dpi < 200) el.insertAdjacentHTML('beforeend', `<span class="badge">저해상도 ${dpi}dpi</span>`);
@@ -1231,14 +1232,31 @@ function syncFrameSel() {
   bar.style.left = `${Math.max(panel + 6, Math.min(innerWidth - bw - 6, r.left + r.width / 2 - bw / 2))}px`;
   bar.style.top = `${r.top - bh - 8 >= 6 ? r.top - bh - 8 : Math.min(innerHeight - bh - 6, r.bottom + 8)}px`;
 }
-/** 고른 틀 안의 사진 확대(up) · 축소. 틀 크기는 그대로, 1~5배 */
+/** 틀에 꽉 차는 배율(fill)과 사진 전체가 보이는 배율(fit). 보통 틀은 꽉 차는 크기가 1배 */
+function photoScales(key) {
+  const p = photos[key], el = frameSel && document.querySelector(`.page[data-pid="${frameSel.pid}"] .photo[data-photo="${CSS.escape(key)}"]`);
+  if (!p || !el) return null;
+  const a = el.offsetWidth / p.w, b = el.offsetHeight / p.h, contain = el.classList.contains('contain');
+  return { p, fill: contain ? Math.max(a, b) / Math.min(a, b) : 1, fit: contain ? 1 : Math.min(a, b) / Math.max(a, b) };
+}
+/** 고른 틀 안의 사진 확대(up) · 축소. 틀 크기는 그대로, 사진 전체가 보이는 크기 ~ 5배 */
 function zoomPhoto(key, up) {
-  const p = photos[key];
-  if (!p) return;
-  p.z = Math.min(5, Math.max(1, p.z * (up ? 1.08 : 1 / 1.08)));
+  const sc = photoScales(key);
+  if (!sc) return;
+  const { p } = sc;
+  p.z = Math.min(5, Math.max(Math.min(1, sc.fit), p.z * (up ? 1.08 : 1 / 1.08)));
   applyKey(key);
   persistPos(key);
-  frameNote(`사진 크기 ${Math.round(p.z * 100)}%`);
+  frameNote(`사진 크기 ${Math.round(p.z / sc.fill * 100)}%`);
+}
+/** 인디자인처럼 Ctrl+Alt+Shift+C: 틀에 꽉 차게, Ctrl+Alt+Shift+E: 사진 전체가 보이게 (가운데 맞춤) */
+function fitPhoto(key, mode) {
+  const sc = photoScales(key);
+  if (!sc) return;
+  Object.assign(sc.p, { z: mode === 'fill' ? sc.fill : sc.fit, x: 50, y: 50 });
+  applyKey(key);
+  persistPos(key);
+  frameNote(mode === 'fill' ? '사진을 틀에 꽉 차게 맞췄습니다.' : '사진 전체가 보이게 맞췄습니다.');
 }
 function cutCopyPhoto(cut) {
   const p = frameSel && photos[frameSel.key];
@@ -1450,10 +1468,16 @@ function bindFrameEditor() {
     if ((e.key === 'Delete' || e.key === 'Backspace') && frameSel) { e.preventDefault(); deleteFrame(); return; }
     if (!(e.ctrlKey || e.metaKey)) return;
     const k = /^Key([A-Z])$/.exec(e.code)?.[1].toLowerCase() || e.key.toLowerCase();     // 한글 입력 상태에서도 같은 자리의 키로 동작
-    const zoomKey = { Equal: true, NumpadAdd: true, Minus: false, NumpadSubtract: false }[e.code] ?? { '+': true, '=': true, '-': false }[e.key];
-    if (zoomKey !== undefined && !e.altKey && frameSel?.kind !== 'text' && photos[frameSel?.key]) {   // 브라우저 화면 확대 대신 사진만 확대 · 축소
+    const photoKey = frameSel?.kind !== 'text' && photos[frameSel?.key] ? frameSel.key : null;
+    const zoomKey = { Period: true, Comma: false }[e.code] ?? { '>': true, '.': true, '<': false, ',': false }[e.key];
+    if (zoomKey !== undefined && !e.altKey && photoKey) {     // Ctrl > 확대, Ctrl < 축소 (Shift 없이 Ctrl . / Ctrl , 도 같음)
       e.preventDefault();
-      zoomPhoto(frameSel.key, zoomKey);
+      zoomPhoto(photoKey, zoomKey);
+      return;
+    }
+    if (e.altKey && e.shiftKey) {      // Ctrl+Alt+Shift+C 틀에 꽉 차게, Ctrl+Alt+Shift+E 사진 전체 보이기
+      const mode = { c: 'fill', e: 'fit' }[k];
+      if (mode && photoKey) { e.preventDefault(); fitPhoto(photoKey, mode); }
       return;
     }
     if (e.altKey) {      // 인디자인처럼 Ctrl+Alt+X: 틀 안의 사진만 잘라내기, Ctrl+Alt+V: 고른 틀 안으로 붙여넣기
