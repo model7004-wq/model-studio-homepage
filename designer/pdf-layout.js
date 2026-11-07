@@ -138,13 +138,22 @@ function studentPages(c, ci, tone) {
     );
     if (S.useStrip !== false) pages.push(
       layPage('strip', `${c.name} · 작은 프로필${tag}`, ['side', [tone[1], tone[2], tone[0]]], `${schoolLabel()}
-        ${studentGrid(COL_L, rect ? [[10.5, 33], [34, 56.5]] : [[12.3, 28.8], [32.4, 48.9]], chunk, 'ox', ci, { cls: 'line', ratio: rect ? 1.45 : 0 })}
+        ${studentGrid(COL_L, rect ? [[10.5, 33], [34, 56.5]] : [[12.3, 28.8], [32.4, 48.9]], chunk, S.outdoorTwo ? 'ex' : 'ox', ci, { cls: 'line', ratio: rect ? 1.45 : 0 })}
         ${LF(name('big3', j), rect ? [8.4, 58, 91.6, 93] : [8.8, 53.4, 94.4, 92.9], 'r')}`),
       layPage('strip', `${c.name} · 포즈 프로필${tag}`, ['soft', [tone[1], tone[2], tone[0]]], `
         ${LF(name('big4', j), low?.big || [8.4, 11.9, 91.8, 50.4], 'line')}
         ${studentGrid(COL_R, low?.rows || [[51.8, 68.3], [72.4, 88.9]], chunk, 'po', ci, { cls: 'line', ratio: low?.ratio })}`),
     );
     // 펼침면을 같은 크기 칸으로 나눔 (쪽마다 2줄). 사진이 들어가고 남는 칸은 가운데부터 글자 칸으로
+    if (S.outdoorTwo) {     // 앨범 설정 outdoorTwo: 쪽마다 반 전체 (왼쪽 야외 프로필, 오른쪽 작은 프로필 사진), 세로 틀 아래 이름
+      const per = Math.max(3, Math.ceil(chunk.length / 2)), w = (94 - .9 * (per - 1)) / per, h = Math.min(w * 1.6 / G.aspect, 36), y0 = (100 - (2 * h + 8)) / 2 + 2;
+      const rows = [[y0, y0 + h], [y0 + h + 4.5, y0 + 2 * h + 4.5]], grid = code => studentGrid(COL_L, rows, chunk, code, ci, { names: true, cls: 'line', ratio: 1.6 });
+      pages.push(
+        layPage('outdoor', `${c.name} · 야외 프로필${tag}`, ['soft', tone], `${schoolLabel()}${grid('o')}`),
+        layPage('outdoor', `${c.name} · 야외 프로필${tag}`, ['soft', tone], `${schoolLabel()}${grid('ox')}`),
+      );
+      continue;
+    }
     const cols = Math.max(2, Math.ceil((chunk.length + 1) / 4));
     let X = [evenCols(1.6, 98.4, cols, 1.4), evenCols(1.6, 98.4, cols, 1.4)], Y = [[14.7, 50.3], [51.3, 87]];
     if (rect) {      // 세로 직사각형 칸 (높이 ÷ 폭 = 1.4), 쪽 가운데 정렬

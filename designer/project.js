@@ -577,10 +577,10 @@ function photoSlotName(el) {
   const k = el.dataset.photo;
   if (isRollingKey(k)) return '롤링페이퍼';
   if (/^fx-/.test(k)) return '복사한 틀';
-  const stu = /^c(\d+)-(s|fl|in|ca|po|ox|o)(\d+)$/.exec(k);
+  const stu = /^c(\d+)-(s|fl|in|ca|po|ox|ex|o)(\d+)$/.exec(k);
   if (stu) {
     const nm = parseRoster(S.roster)[+stu[1]]?.students[+stu[3]]?.name || '';
-    return `${nm} ${{ s: '증명사진', fl: '꽃 프로필', in: '악기 프로필', ca: '학사모', po: '포즈', ox: '작은 프로필', o: '야외 프로필' }[stu[2]]}`.trim();
+    return `${nm} ${{ s: '증명사진', fl: '꽃 프로필', in: '악기 프로필', ca: '학사모', po: '포즈', ox: '작은 프로필', ex: '프로필', o: '야외 프로필' }[stu[2]]}`.trim();
   }
   if (/-(team\d|big\d)(-\d+)?$/.test(k)) return '단체사진';
   const fixed = { song: '교가 악보', 'leader-group': '단체사진', 'cover-group': '대표 단체사진', 'sym-extra': '5쪽 사진', 'sym-emblem': '교표', 'sym-motto': '교훈 사진', 'sym-tree': '교목', 'sym-flower': '교화', principal: '교장 큰 사진', 'principal-2': '교장 작은 사진', vice: '교감 큰 사진', 'vice-2': '교감 작은 사진', rolling: '롤링페이퍼', 'campus-0': '큰 풍경', 'campus-1': '큰 풍경' };
