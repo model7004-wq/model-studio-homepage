@@ -1232,6 +1232,27 @@ function syncFrameSel() {
   bar.style.left = `${Math.max(panel + 6, Math.min(innerWidth - bw - 6, r.left + r.width / 2 - bw / 2))}px`;
   bar.style.top = `${r.top - bh - 8 >= 6 ? r.top - bh - 8 : Math.min(innerHeight - bh - 6, r.bottom + 8)}px`;
 }
+/** 편집 화면(미리보기) 크기. 화면 가운데 보던 곳이 그대로 가운데에 오도록 스크롤을 맞춤 */
+function setViewZoom(z) {
+  const box = $('#f-zoom'), min = +box.min, max = +box.max;
+  z = Math.round(Math.min(max, Math.max(min, +z)) * 100) / 100;
+  const se = document.scrollingElement, cx = (se.scrollLeft + innerWidth / 2) / se.scrollWidth, cy = (se.scrollTop + innerHeight / 2) / se.scrollHeight;
+  S.zoom = z; box.value = z; saveState();
+  document.documentElement.style.setProperty('--zoom', z);
+  se.scrollLeft = cx * se.scrollWidth - innerWidth / 2;
+  se.scrollTop = cy * se.scrollHeight - innerHeight / 2;
+  syncFrameSel();
+}
+/* Ctrl + 화면 확대, Ctrl - 화면 축소 (브라우저 전체 확대 대신 편집 화면만) */
+function bindViewZoom() {
+  addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.target.closest?.('input,textarea,select') || document.querySelector('dialog[open]')) return;
+    const up = { Equal: true, NumpadAdd: true, Minus: false, NumpadSubtract: false }[e.code] ?? { '+': true, '=': true, '-': false }[e.key];
+    if (up === undefined) return;
+    e.preventDefault();
+    setViewZoom(+S.zoom + (up ? .1 : -.1));
+  });
+}
 /* 손바닥 도구 (인디자인처럼): 스페이스바를 누르고 있는 동안 끌면 편집 화면이 따라 움직임.
    그동안은 사진 끌기 · 틀 선택이 일어나지 않도록 가장 먼저(window 캡처 단계에서) 가로챔 */
 function bindHandTool() {
@@ -1558,10 +1579,7 @@ function bindPanel() {
   $('#f-roster').value = S.roster;
   $('#f-teachers').value = S.teachers;
   $('#f-zoom').value = S.zoom;
-  $('#f-zoom').addEventListener('input', e => {
-    S.zoom = e.target.value; saveState();
-    document.documentElement.style.setProperty('--zoom', S.zoom);
-  });
+  $('#f-zoom').addEventListener('input', e => setViewZoom(e.target.value));
   $('#f-bulk-o').addEventListener('change', async e => { await bulkUpload(e.target.files, outdoorKeys); e.target.value = ''; });
   $('#f-bulk-fl').addEventListener('change', async e => { await bulkUpload(e.target.files, flowerKeys); e.target.value = ''; });
   $('#f-bulk-ox').addEventListener('change', async e => { await bulkUpload(e.target.files, outdoorStripKeys); e.target.value = ''; });
@@ -1883,6 +1901,7 @@ async function importGalleryFolders(fileList, append) {
   bindPhotoEvents();
   bindFrameEditor();
   bindHandTool();
+  bindViewZoom();
   render();
   window.__photosLoaded = true;
   window.undoInit?.();
