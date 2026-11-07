@@ -1,7 +1,7 @@
-/* 실행취소 (Ctrl+Z, 최대 3번): 작업 전의 설정 · 글자와 바뀐 사진을 기억해 두었다가 되돌림.
+/* 실행취소 (Ctrl+Z, 최대 12번): 작업 전의 설정 · 글자와 바뀐 사진을 기억해 두었다가 되돌림.
    사진은 파일을 복사하지 않고 참조만 들고 있어 가벼움. 연달아 한 작업은 잠깐 멈출 때까지 한 번으로 묶음.
    새로고침하면 기록은 사라짐. 자동 얼굴 맞춤 · 인물 수 확인은 사용자의 작업으로 세지 않음. */
-const UNDO_MAX = 3, UNDO_IDLE = 450;
+const UNDO_MAX = 12, UNDO_IDLE = 450;
 let undoStack = [], undoPending = null, undoTimer = null, undoHold = 0, undoBusy = false, undoQueued = 0, undoShadow = null, undoLast = null;
 
 const undoSnap = () => { const { zoom, ...s } = S; return JSON.stringify({ s, texts }); };   // 미리보기 크기는 작업으로 치지 않음
@@ -56,7 +56,7 @@ function undoSyncControls() {
 async function undoRun() {
   undoCommit();
   const step = undoStack.pop();
-  if (!step) { pgNote('더 되돌릴 작업이 없습니다. (최대 3번)'); return; }
+  if (!step) { pgNote(`더 되돌릴 작업이 없습니다. (최대 ${UNDO_MAX}번)`); return; }
   undoBusy = true;
   try {
     const st = JSON.parse(step.state);
@@ -94,7 +94,7 @@ for (const name of ['bulkUpload', 'applyFolderPlan', 'importGalleryFolders']) {
   window[name] = async (...a) => { undoHold++; try { return await fn(...a); } finally { undoHold--; undoArm(); } };
 }
 document.addEventListener('keydown', e => {
-  if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== 'z') return;
+  if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || (e.code !== 'KeyZ' && e.key.toLowerCase() !== 'z')) return;    // 한글 입력 상태(ㅋ)에서도 동작
   if (e.target.closest?.('input,textarea,select') || document.querySelector('dialog[open]') || document.querySelector('#photo-room:not([hidden])')) return;
   e.preventDefault();
   if (undoBusy) undoQueued = Math.min(UNDO_MAX, undoQueued + 1); else undoRun();
