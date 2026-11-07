@@ -55,10 +55,17 @@ async function jeExport(o, say) {
   else groups = all.map((_, i) => [i]);
   groups = groups.filter(g => !want || g.some(i => want.has(i + 1)));
   if (!groups.length) throw new Error('내보낼 쪽이 없습니다.');
+  // 저장 방법: 'folder'는 폴더를 골라 한꺼번에, 'download'는 브라우저의 내려받기 폴더로.
+  // 폴더 고르기 창을 띄울 수 없는 곳(앱 안 브라우저 등)이면 바로 실패하므로 그때는 내려받기로 바꿈
   let dir = null;
-  if (window.showDirectoryPicker) {
-    try { dir = await showDirectoryPicker({ id: 'gradalbum-jpg', mode: 'readwrite', startIn: 'pictures' }); }
-    catch (e) { if (e.name === 'AbortError') return 0; }
+  if (o.save === 'folder' && window.showDirectoryPicker) {
+    const t0 = performance.now();
+    try { dir = await showDirectoryPicker({ id: 'gradalbum-jpg', mode: 'readwrite', startIn: 'downloads' }); }
+    catch (e) {
+      if (e.name === 'AbortError' && performance.now() - t0 > 800) return 0;      // 사용자가 창을 닫음
+      say('폴더를 고를 수 없어 내려받기 폴더로 저장합니다.', 0);
+      await new Promise(r => setTimeout(r, 900));
+    }
   }
   let n = 0;
   for (const g of groups) {
@@ -108,9 +115,12 @@ function bindJpgExport() {
       <label>쪽 범위 <input id="je-range" placeholder="비워 두면 전체 (예: 1-3, 8)"></label>
       <label>나누기 <select id="je-spread"><option value="0">쪽마다 한 장</option><option value="1">펼침면 (두 쪽을 한 장)</option></select></label>
     </div>
+    <div class="pp-row">
+      <label>저장 방법 <select id="je-save"><option value="download" selected>내려받기 폴더에 저장</option><option value="folder">폴더 골라서 저장</option></select></label>
+    </div>
     <label class="chk"><input type="checkbox" id="je-bleed"> 도련(재단 여백 3mm) 포함</label>
     <p class="pp-note" id="je-size"></p>
-    <p class="pp-note">저장할 폴더를 고르면 그 폴더에 한꺼번에 저장합니다. 파일 안의 해상도 정보도 고른 dpi로 들어가서 포토샵에서 열면 같은 크기로 보입니다.</p>
+    <p class="pp-note">'내려받기 폴더'는 브라우저의 다운로드 폴더에 한 장씩 저장합니다 (처음에 '여러 파일 다운로드 허용'을 물으면 허용). 파일 안의 해상도 정보도 고른 dpi로 들어가서 포토샵에서 열면 같은 크기로 보입니다.</p>
     <progress id="je-bar" max="1" value="0" hidden></progress>
     <p id="je-status" role="status"></p>
     <div class="it-foot"><span></span><button id="je-cancel">닫기</button><button id="je-go" class="pri">내보내기</button></div>
@@ -129,9 +139,10 @@ function bindJpgExport() {
     if (busy) return;
     busy = true; go.disabled = true; bar.hidden = false; bar.value = 0;
     try {
-      const n = await jeExport({ dpi: +$$('#je-dpi').value, quality: +$$('#je-q').value, range: $$('#je-range').value, spread: $$('#je-spread').value === '1', bleed: $$('#je-bleed').checked }, (t, p) => { status.textContent = t; bar.value = p; });
-      bar.value = 1;
-      status.textContent = n ? `JPG ${n}장을 저장했습니다.` : '취소했습니다.';
+      const save = $$('#je-save').value;
+      const n = await jeExport({ dpi: +$$('#je-dpi').value, quality: +$$('#je-q').value, range: $$('#je-range').value, spread: $$('#je-spread').value === '1', bleed: $$('#je-bleed').checked, save }, (t, p) => { status.textContent = t; bar.value = p; });
+      bar.value = n ? 1 : 0;
+      status.textContent = n ? `JPG ${n}장을 저장했습니다.${save === 'download' ? ' 다운로드 폴더를 확인하세요.' : ''}` : '폴더 고르기를 취소했습니다. 저장 방법을 \'내려받기 폴더에 저장\'으로 바꿔 다시 눌러 보세요.';
     } catch (e) {
       status.textContent = e.message || '내보내기에 실패했습니다.';
     }
