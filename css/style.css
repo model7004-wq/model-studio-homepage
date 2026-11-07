@@ -328,6 +328,7 @@ p { margin: 0; }
 .site-footer a:hover { color: #fff; }
 .site-footer ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
 .site-footer .copy { grid-column: 1 / -1; border-top: 1px solid #473b2f; padding-top: 22px; margin-top: 12px; font-size: 13px; color: #8f8272; }
+.site-footer .staff-link { margin-left: 12px; color: #6f6355; font-size: 12px; text-decoration: underline; }
 
 /* ---------- 모바일 하단 고정 버튼 ---------- */
 .mobile-bar { display: none; }

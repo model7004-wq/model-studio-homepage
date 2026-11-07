@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>졸업앨범 디자이너5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Gowun+Batang:wght@400;700&family=Jost:wght@300;400;500&family=Jua&family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="album.css">
+<style id="pagesize">@page{size:216mm 303mm;margin:0}</style>
+</head>
+<body class="show-guides">
+
+<aside class="panel">
+  <div class="brand">
+    <div class="brand-script">Graduation</div>
+    <h1>졸업앨범 디자이너5</h1>
+    <p>파스텔 수채화 · 인쇄용 레이아웃</p>
+  </div>
+
+  <section class="grp">
+    <h3>학교 · 앨범</h3>
+    <label>지금 앨범 <select id="p-list"></select></label>
+    <div class="row2">
+      <button class="btn ghost" id="p-new">새 앨범</button>
+      <button class="btn ghost" id="p-kinder">유치원앨범</button>
+      <button class="btn ghost" id="p-del">이 앨범 지우기</button>
+    </div>
+    <div class="row2">
+      <button class="btn ghost" id="p-save">파일로 저장</button>
+      <label class="btn ghost">파일 열기<input type="file" id="p-open" accept=".album" hidden></label>
+    </div>
+    <label class="btn primary-soft">학교 폴더 한 번에 불러오기<input type="file" id="p-dir" webkitdirectory multiple hidden></label>
+    <button class="btn ghost" id="p-check">점검표 보기</button>
+    <div class="info" id="p-info"></div>
+    <p class="hint" id="p-saved"></p>
+    <p class="hint">사진은 이 브라우저 안에 저장됩니다. 작업을 마칠 때마다 <b>파일로 저장</b>해서 학교 폴더에 넣어 두세요. 파일 열기는 항상 새 앨범으로 열립니다.</p>
+  </section>
+
+  <section class="grp">
+    <h3>디자인 테마</h3>
+    <div id="theme-grid" class="th-grid"></div>
+    <p class="hint">색 · 글꼴 · 배경 장식이 바뀝니다. 쪽 구성과 사진 · 글자는 그대로이고, Ctrl+Z로 되돌릴 수 있습니다.</p>
+  </section>
+
+  <section class="grp">
+    <h3>판 구성</h3>
+    <label class="chk"><input type="checkbox" id="l-flower"> 학생 꽃 프로필 쓰기</label>
+    <label class="chk"><input type="checkbox" id="l-strip"> 작은 프로필 · 포즈 쪽</label>
+    <label class="chk"><input type="checkbox" id="l-instr"> 악기 · 학사모 쪽</label>
+    <label class="chk"><input type="checkbox" id="l-scene"> 교정 곳곳 단체사진 2쪽</label>
+    <label class="chk"><input type="checkbox" id="l-scenerow"> 2–3쪽 작은 풍경 줄</label>
+    <label class="chk"><input type="checkbox" id="l-song"> 교가 넣기 <small>(5쪽)</small></label>
+    <label class="chk"><input type="checkbox" id="l-faculty"> 선생님 명단 쪽 <small>(끄면 그 자리에 교훈 · 교표 · 교목 · 교화 · 교가)</small></label>
+    <label class="chk"><input type="checkbox" id="l-vice"> 교감 선생님 자리 <small>(끄면 그 자리에 단체사진)</small></label>
+    <div class="row2">
+      <label style="display:none">야외 프로필 쪽당 인원 <input type="number" id="l-outdoor" min="1" max="16"></label>
+      <label style="display:none">행사 사진 줄 수 <input type="number" id="l-galrows" min="3" max="6"></label>
+      <label>롤링페이퍼 쪽수 <input type="number" id="l-msgpages" min="1" max="6"></label>
+    </div>
+    <label>템플릿 <select id="l-tpl"></select></label>
+    <button class="btn ghost" id="l-apply">이 템플릿 적용</button>
+    <label>지금 구성을 템플릿으로 저장 <input id="l-name" placeholder="템플릿 이름"></label>
+    <button class="btn ghost" id="l-save">템플릿 저장</button>
+    <div class="info" id="l-info"></div>
+    <p class="hint">조 나누기: 명단에 <code>## 1조</code> 줄을 넣으면 그 아래 학생이 그 조입니다. 표시가 없으면 명렬 앞쪽 절반이 1조입니다. 엑셀에 <code>조</code> 칸이 있으면 자동으로 나뉩니다. 명단 순서를 바꾸면 사진 자리도 함께 바뀌니, 사진을 넣기 전에 정해 주세요.</p>
+  </section>
+
+  <section class="grp">
+    <h3>판형 · 인쇄</h3>
+    <label>판형
+      <select id="f-size"></select>
+    </label>
+    <label>미리보기 크기 <small>(Ctrl + / Ctrl -)</small> <input type="range" id="f-zoom" min="0.3" max="1.5" step="0.05"></label>
+    <label class="chk"><input type="checkbox" id="f-bleed"> 재단 여백(블리드) 3mm 포함</label>
+    <label class="chk"><input type="checkbox" id="f-guides"> 재단선 · 안전선 표시 <small>(화면 전용)</small></label>
+    <label class="chk"><input type="checkbox" id="f-pad4"> 4의 배수 쪽수로 맞추기 <small>(메모 페이지 추가)</small></label>
+    <div class="info" id="info"></div>
+  </section>
+
+  <section class="grp">
+    <h3>기본 정보</h3>
+    <label>학교명 <input id="f-school"></label>
+    <div class="row2">
+      <label>졸업 회차 <input id="f-nth" inputmode="numeric"></label>
+      <label>졸업 연도 <input id="f-year" inputmode="numeric"></label>
+    </div>
+    <div class="row2">
+      <label>교장 선생님 <input id="f-principal"></label>
+      <label>교감 선생님 <input id="f-vice"></label>
+    </div>
+  </section>
+
+  <section class="grp">
+    <h3>학급 · 학생 명단</h3>
+    <div class="row2">
+      <label class="btn primary-soft">엑셀 불러오기<input type="file" id="f-xlsx" accept=".xlsx,.xls,.csv" hidden></label>
+      <button class="btn ghost" id="b-template">엑셀 양식 받기</button>
+    </div>
+    <div class="info" id="xlsx-info"></div>
+    <p class="hint">엑셀의 <b>성명</b> 또는 <b>이름</b> 열에서 이름을 가져옵니다. 반 · 번호 · 장래희망 · 한마디 · 담임 열은 있으면 함께 씁니다.<br>
+      '교직원' 시트가 함께 있으면 선생님 명단도 불러옵니다.<br>
+      직접 입력할 때는 <code># 학급명 | 담임</code> 줄로 학급을 시작하고, 한 줄에 한 명씩 <code>이름 | 장래희망 | 한마디</code></p>
+    <textarea id="f-roster" rows="12" spellcheck="false"></textarea>
+    <button class="btn" id="b-roster">명단 적용</button>
+  </section>
+
+  <section class="grp">
+    <h3>교직원 명단</h3>
+    <label class="btn ghost">교직원 엑셀 불러오기<input type="file" id="f-xlsx-t" accept=".xlsx,.xls,.csv" hidden></label>
+    <p class="hint">엑셀의 <b>성명</b>/<b>이름</b> 열로 명렬을 만듭니다(직위 · 담당 열은 선택). 직접 입력은 한 줄에 한 분씩 <code>직위 | 이름 | 담당</code> · 사진과 함께 명렬 페이지로 만들어집니다.</p>
+    <textarea id="f-teachers" rows="8" spellcheck="false"></textarea>
+    <button class="btn" id="b-teachers">교직원 명단 적용</button>
+    <label class="btn ghost">선생님 사진 한꺼번에 넣기<input type="file" id="f-bulk-t" accept="image/*" multiple hidden></label>
+    <div class="info" id="t-info"></div>
+  </section>
+
+  <section class="grp">
+    <h3>행사 갤러리</h3>
+    <label class="btn primary-soft">행사 폴더 불러오기 (전체)<input type="file" id="f-gal-dir" webkitdirectory multiple hidden></label>
+    <label class="btn ghost">행사 폴더 하나 추가<input type="file" id="f-gal-add" webkitdirectory multiple hidden></label>
+    <p class="hint"><b>전체</b>: 행사별 하위 폴더(예: <code>01_입학식</code>, <code>02_운동회</code>)가 든 상위 폴더를 고르세요.
+      <b>폴더명이 행사 제목</b>이 되고, 행사가 끝나면 빈 칸 없이 다음 행사 제목과 사진이 바로 이어집니다. 앞의 숫자·날짜는 순서로만 쓰입니다.<br>
+      <b>하나 추가</b>: 행사 폴더 하나를 고르면 기존 갤러리 뒤에 이어 붙습니다.</p>
+    <div class="info" id="g-info"></div>
+    <label style="display:none">인물 1명 사진 틀 <select id="f-solo">
+      <option value="circle">작은 원형</option><option value="hex">작은 육각형</option><option value="rect">일반 사각</option></select></label>
+    <button class="btn ghost" id="b-faces">행사 사진 인물 수 다시 확인</button>
+    <p class="hint">사진 속 얼굴이 하나뿐이고 크게 찍혔을 때만 자동으로 작은 원형·육각형 틀에 넣고 얼굴을 가운데로 맞춥니다(인식은 이 컴퓨터 안에서만 처리).
+      사진에 마우스를 올리면 나오는 <b>자동/원형/육각/사각</b> 단추로 사진마다 바꿀 수 있습니다.</p>
+    <label>빈 갤러리 쪽수 (사진을 넣기 전) <input type="number" id="f-gallery" min="1" max="40"></label>
+    <label class="btn ghost">행사 사진 한꺼번에 넣기<input type="file" id="f-bulk-g" accept="image/*" multiple hidden></label>
+    <p class="hint">폴더 없이 고른 사진은 파일명 순서대로 채워집니다. 행사 제목은 페이지에서 클릭해 고칠 수 있습니다.</p>
+  </section>
+
+  <section class="grp">
+    <h3>사진</h3>
+    <p class="hint"><b>넣을 사진</b>: 1쪽 대표 단체사진 · 학교 전경 2장 · 교표 · 교목 · 교화 · 교가 · 교장/교감 각 2장 · 선생님 · 담임 · 반 단체사진 3장 · 학생 프로필 · 조 단체사진 2장 · 야외 프로필 · 행사 사진</p>
+    <p class="hint">틀 <b>클릭</b> 선택 · <b>두 번 클릭</b> 사진 넣기·교체 · 사진 <b>드래그</b> 위치 조정 · 틀을 고르고 <b>Ctrl &gt;</b> 확대 · <b>Ctrl &lt;</b> 축소 · <b>Ctrl+Alt+Shift+C</b> 틀에 꽉 차게 · <b>Ctrl+Alt+Shift+E</b> 사진 전체 보이기 · <b>스페이스</b>를 누른 채 끌면 화면 이동 · 빈 곳에서 <b>끌어</b> 여러 틀 선택 (<b>Shift+클릭</b> 더하기·빼기) → 묶음 손잡이로 함께 크기 변경<br>
+      <b>Ctrl+Z</b>로 방금 한 작업을 12번까지 되돌립니다.<br>
+      틀을 고르면 네모 손잡이로 <b>크기 조절</b>(Shift: 비율 유지), 파란 테두리나 ✥ 를 끌어 <b>이동</b>, <b>Delete</b> 또는 도구 막대로 <b>틀 삭제</b>, <b>사진 잘라내기(Ctrl+X) · 복사(Ctrl+C) · 붙여넣기(Ctrl+V) · 틀 복사(Ctrl+Shift+C)</b>를 합니다. Esc로 해제합니다.<br>
+      페이지의 <b>모든 글씨</b>는 눌러서 고치거나 지울 수 있습니다. 글씨를 누르면 <b>글자틀</b> 손잡이도 나타나 <b>크기 조절 · 이동(테두리, ✥) · 글자 크게/작게 · 글자틀 삭제</b>를 합니다. 전부 처음으로 돌리려면 맨 아래 [문구 초기화]를 누르세요.<br>
+      사진을 보정하려면 도구 막대의 <b>사진 편집실</b>을 누르고, 끝나면 위쪽의 <b>앨범에 적용</b>을 누르세요.<br>
+      파일을 사진 칸에 끌어다 놓아도 됩니다.</p>
+    <button class="btn ghost" id="fr-restore" hidden></button>
+    <div class="info" id="fr-note"></div>
+    <label class="btn ghost file">학생 프로필 사진 한꺼번에 넣기
+      <input type="file" id="f-bulk" accept="image/*" multiple hidden>
+    </label>
+    <label class="btn ghost">학생 꽃 프로필 한꺼번에 넣기<input type="file" id="f-bulk-fl" accept="image/*" multiple hidden></label>
+    <label class="btn ghost">학생 야외 프로필 한꺼번에 넣기<input type="file" id="f-bulk-o" accept="image/*" multiple hidden></label>
+    <label class="btn ghost">야외 프로필 아래 작은 사진 한꺼번에 넣기<input type="file" id="f-bulk-ox" accept="image/*" multiple hidden></label>
+    <p class="hint">파일명에 학생 이름이 있으면 그 학생에게, 없으면 파일명 순서대로 들어갑니다.</p>
+    <div class="info" id="bulk-info"></div>
+  </section>
+
+  <section class="grp">
+    <button class="btn primary" id="b-print">인쇄 · PDF 저장</button>
+    <p class="hint">Chrome 인쇄 창에서 <b>대상: PDF로 저장</b>, <b>여백: 없음</b>,
+      <b>배경 그래픽</b>을 체크하세요. 용지 크기는 판형에 맞게 자동 설정됩니다.</p>
+    <button class="btn primary" id="b-print-pdf">인쇄용 PDF 저장 (CMYK · 재단선)</button>
+    <button class="btn primary-soft" id="b-pdf">대화형 PDF로 내보내기</button>
+    <div id="wrap-controls">
+    <h3>싸바리 표지</h3>
+    <label class="chk"><input type="checkbox" id="w-on"> 표지 전개도 쓰기</label>
+    <div class="row2">
+      <label>책등 두께(mm) <input type="number" id="w-spine" min="0" step="0.5"></label>
+      <label>접힘 여유(mm) <input type="number" id="w-fold" min="0" step="1"></label>
+      <label>홈 너비(mm) <input type="number" id="w-hinge" min="0" step="0.5"></label>
+      <label>보드 여유(mm) <input type="number" id="w-board" min="0" step="0.5"></label>
+    </div>
+    <button class="btn ghost" id="b-print-wrap">표지만 인쇄 · PDF 저장</button>
+    <p class="hint">책등 두께는 쪽수와 종이에 따라 달라집니다. 인쇄소에 확인한 값을 넣어 주세요. 빨간 점선은 화면에서만 보입니다.</p>
+    </div>
+    <div class="row2">
+      <button class="btn ghost" id="b-reset-text">문구 초기화</button>
+      <button class="btn ghost" id="b-clear-photos">사진 모두 지우기</button>
+    </div>
+  </section>
+</aside>
+
+<main class="pages" id="pages"></main>
+
+<input type="file" id="picker" accept="image/*" hidden>
+
+<dialog class="pd" id="pdf-dlg">
+  <div class="pd-title">대화형 PDF로 내보내기</div>
+  <div class="pd-body">
+    <nav class="pd-tabs">
+      <button type="button" class="on" data-tab="general">일반</button>
+      <button type="button" data-tab="compress">압축</button>
+      <button type="button" data-tab="advanced">고급</button>
+      <button type="button" data-tab="security">보안</button>
+    </nav>
+    <div class="pd-main">
+      <section class="pd-tab" data-tab="general">
+        <h4>일반</h4>
+        <fieldset><legend>페이지</legend>
+          <div class="pd-row">
+            <label><input type="radio" name="pd-r" id="pd-range-all"> 모두(A)</label>
+            <label><input type="radio" name="pd-r" id="pd-range-part"> 범위(R):</label>
+            <input type="text" id="pd-range" class="w-s" placeholder="1-9, 12">
+            <span class="pd-sep"></span>
+            <span>내보내기 형식</span>
+            <label><input type="radio" name="pd-f" id="pd-fmt-page"> 페이지(G)</label>
+            <label><input type="radio" name="pd-f" id="pd-fmt-spread"> 스프레드(E)</label>
+          </div>
+          <div class="pd-row">
+            <label><input type="checkbox" id="pd-separate"> 별도의 PDF 파일 만들기(C)</label>
+            <label>접미어(X): <input type="text" id="pd-suffix" class="w-s"></label>
+          </div>
+        </fieldset>
+        <fieldset><legend>보기</legend>
+          <div class="pd-grid">
+            <span>보기(V):</span>
+            <select id="pd-view">
+              <option value="default">기본값</option><option value="actual">실제 크기</option><option value="fit">페이지 맞춤</option>
+              <option value="fitW">너비 맞춤</option><option value="fitH">높이 맞춤</option>
+              <option value="z25">25%</option><option value="z50">50%</option><option value="z75">75%</option><option value="z100">100%</option>
+            </select>
+            <span>레이아웃(Y):</span>
+            <select id="pd-layout">
+              <option value="default">기본값</option><option value="single">한 페이지</option><option value="column">한 페이지 연속</option>
+              <option value="two">두 페이지 마주보기</option><option value="twoCol">두 페이지 연속</option>
+              <option value="cover">두 페이지 마주보기(표지)</option><option value="coverCol">두 페이지 연속(표지)</option>
+            </select>
+            <span>프레젠테이션:</span>
+            <div>
+              <label class="pd-line"><input type="checkbox" id="pd-full"> 전체 화면 모드에서 열기(M)</label>
+              <label class="pd-line"><input type="checkbox" id="pd-flip"> 페이지 뒤집기 간격(G): <input type="number" id="pd-flipsec" class="w-n" min="1" max="600"> 초</label>
+              <label class="pd-line"><input type="checkbox" id="pd-open"> 내보낸 후 보기(W)</label>
+            </div>
+            <span>페이지 전환(T):</span>
+            <select id="pd-trans">
+              <option value="none">없음</option><option value="Dissolve">디졸브</option><option value="Fade">페이드</option><option value="Wipe">닦아내기</option>
+              <option value="Push">밀어내기</option><option value="Cover">덮기</option><option value="Uncover">벗기기</option>
+              <option value="Split">나누기</option><option value="Box">상자</option><option value="Blinds">블라인드</option>
+            </select>
+          </div>
+        </fieldset>
+        <fieldset><legend>옵션</legend>
+          <div class="pd-row"><label><input type="checkbox" id="pd-thumbs"> 페이지 축소판 포함(P)</label></div>
+          <div class="pd-row pd-off" title="쪽을 이미지로 담는 방식이라 지원하지 않습니다">
+            <label><input type="checkbox" disabled> 태그 있는 PDF 만들기(F)</label>
+            <label><input type="checkbox" disabled> Acrobat 레이어 만들기(L)</label>
+            <label><input type="checkbox" disabled> 숨겨진 스프레드 포함</label>
+          </div>
+        </fieldset>
+      </section>
+      <section class="pd-tab" data-tab="compress" hidden>
+        <h4>압축</h4>
+        <fieldset><legend>이미지 압축</legend>
+          <div class="pd-grid">
+            <span>압축(O):</span>
+            <select id="pd-compress"><option value="jpeg">JPEG(손실)</option><option value="lossless">PNG(손실 없음)</option></select>
+            <span>JPEG 품질(Q):</span>
+            <select id="pd-quality"><option value="min">최소</option><option value="low">낮음</option><option value="mid">중간</option><option value="high">높음</option><option value="max">최대</option></select>
+            <span>해상도(ppi)(U):</span>
+            <select id="pd-ppi"><option value="72">72</option><option value="96">96</option><option value="144">144</option><option value="300">300</option></select>
+          </div>
+          <p class="pd-note">화면으로 볼 때는 144ppi면 충분합니다. 손실 없음과 300ppi는 시간이 오래 걸리고 파일이 많이 커집니다. 인쇄소에 넘길 파일은 패널의 <b>인쇄 · PDF 저장</b>을 쓰세요.</p>
+        </fieldset>
+      </section>
+      <section class="pd-tab" data-tab="advanced" hidden>
+        <h4>고급</h4>
+        <fieldset><legend>문서</legend>
+          <div class="pd-grid">
+            <span>문서 제목:</span><input type="text" id="pd-title">
+            <span>제목 표시:</span>
+            <div class="pd-row">
+              <label><input type="radio" name="pd-s" id="pd-show-title"> 문서 제목</label>
+              <label><input type="radio" name="pd-s" id="pd-show-file"> 파일 이름</label>
+            </div>
+            <span>언어:</span>
+            <select id="pd-lang"><option value="ko-KR">한국어</option><option value="en-US">영어</option></select>
+          </div>
+        </fieldset>
+        <fieldset><legend>재단</legend>
+          <div class="pd-row"><label><input type="checkbox" id="pd-bleed"> 재단 여백 포함 (화면용은 끄는 것을 권장)</label></div>
+        </fieldset>
+      </section>
+      <section class="pd-tab" data-tab="security" hidden>
+        <h4>보안</h4>
+        <fieldset class="pd-off"><legend>암호</legend>
+          <div class="pd-row"><label><input type="checkbox" disabled> 문서를 여는 데 암호 필요</label></div>
+          <div class="pd-row"><label><input type="checkbox" disabled> 인쇄 · 편집 제한</label></div>
+          <p class="pd-note">이 편집기에서는 PDF 암호를 걸 수 없습니다. 암호가 필요하면 내보낸 파일을 Acrobat 등에서 설정하세요.</p>
+        </fieldset>
+      </section>
+    </div>
+  </div>
+  <div class="pd-foot">
+    <div class="pd-status">
+      <div id="pd-progress" hidden><progress id="pd-bar" value="0" max="1"></progress> <span id="pd-state"></span></div>
+      <div id="pd-msg"></div>
+    </div>
+    <button type="button" class="pd-btn main" id="pd-export">내보내기(X)</button>
+    <button type="button" class="pd-btn" id="pd-cancel">취소</button>
+  </div>
+</dialog>
+
+<dialog class="pd" id="prj-dlg">
+  <div class="pd-title"></div>
+  <div class="prj-body"></div>
+  <div class="pd-foot"><div class="pd-status"></div><div class="pd-btns"></div></div>
+</dialog>
+
+<script src="themes.js"></script>
+<script src="pdf-layout.js"></script>
+<script src="kinder.js"></script>
+<script src="album.js"></script>
+<script src="pdf-export.js"></script>
+<script src="project.js"></script>
+<script src="image-tools.js"></script>
+<script src="page-panel.js"></script>
+<script src="undo.js"></script>
+<script src="ps-edit.js"></script>
+<script src="print-pdf.js"></script>
+<script src="jpg-export.js"></script>
+</body>
+</html>

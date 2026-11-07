@@ -76,7 +76,8 @@ document.body.insertAdjacentHTML("beforeend", `
         <li>${STUDIO.addressNote}</li>
       </ul>
     </div>
-    <p class="copy">${STUDIO.bizInfo}<br>© ${new Date().getFullYear()} ${STUDIO.name}. All rights reserved.</p>
+    <p class="copy">${STUDIO.bizInfo}<br>© ${new Date().getFullYear()} ${STUDIO.name}. All rights reserved.
+      <a class="staff-link" href="designer/" rel="nofollow">직원용 · 졸업앨범 디자이너</a></p>
   </div>
 </footer>
 <div class="mobile-bar">
