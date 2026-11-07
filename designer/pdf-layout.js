@@ -145,8 +145,8 @@ function studentPages(c, ci, tone) {
         ${studentGrid(COL_R, low?.rows || [[51.8, 68.3], [72.4, 88.9]], chunk, 'po', ci, { cls: 'line', ratio: low?.ratio })}`),
     );
     // 펼침면을 같은 크기 칸으로 나눔 (쪽마다 2줄). 사진이 들어가고 남는 칸은 가운데부터 글자 칸으로
-    if (S.outdoorTwo && S.outdoorDiamond) {     // 앨범 설정 outdoorDiamond: 1 · 2 · 3 · 2 · 1층. 1층은 단체사진, 3층 가운데는 학교와 졸업생 이름
-      const counts = [1, 2, 3, 2, 1], top = 8.5, bottom = 95, gap = 1, gx = 1.2, h = (bottom - top - gap * 4) / 5, w = h * G.aspect / 1.25;
+    if (S.outdoorTwo && S.outdoorDiamond) {     // 앨범 설정 outdoorDiamond: 위에서부터 1 · 1 · 2 · 3 · 2칸. 맨 위는 단체사진, 3칸 줄 가운데는 학교와 졸업생 이름
+      const counts = [1, 1, 2, 3, 2], nameRow = 3, top = 8.5, bottom = 95, gap = 1, gx = 1.2, h = (bottom - top - gap * 4) / 5, w = h * G.aspect / 1.25;
       const names = chunk.map(x => esc(x.s.name)).join(' · ');
       const diamond = (code, topKey) => {
         let n = 0, html = '';
@@ -155,7 +155,7 @@ function studentPages(c, ci, tone) {
           for (let i = 0; i < cnt; i++) {
             const x0 = 50 - rowW / 2 + i * (cw + gx), box = [x0, y0, x0 + cw, y0 + h];
             if (!r) html += LF(topKey, box, 'line');
-            else if (r === 2 && i === 1) html += LT(box, `<div class="lpanel-school">${esc(S.school)}</div><div class="lpanel-names">${names}</div>`, 'lpanel lpanel-sm');
+            else if (r === nameRow && i === 1) html += LT(box, `<div class="lpanel-school">${esc(S.school)}</div><div class="lpanel-names">${names}</div>`, 'lpanel lpanel-sm');
             else if (chunk[n]) html += LF(`c${ci}-${code}${chunk[n++].i}`, box, 'line');
           }
         });
