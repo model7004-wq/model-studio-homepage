@@ -1027,15 +1027,7 @@ function bindPhotoEvents() {
   root.addEventListener('pointerup', end);
   root.addEventListener('pointercancel', () => { if (drag) drag.el.classList.remove('dragging'); drag = null; });
 
-  root.addEventListener('wheel', e => {
-    const el = e.target.closest('.photo.has-img');
-    if (!el) return;
-    e.preventDefault();
-    const p = photos[el.dataset.photo];
-    p.z = Math.min(5, Math.max(1, p.z * (e.deltaY < 0 ? 1.08 : 1 / 1.08)));
-    applyKey(el.dataset.photo);
-    persistPos(el.dataset.photo);
-  }, { passive: false });
+  // 사진 확대 · 축소는 마우스 휠이 아니라 틀을 고른 뒤 Ctrl + / Ctrl - (틀 편집 키 처리에서)
 
   root.addEventListener('dragover', e => {
     const el = e.target.closest('.photo');
@@ -1238,6 +1230,15 @@ function syncFrameSel() {
   const bw = bar.offsetWidth, bh = bar.offsetHeight, panel = $('.panel')?.getBoundingClientRect().right || 0;
   bar.style.left = `${Math.max(panel + 6, Math.min(innerWidth - bw - 6, r.left + r.width / 2 - bw / 2))}px`;
   bar.style.top = `${r.top - bh - 8 >= 6 ? r.top - bh - 8 : Math.min(innerHeight - bh - 6, r.bottom + 8)}px`;
+}
+/** 고른 틀 안의 사진 확대(up) · 축소. 틀 크기는 그대로, 1~5배 */
+function zoomPhoto(key, up) {
+  const p = photos[key];
+  if (!p) return;
+  p.z = Math.min(5, Math.max(1, p.z * (up ? 1.08 : 1 / 1.08)));
+  applyKey(key);
+  persistPos(key);
+  frameNote(`사진 크기 ${Math.round(p.z * 100)}%`);
 }
 function cutCopyPhoto(cut) {
   const p = frameSel && photos[frameSel.key];
@@ -1449,6 +1450,12 @@ function bindFrameEditor() {
     if ((e.key === 'Delete' || e.key === 'Backspace') && frameSel) { e.preventDefault(); deleteFrame(); return; }
     if (!(e.ctrlKey || e.metaKey)) return;
     const k = /^Key([A-Z])$/.exec(e.code)?.[1].toLowerCase() || e.key.toLowerCase();     // 한글 입력 상태에서도 같은 자리의 키로 동작
+    const zoomKey = { Equal: true, NumpadAdd: true, Minus: false, NumpadSubtract: false }[e.code] ?? { '+': true, '=': true, '-': false }[e.key];
+    if (zoomKey !== undefined && !e.altKey && frameSel?.kind !== 'text' && photos[frameSel?.key]) {   // 브라우저 화면 확대 대신 사진만 확대 · 축소
+      e.preventDefault();
+      zoomPhoto(frameSel.key, zoomKey);
+      return;
+    }
     if (e.altKey) {      // 인디자인처럼 Ctrl+Alt+X: 틀 안의 사진만 잘라내기, Ctrl+Alt+V: 고른 틀 안으로 붙여넣기
       const act = k === 'x' && frameSel?.kind !== 'text' && photos[frameSel?.key] ? () => cutCopyPhoto(true) : k === 'v' && frameClip?.blob ? pasteInto : null;
       if (act) { e.preventDefault(); act(); }
