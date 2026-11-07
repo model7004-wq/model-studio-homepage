@@ -1232,6 +1232,31 @@ function syncFrameSel() {
   bar.style.left = `${Math.max(panel + 6, Math.min(innerWidth - bw - 6, r.left + r.width / 2 - bw / 2))}px`;
   bar.style.top = `${r.top - bh - 8 >= 6 ? r.top - bh - 8 : Math.min(innerHeight - bh - 6, r.bottom + 8)}px`;
 }
+/* 손바닥 도구 (인디자인처럼): 스페이스바를 누르고 있는 동안 끌면 편집 화면이 따라 움직임.
+   그동안은 사진 끌기 · 틀 선택이 일어나지 않도록 가장 먼저(window 캡처 단계에서) 가로챔 */
+function bindHandTool() {
+  let on = false, pan = null, moved = false;
+  const typing = e => e.target.closest?.('input,textarea,select,[contenteditable]') || document.querySelector('dialog[open]') || document.querySelector('#photo-room:not([hidden])');
+  const set = v => { on = v; document.body.classList.toggle('hand-tool', v); if (!v) { pan = null; document.body.classList.remove('hand-pan'); } };
+  addEventListener('keydown', e => { if (e.code !== 'Space' || typing(e)) return; e.preventDefault(); if (!on) set(true); });
+  addEventListener('keyup', e => { if (e.code === 'Space') set(false); });
+  addEventListener('blur', () => set(false));
+  addEventListener('pointerdown', e => {
+    if (!on) moved = false;      // 손바닥으로 끈 뒤 클릭이 안 일어났어도 다음 클릭은 정상으로
+    if (!on || e.button !== 0) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    pan = { x: e.clientX, y: e.clientY }; moved = false;
+    document.body.classList.add('hand-pan');
+  }, true);
+  addEventListener('pointermove', e => {
+    if (!pan) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    scrollBy(pan.x - e.clientX, pan.y - e.clientY);
+    pan = { x: e.clientX, y: e.clientY }; moved = true;
+  }, true);
+  addEventListener('pointerup', e => { if (!pan) return; e.stopImmediatePropagation(); pan = null; document.body.classList.remove('hand-pan'); }, true);
+  addEventListener('click', e => { if (on || moved) { e.preventDefault(); e.stopImmediatePropagation(); moved = false; } }, true);     // 끈 뒤 버튼 · 틀이 눌리지 않게
+}
 /** 틀에 꽉 차는 배율(fill)과 사진 전체가 보이는 배율(fit). 보통 틀은 꽉 차는 크기가 1배 */
 function photoScales(key) {
   const p = photos[key], el = frameSel && document.querySelector(`.page[data-pid="${frameSel.pid}"] .photo[data-photo="${CSS.escape(key)}"]`);
@@ -1857,6 +1882,7 @@ async function importGalleryFolders(fileList, append) {
   bindPanel();
   bindPhotoEvents();
   bindFrameEditor();
+  bindHandTool();
   render();
   window.__photosLoaded = true;
   window.undoInit?.();
