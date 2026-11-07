@@ -758,3 +758,10 @@ body.fr-marqueeing,body.fr-marqueeing *{user-select:none!important;cursor:crossh
 /* 야외 프로필 이름 칸: 베이지 바탕 */
 #pages .lt.lpanel.lpanel-beige{background:#EFE3CF}
 .k-emb.k-emb-s{width:62%;margin:0 auto}
+
+/* 사진 오른쪽 클릭 메뉴 (ps-edit.js) */
+#ps-menu{position:fixed;z-index:30;min-width:170px;padding:4px;background:#2b2b2b;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+#ps-menu[hidden]{display:none}
+#ps-menu button{display:block;width:100%;padding:7px 12px;border:0;border-radius:4px;background:transparent;color:#fff;font:13px/1.2 system-ui,'Malgun Gothic',sans-serif;text-align:left;cursor:pointer}
+#ps-menu button:hover{background:#2f7de1}
+@media print{#ps-menu{display:none!important}}
