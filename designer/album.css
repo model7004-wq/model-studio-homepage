@@ -774,3 +774,12 @@ body.fr-marqueeing,body.fr-marqueeing *{user-select:none!important;cursor:crossh
 #pg-menu button{display:block;width:100%;padding:7px 12px;border:0;border-radius:4px;background:transparent;color:#fff;font:13px/1.2 system-ui,'Malgun Gothic',sans-serif;text-align:left;cursor:pointer}
 #pg-menu button:hover{background:#2f7de1}
 @media print{#pg-menu{display:none!important}}
+/* 왼쪽 패널 접기 · 펼치기 */
+.panel{transition:transform .2s ease}
+body.lp-closed .panel{transform:translateX(-100%)}
+.pages{margin-left:calc(330px / var(--zoom,.6))}
+body.lp-closed .pages{margin-left:calc(40px / var(--zoom,.6))}
+#lp-toggle{position:fixed;top:8px;left:320px;z-index:11;width:22px;height:34px;padding:0;border:1px solid #E9DECD;border-left:0;border-radius:0 6px 6px 0;background:#FFFCF7;color:#8A7766;font:15px/1 system-ui,'Malgun Gothic',sans-serif;cursor:pointer;transition:left .2s ease;box-shadow:2px 1px 4px rgba(80,60,40,.12)}
+#lp-toggle:hover{background:#F3EBDD}
+body.lp-closed #lp-toggle{left:0}
+@media print{#lp-toggle{display:none!important}body.lp-closed .pages,.pages{margin-left:0!important}}

@@ -188,5 +188,32 @@ function bindPagePanel() {
   let open = true;
   try { open = localStorage.getItem('gradAlbum.pagePanel') !== '0'; } catch { /* 기본값 */ }
   setOpen(open);
+  window.pgSetOpen = setOpen;
 }
 bindPagePanel();
+
+/* 왼쪽 설정 패널 접기 · 펼치기. Tab 키는 인디자인처럼 양쪽 패널을 한꺼번에 접고 폄 */
+function bindLeftPanel() {
+  document.body.insertAdjacentHTML('beforeend', '<button type="button" id="lp-toggle" title="왼쪽 패널 접기 (Tab: 양쪽 패널 함께)">«</button>');
+  const btn = document.getElementById('lp-toggle');
+  const setOpen = open => {
+    document.body.classList.toggle('lp-closed', !open);
+    btn.textContent = open ? '«' : '»';
+    btn.title = open ? '왼쪽 패널 접기 (Tab: 양쪽 패널 함께)' : '왼쪽 패널 펼치기 (Tab: 양쪽 패널 함께)';
+    try { localStorage.setItem('gradAlbum.leftPanel', open ? '1' : '0'); } catch { /* 저장 못 해도 동작 */ }
+    setTimeout(() => window.syncFrameSel?.(), 250);      // 화면이 옮겨지면 틀 선택 테두리도 따라감
+  };
+  btn.addEventListener('click', () => setOpen(document.body.classList.contains('lp-closed')));
+  addEventListener('keydown', e => {
+    if (e.key !== 'Tab' || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (e.target.closest?.('input,textarea,select,button,[contenteditable],dialog') || document.querySelector('dialog[open]') || document.querySelector('#photo-room:not([hidden])')) return;
+    e.preventDefault();
+    const anyOpen = !document.body.classList.contains('lp-closed') || document.body.classList.contains('pg-open');
+    setOpen(!anyOpen);
+    window.pgSetOpen?.(!anyOpen);
+  });
+  let open = true;
+  try { open = localStorage.getItem('gradAlbum.leftPanel') !== '0'; } catch { /* 기본값 */ }
+  setOpen(open);
+}
+bindLeftPanel();
