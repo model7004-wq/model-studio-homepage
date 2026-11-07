@@ -43,7 +43,23 @@ const THEMES = {
   simple: { no: '13', name: '심플 라인', dots: ['#222222', '#9A9A9A', '#E2E2E2'], bg: 'simple', flat: 1, plain: 1,
     vars: { paper: '#FFFFFF', ink: '#222222', soft: '#767676', gold: '#333333', goldSoft: '#BDBDBD', empty: '#EFEFEF', g1: '#222222', g2: '#555555', title: SANS, script: JOST, en: JOST, body: SANS, cap: SANS },
     pal: { blush: '#EEEEEE', peach: '#F0F0F0', butter: '#F3F3F3', sage: '#ECECEC', mint: '#EDEDED', sky: '#EBEBEB', lavender: '#EEEEEE', rose: '#F0F0F0', leaf: '#BDBDBD', leaf2: '#9A9A9A', leaf3: '#D0D0D0', stem: '#8A8A8A', gold: '#555555' } },
+  kids: { no: '14', name: '귀여운 심벌', dots: ['#FFC94D', '#FF9DB4', '#78CFC0'], bg: 'kids', plain: 1,
+    vars: { paper: '#FFFCF3', ink: '#4A4036', soft: '#8A7D6E', gold: '#F08AA2', goldSoft: '#FFD3DD', empty: '#FFF1D9', g1: '#F08AA2', g2: '#FFB84D', title: "'Jua',sans-serif", script: "'Jua',sans-serif", en: JOST, body: SANS, cap: "'Jua',sans-serif" },
+    pal: { blush: '#FFD3DD', peach: '#FFE0C2', butter: '#FFF0B8', sage: '#CFEFD9', mint: '#C7EEE6', sky: '#CFE6FA', lavender: '#E3D8F8', rose: '#FFC9D6', leaf: '#8FD3A6', leaf2: '#6CC08C', leaf3: '#B5E3C3', stem: '#7FBF95', gold: '#FFC94D' } },
 };
+/* 귀여운 심벌 테마의 작은 그림 (x, y는 가운데, r은 크기) */
+const KIDS_COLORS = ['#FFC94D', '#FF9DB4', '#78CFC0', '#8CC6F2', '#B9A3EA', '#FFAE70'];
+function kidsStar(x, y, r, c, rot) {
+  let d = '';
+  for (let i = 0; i < 10; i++) { const a = (rot + i * 36 - 90) * Math.PI / 180, R = i % 2 ? r * .45 : r; d += `${i ? 'L' : 'M'}${x + Math.cos(a) * R},${y + Math.sin(a) * R}`; }
+  return `<path d="${d}Z" fill="${c}" stroke="${c}" stroke-width="${r * .22}" stroke-linejoin="round"/>`;
+}
+const kidsHeart = (x, y, r, c, rot) => `<path transform="rotate(${rot} ${x} ${y})" d="M${x},${y + r * .8} C${x - r * 1.3},${y - r * .1} ${x - r * .7},${y - r * 1.1} ${x},${y - r * .35} C${x + r * .7},${y - r * 1.1} ${x + r * 1.3},${y - r * .1} ${x},${y + r * .8}Z" fill="${c}"/>`;
+const kidsCloud = (x, y, r, c) => `<g fill="${c}"><circle cx="${x - r * .55}" cy="${y + r * .1}" r="${r * .45}"/><circle cx="${x}" cy="${y - r * .15}" r="${r * .6}"/><circle cx="${x + r * .6}" cy="${y + r * .12}" r="${r * .42}"/><rect x="${x - r * .95}" y="${y + r * .1}" width="${r * 1.9}" height="${r * .45}" rx="${r * .22}"/></g>`;
+function kidsPencil(x, y, r, c, rot) {
+  const w = r * .5, L = r * 2.4;
+  return `<g transform="rotate(${rot} ${x} ${y})"><rect x="${x - L / 2}" y="${y - w / 2}" width="${L * .78}" height="${w}" rx="${w * .2}" fill="${c}"/><rect x="${x - L / 2}" y="${y - w / 2}" width="${L * .12}" height="${w}" rx="${w * .2}" fill="#FF9DB4"/><path d="M${x + L * .28},${y - w / 2} L${x + L / 2},${y} L${x + L * .28},${y + w / 2}Z" fill="#F6D9B0"/><path d="M${x + L * .43},${y - w * .16} L${x + L / 2},${y} L${x + L * .43},${y + w * .16}Z" fill="#4A4036"/></g>`;
+}
 const THEME_VAR = { paper: '--paper', ink: '--ink', soft: '--ink-soft', gold: '--gold', goldSoft: '--gold-soft', empty: '--photo-empty', g1: '--g1', g2: '--g2', title: '--f-title', script: '--f-script', en: '--f-en', body: '--f-body', cap: '--f-cap' };
 let themeBasePal = null, themeGridDone = false;
 const themeNow = () => THEMES[S.theme] || THEMES.classic;
@@ -173,6 +189,16 @@ function themeBg(kind, tone, seed) {
       const a = left ? 0 : W * .05, b = left ? W * .95 : W, y1 = H * .045, y2 = H * .956, hair = sw * .7;
       s += `<rect x="${a}" y="${y1}" width="${b - a}" height="${hair}" fill="${t.vars.ink}"/><rect x="${a}" y="${y2}" width="${b - a}" height="${hair}" fill="${t.vars.goldSoft}"/>`;
       s += `<rect x="${left ? W * .06 : W * .86}" y="${y1 - sw * 1.6}" width="${W * .08}" height="${sw * 2.2}" fill="${t.vars.ink}"/>`;
+      break;
+    }
+    case 'kids': {      // 점선 테두리 + 모서리와 가장자리에 작은 별 · 하트 · 구름 · 연필 · 동그라미
+      const i = W * .028, R = W * .018, pick = () => KIDS_COLORS[Math.floor(rng() * KIDS_COLORS.length)];
+      s += `<rect x="${i}" y="${i}" width="${W - i * 2}" height="${H - i * 2}" rx="${W * .03}" fill="none" stroke="${t.vars.goldSoft}" stroke-width="${sw * 1.4}" stroke-dasharray="${sw * 5} ${sw * 4}" stroke-linecap="round"/>`;
+      const draw = [kidsStar, kidsHeart, (x, y, r, c) => kidsCloud(x, y, r * 1.3, '#E3F1FB'), kidsStar, (x, y, r, c) => `<circle cx="${x}" cy="${y}" r="${r * .4}" fill="${c}"/>`, kidsHeart];
+      // 바깥쪽 위 모서리와 안쪽 아래 모서리에 모아서, 나머지 가장자리에는 드문드문
+      const spots = [[.05, .03, 1.3], [.12, .055, .8], [.2, .025, .6], [.04, .1, .7], [.95, .975, 1.2], [.88, .955, .7], [.96, .91, .6], [.5, .018, .5], [.018, .5, .5], [.75, .985, .5], [.985, .3, .45], [.3, .985, .45]];
+      spots.forEach(([x, y, k], n) => { s += draw[n % draw.length](X(x) * W, y * H, R * k * (.85 + rng() * .3), pick(), rng() * 40 - 20); });
+      s += kidsPencil(X(.9) * W, .03 * H, R * .9, '#FFC94D', left ? 160 : 20);
       break;
     }
     case 'premium':

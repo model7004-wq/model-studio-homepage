@@ -619,6 +619,26 @@ body.pg-open .pages{margin-right:calc(196px / var(--zoom,.6))}
 #pages[data-theme="simple"] .cover-frame::after{border-color:var(--gold-soft)}
 #pages[data-theme="simple"] .leader-div{height:var(--hair);background:var(--ink)}
 #pages[data-theme="simple"] .rule{background:var(--ink)}
+/* 14 귀여운 심벌: 둥근 파스텔 틀, 알약 모양 제목, 동글동글한 글꼴 */
+#pages[data-theme="kids"] .lf.r .photo,#pages[data-theme="kids"] .gframe .photo{border-radius:2.2cqw}
+#pages[data-theme="kids"] .lf.line{padding:.5cqw;border:.35cqw solid #FFD3DD;border-radius:2cqw;background:#fff}
+#pages[data-theme="kids"] .lf.line .photo{border-radius:1.5cqw}
+#pages[data-theme="kids"] .lf.card{padding:.7cqw;border-radius:2cqw;box-shadow:0 .4cqw 1.2cqw rgba(240,138,162,.25)}
+#pages[data-theme="kids"] .lf.card .photo{border-radius:1.4cqw}
+#pages[data-theme="kids"] .lf.lf-oval{border:.4cqw solid #C7EEE6;background:#fff}
+#pages[data-theme="kids"] .gframe{border:.35cqw solid #FFD3DD;border-radius:2.2cqw}
+#pages[data-theme="kids"] .lhead{display:inline-block;padding:.5cqw 2cqw;border-radius:99cqw;background:#FFF0B8;color:#4A4036;font-weight:400;letter-spacing:.04em}
+#pages[data-theme="kids"] .lt.lpanel{background:#C7EEE6;border-radius:2.4cqw}
+#pages[data-theme="kids"] .lletter{background:#fff;border:.3cqw dashed #FFD3DD;border-radius:2cqw}
+#pages[data-theme="kids"] .lt.lword{background:#fff;border:.3cqw dashed #CFE6FA;border-radius:2cqw}
+#pages[data-theme="kids"] .lt.lmotto-box{background:#FFF0B8;border:0;border-radius:2.4cqw}
+#pages[data-theme="kids"] .lt.lhist-box{background:rgba(255,255,255,.92);border:.3cqw dashed #FFD3DD;border-radius:2.4cqw}
+#pages[data-theme="kids"] .cover-frame{border:.3cqw dashed #FFD3DD;border-radius:3cqw}
+#pages[data-theme="kids"] .cover-frame::after{display:none}
+#pages[data-theme="kids"] .leader-div{height:.3cqw;border-radius:9cqw;background:repeating-linear-gradient(90deg,#FFC94D 0 2cqw,transparent 2cqw 3cqw)}
+#pages[data-theme="kids"] .rule{background:#FFC94D;height:.35cqw;border-radius:9cqw}
+#pages[data-theme="kids"] .rule::after{display:none}
+#pages[data-theme="kids"] .lname,#pages[data-theme="kids"] .lword-name,#pages[data-theme="kids"] .l-name{font-family:'Jua',sans-serif;font-weight:400}
 #pages[data-theme="frame"] .script{font-size:4.4cqw;letter-spacing:0;text-transform:none;color:var(--gold);line-height:1.1}
 /* 필름 테마: 사진을 흰 인화지처럼 */
 .th-print .gframe,.th-print .cover-photo{background:#fff;border:0;box-shadow:0 .3cqw 1.2cqw rgba(70,50,30,.2)}
