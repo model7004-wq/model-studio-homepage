@@ -1243,7 +1243,7 @@ function cutCopyPhoto(cut) {
   const p = frameSel && photos[frameSel.key];
   if (!p) return;
   frameClip = { kind: 'photo', blob: p.blob };
-  frameNote(cut ? '사진을 잘라냈습니다. 옮길 틀을 누르고 붙여넣기(Ctrl+V)를 하세요.' : '사진을 복사했습니다. 넣을 틀을 누르고 붙여넣기(Ctrl+V)를 하세요.');
+  frameNote(cut ? '사진을 잘라냈습니다. 옮길 틀을 누르고 Ctrl+Alt+V (또는 Ctrl+V)를 누르세요.' : '사진을 복사했습니다. 넣을 틀을 누르고 Ctrl+Alt+V (또는 Ctrl+V)를 누르세요.');
   if (cut) removePhoto(frameSel.key);
   syncFrameSel();
 }
@@ -1277,6 +1277,12 @@ async function pasteClip() {
   const c = frameClip;
   if (!c) return;
   if (c.kind === 'frame') return pasteFrame();
+  return pasteInto();
+}
+/** 고른 사진틀 안으로 붙여넣기 (Ctrl+Alt+V): 복사한 틀이어도 그 안의 사진만 넣음 */
+async function pasteInto() {
+  const c = frameClip;
+  if (!c?.blob) return;
   if (!frameSel || frameSel.kind === 'text') { frameNote('붙여 넣을 사진틀을 먼저 누르세요.'); return; }
   const old = photos[frameSel.key];
   frameClip = old ? { kind: 'photo', blob: old.blob } : null;     // 있던 사진은 잃지 않도록 클립보드에 남김
@@ -1337,9 +1343,9 @@ function bindFrameEditor() {
     <div class="fr-bar">
       <button type="button" data-act="small" data-tx="1" title="글자 작게">글자 작게</button>
       <button type="button" data-act="big" data-tx="1" title="글자 크게">글자 크게</button>
-      <button type="button" data-act="cut" title="Ctrl+X">사진 잘라내기</button>
+      <button type="button" data-act="cut" title="Ctrl+X 또는 Ctrl+Alt+X">사진 잘라내기</button>
       <button type="button" data-act="copy" title="Ctrl+C">사진 복사</button>
-      <button type="button" data-act="paste" title="Ctrl+V">붙여넣기</button>
+      <button type="button" data-act="paste" title="Ctrl+V · 틀 안으로는 Ctrl+Alt+V">붙여넣기</button>
       <button type="button" data-act="swap" title="두 번 누르기">사진 바꾸기</button>
       <button type="button" data-act="room" title="업무노트의 사진 편집실에서 보정">사진 편집실</button>
       <button type="button" data-act="tools" title="고해상도 · 벡터 · 계절">이미지 도구</button>
@@ -1442,7 +1448,12 @@ function bindFrameEditor() {
     if (frameSel?.kind === 'text' && !(e.key === 'Delete' || e.key === 'Backspace')) return;
     if ((e.key === 'Delete' || e.key === 'Backspace') && frameSel) { e.preventDefault(); deleteFrame(); return; }
     if (!(e.ctrlKey || e.metaKey)) return;
-    const k = e.key.toLowerCase();
+    const k = /^Key([A-Z])$/.exec(e.code)?.[1].toLowerCase() || e.key.toLowerCase();     // 한글 입력 상태에서도 같은 자리의 키로 동작
+    if (e.altKey) {      // 인디자인처럼 Ctrl+Alt+X: 틀 안의 사진만 잘라내기, Ctrl+Alt+V: 고른 틀 안으로 붙여넣기
+      const act = k === 'x' && frameSel?.kind !== 'text' && photos[frameSel?.key] ? () => cutCopyPhoto(true) : k === 'v' && frameClip?.blob ? pasteInto : null;
+      if (act) { e.preventDefault(); act(); }
+      return;
+    }
     const run = k === 'x' ? () => cutCopyPhoto(true) : k === 'c' ? () => (e.shiftKey ? copyFrame() : cutCopyPhoto(false)) : k === 'v' ? pasteClip : null;
     if (!run || (k !== 'v' && !frameSel) || (k === 'v' && !frameClip)) return;
     e.preventDefault();
