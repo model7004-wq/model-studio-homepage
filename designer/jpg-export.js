@@ -42,10 +42,48 @@ async function jeRenderPage(page, dpi, fontCSS, cut) {
   cv.width = cv.height = 1;
   return out;
 }
+/** 싸바리 표지 전개도 한 장 (뒤표지 | 책등 | 앞표지, 접힘 여유 포함). 전개도가 꺼져 있으면 켜고 그림 */
+async function jeExportWrap(o, say, fontCSS, base, sheet, no, total) {
+  const z = wrapSize(), targetW = Math.round(z.W / 25.4 * o.dpi), tag = total > 1 ? `_시안${no}` : '';
+  say(`표지${total > 1 ? ` 시안 ${no}/${total}` : ''} 그리는 중`, (no - 1) / total);
+  const cv = await pdfRenderPage(sheet, targetW / sheet.offsetWidth, fontCSS, false, .95);
+  return { cv, name: `${base}_표지전개도${tag}_${o.dpi}dpi.jpg` };
+}
+async function jeSave(blob, name, dir) {
+  if (dir) {
+    const fh = await dir.getFileHandle(name, { create: true }), w = await fh.createWritable();
+    await w.write(blob); await w.close();
+  } else {
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    await new Promise(r => setTimeout(r, 400));      // 여러 장 내려받기가 막히지 않게 조금씩
+  }
+}
 async function jeExport(o, say) {
   jeCancel = false;
   await pdfLoadLib('htmlToImage');
   await document.fonts.ready;
+  if (o.spread === 'wrap') {
+    const fontCSS = await pdfFontCSS(), base = `${S.school || '앨범'}_${S.year || ''}`.replace(/[\\/:*?"<>|]/g, '_');
+    let dir = null;
+    if (o.save === 'folder' && window.showDirectoryPicker) {
+      const t0 = performance.now();
+      try { dir = await showDirectoryPicker({ id: 'gradalbum-jpg', mode: 'readwrite', startIn: 'downloads' }); }
+      catch (e) { if (e.name === 'AbortError' && performance.now() - t0 > 800) return 0; say('폴더를 고를 수 없어 내려받기 폴더로 저장합니다.', 0); }
+    }
+    if (S.wrapOn === false) { S.wrapOn = true; const c = document.getElementById('w-on'); if (c) c.checked = true; saveState(); render(); await new Promise(r => setTimeout(r, 50)); }
+    const sheets = [...document.querySelectorAll('.wrap-sheet')];      // 표지 시안마다 한 장씩
+    if (!sheets.length) throw new Error('이 판형에는 싸바리 표지가 없습니다.');
+    for (let i = 0; i < sheets.length; i++) {
+      if (jeCancel) throw new Error('취소했습니다.');
+      const { cv, name } = await jeExportWrap(o, say, fontCSS, base, sheets[i], i + 1, sheets.length);
+      await jeSave(await jeJpegWithDpi(cv, o.quality, o.dpi), name, dir);
+      cv.width = cv.height = 1;
+    }
+    return sheets.length;
+  }
+  o.spread = o.spread === true || o.spread === '1';
   const all = [...document.querySelectorAll('#pages .page')], want = jeRange(o.range, all.length);
   const fontCSS = await pdfFontCSS(), base = `${S.school || '앨범'}_${S.year || ''}`.replace(/[\\/:*?"<>|]/g, '_');
   const keep = !o.bleed;       // 도련을 뺄지
@@ -55,10 +93,17 @@ async function jeExport(o, say) {
   else groups = all.map((_, i) => [i]);
   groups = groups.filter(g => !want || g.some(i => want.has(i + 1)));
   if (!groups.length) throw new Error('내보낼 쪽이 없습니다.');
+  // 저장 방법: 'folder'는 폴더를 골라 한꺼번에, 'download'는 브라우저의 내려받기 폴더로.
+  // 폴더 고르기 창을 띄울 수 없는 곳(앱 안 브라우저 등)이면 바로 실패하므로 그때는 내려받기로 바꿈
   let dir = null;
-  if (window.showDirectoryPicker) {
-    try { dir = await showDirectoryPicker({ id: 'gradalbum-jpg', mode: 'readwrite', startIn: 'pictures' }); }
-    catch (e) { if (e.name === 'AbortError') return 0; }
+  if (o.save === 'folder' && window.showDirectoryPicker) {
+    const t0 = performance.now();
+    try { dir = await showDirectoryPicker({ id: 'gradalbum-jpg', mode: 'readwrite', startIn: 'downloads' }); }
+    catch (e) {
+      if (e.name === 'AbortError' && performance.now() - t0 > 800) return 0;      // 사용자가 창을 닫음
+      say('폴더를 고를 수 없어 내려받기 폴더로 저장합니다.', 0);
+      await new Promise(r => setTimeout(r, 900));
+    }
   }
   let n = 0;
   for (const g of groups) {
@@ -77,16 +122,7 @@ async function jeExport(o, say) {
       const c = cv.getContext('2d');
       c.drawImage(cvs[0], 0, 0); c.drawImage(cvs[1], cvs[0].width, 0);
     }
-    const blob = await jeJpegWithDpi(cv, o.quality, o.dpi), name = `${base}_${label}쪽_${o.dpi}dpi.jpg`;
-    if (dir) {
-      const fh = await dir.getFileHandle(name, { create: true }), w = await fh.createWritable();
-      await w.write(blob); await w.close();
-    } else {
-      const url = URL.createObjectURL(blob), a = document.createElement('a');
-      a.href = url; a.download = name; a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-      await new Promise(r => setTimeout(r, 400));      // 여러 장 내려받기가 막히지 않게 조금씩
-    }
+    await jeSave(await jeJpegWithDpi(cv, o.quality, o.dpi), `${base}_${label}쪽_${o.dpi}dpi.jpg`, dir);
     cvs.forEach(c => { c.width = c.height = 1; });
     n++;
     await new Promise(r => setTimeout(r));
@@ -106,11 +142,14 @@ function bindJpgExport() {
     </div>
     <div class="pp-row">
       <label>쪽 범위 <input id="je-range" placeholder="비워 두면 전체 (예: 1-3, 8)"></label>
-      <label>나누기 <select id="je-spread"><option value="0">쪽마다 한 장</option><option value="1">펼침면 (두 쪽을 한 장)</option></select></label>
+      <label>나누기 <select id="je-spread"><option value="0">쪽마다 한 장</option><option value="1">펼침면 (두 쪽을 한 장)</option><option value="wrap">싸바리 표지 전개도</option></select></label>
+    </div>
+    <div class="pp-row">
+      <label>저장 방법 <select id="je-save"><option value="download" selected>내려받기 폴더에 저장</option><option value="folder">폴더 골라서 저장</option></select></label>
     </div>
     <label class="chk"><input type="checkbox" id="je-bleed"> 도련(재단 여백 3mm) 포함</label>
     <p class="pp-note" id="je-size"></p>
-    <p class="pp-note">저장할 폴더를 고르면 그 폴더에 한꺼번에 저장합니다. 파일 안의 해상도 정보도 고른 dpi로 들어가서 포토샵에서 열면 같은 크기로 보입니다.</p>
+    <p class="pp-note">'내려받기 폴더'는 브라우저의 다운로드 폴더에 한 장씩 저장합니다 (처음에 '여러 파일 다운로드 허용'을 물으면 허용). 파일 안의 해상도 정보도 고른 dpi로 들어가서 포토샵에서 열면 같은 크기로 보입니다.</p>
     <progress id="je-bar" max="1" value="0" hidden></progress>
     <p id="je-status" role="status"></p>
     <div class="it-foot"><span></span><button id="je-cancel">닫기</button><button id="je-go" class="pri">내보내기</button></div>
@@ -118,20 +157,32 @@ function bindJpgExport() {
   const d = document.getElementById('je-dlg'), $$ = s => d.querySelector(s), status = $$('#je-status'), bar = $$('#je-bar'), go = $$('#je-go');
   let busy = false;
   const showSize = () => {
+    const isWrap = $$('#je-spread').value === 'wrap';
+    $$('#je-range').disabled = $$('#je-bleed').disabled = isWrap;
+    if (isWrap) {
+      const z = wrapSize(), dpi = +$$('#je-dpi').value;
+      $$('#je-size').textContent = `한 장 크기: ${Math.round(z.W / 25.4 * dpi).toLocaleString()} × ${Math.round(z.H / 25.4 * dpi).toLocaleString()} 픽셀 (표지 전개도 ${f(z.W)}×${f(z.H)}mm, 접힘 여유 포함 · 빨간 점선은 빠짐)`;
+      return;
+    }
     const sz = SIZES[S.size] || SIZES.a4, dpi = +$$('#je-dpi').value, b = $$('#je-bleed').checked && S.bleed ? BLEED * 2 : 0, sp = $$('#je-spread').value === '1';
     const w = Math.round((sz.w * (sp ? 2 : 1) + b) / 25.4 * dpi), h = Math.round((sz.h + b) / 25.4 * dpi);
     $$('#je-size').textContent = `한 장 크기: ${w.toLocaleString()} × ${h.toLocaleString()} 픽셀 (${sp ? '펼침면' : '한 쪽'} ${sz.name.split(' (')[0]}${b ? ', 도련 포함' : ''})` + (!S.bleed && $$('#je-bleed').checked ? ' · 왼쪽 패널에서 도련이 꺼져 있어 도련 없이 저장됩니다.' : '');
   };
   ['#je-dpi', '#je-spread', '#je-bleed'].forEach(s => $$(s).addEventListener('change', showSize));
-  document.getElementById('b-jpg').addEventListener('click', () => { status.textContent = ''; bar.hidden = true; showSize(); d.showModal(); });
+  const open = wrap => { status.textContent = ''; bar.hidden = true; if (wrap) $$('#je-spread').value = 'wrap'; else if ($$('#je-spread').value === 'wrap') $$('#je-spread').value = '0'; showSize(); d.showModal(); };
+  document.getElementById('b-jpg').addEventListener('click', () => open(false));
+  // 싸바리 표지 칸에도 바로가기
+  document.getElementById('b-print-wrap')?.insertAdjacentHTML('afterend', '<button class="btn ghost" id="b-jpg-wrap">표지만 JPG로 저장</button>');
+  document.getElementById('b-jpg-wrap')?.addEventListener('click', () => open(true));
   $$('#je-cancel').addEventListener('click', () => { if (busy) { jeCancel = true; status.textContent = '멈추는 중…'; } else d.close(); });
   go.addEventListener('click', async () => {
     if (busy) return;
     busy = true; go.disabled = true; bar.hidden = false; bar.value = 0;
     try {
-      const n = await jeExport({ dpi: +$$('#je-dpi').value, quality: +$$('#je-q').value, range: $$('#je-range').value, spread: $$('#je-spread').value === '1', bleed: $$('#je-bleed').checked }, (t, p) => { status.textContent = t; bar.value = p; });
-      bar.value = 1;
-      status.textContent = n ? `JPG ${n}장을 저장했습니다.` : '취소했습니다.';
+      const save = $$('#je-save').value;
+      const n = await jeExport({ dpi: +$$('#je-dpi').value, quality: +$$('#je-q').value, range: $$('#je-range').value, spread: $$('#je-spread').value, bleed: $$('#je-bleed').checked, save }, (t, p) => { status.textContent = t; bar.value = p; });
+      bar.value = n ? 1 : 0;
+      status.textContent = n ? `JPG ${n}장을 저장했습니다.${save === 'download' ? ' 다운로드 폴더를 확인하세요.' : ''}` : '폴더 고르기를 취소했습니다. 저장 방법을 \'내려받기 폴더에 저장\'으로 바꿔 다시 눌러 보세요.';
     } catch (e) {
       status.textContent = e.message || '내보내기에 실패했습니다.';
     }
@@ -139,3 +190,42 @@ function bindJpgExport() {
   });
 }
 bindJpgExport();
+
+/* ============================================================
+   Ctrl+E 내보내기 (인디자인처럼): 대화형 PDF · JPG · 인쇄용 PDF 중 고르는 창.
+   창 안에서 1 · 2 · 3 키로도 고름. 마지막에 고른 것이 처음부터 골라져 있음
+   ============================================================ */
+(() => {
+  const KINDS = [
+    { id: 'b-pdf', key: '1', title: '대화형 PDF로 내보내기', note: '화면으로 보거나 보내기용 PDF' },
+    { id: 'b-jpg', key: '2', title: 'JPG로 내보내기', note: '쪽마다 이미지 파일' },
+    { id: 'b-print-pdf', key: '3', title: '인쇄용 PDF 저장', note: 'CMYK · 재단선 · 인쇄소에 넘길 파일' },
+  ];
+  const LAST = 'gradAlbum.lastExport';
+  const pick = id => {
+    try { localStorage.setItem(LAST, id); } catch {}
+    closePrj();
+    setTimeout(() => document.getElementById(id)?.click(), 0);     // 고르는 창이 닫힌 다음에 내보내기 창을 엶
+  };
+  function openExport() {
+    let last = 'b-pdf';
+    try { last = localStorage.getItem(LAST) || last; } catch {}
+    const d = showPrj('내보내기 (Ctrl+E)', `<div class="ex-pick">${KINDS.map(k => `<button type="button" class="ex-opt${k.id === last ? ' on' : ''}" data-id="${k.id}"><b>${k.key}</b><span>${k.title}<small>${k.note}</small></span></button>`).join('')}</div>`, [{ text: '취소', on: closePrj }]);
+    d.querySelectorAll('.ex-opt').forEach(b => b.addEventListener('click', () => pick(b.dataset.id)));
+    d.querySelector('.ex-opt.on')?.focus();
+    const keys = e => {
+      if (!d.open) { removeEventListener('keydown', keys, true); return; }
+      const k = KINDS.find(x => x.key === e.key);
+      if (k) { e.preventDefault(); e.stopPropagation(); removeEventListener('keydown', keys, true); pick(k.id); }
+    };
+    addEventListener('keydown', keys, true);
+    d.addEventListener('close', () => removeEventListener('keydown', keys, true), { once: true });
+  }
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.code !== 'KeyE') return;     // 한글 입력 상태에서도 같은 자리 키로
+    if (document.querySelector('dialog[open]') || document.querySelector('#photo-room:not([hidden])')) return;
+    e.preventDefault(); e.stopPropagation();
+    openExport();
+  }, true);
+  window.openExport = openExport;
+})();

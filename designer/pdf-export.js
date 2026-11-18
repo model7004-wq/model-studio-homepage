@@ -15,7 +15,7 @@ const PDF_DEFAULTS = {
   titleShow: 'title', title: '', lang: 'ko-KR', bleed: false,
 };
 const PDF_QUALITY = { min: .4, low: .6, mid: .75, high: .88, max: .97 };
-const PDF_SKIP = ['guide', 'sheet-label', 'ph-hint', 'ph-remove', 'badge', 'gal-add', 'gal-shape', 'song-hint'];
+const PDF_SKIP = ['guide', 'lnk-badge', 'sheet-label', 'ph-hint', 'ph-remove', 'ph-rot', 'badge', 'gal-add', 'gal-shape', 'song-hint'];
 
 function pdfLoadLib(name) {
   if (window[name]) return Promise.resolve();
@@ -44,6 +44,54 @@ function pdfParseRange(text, total) {
 /* 웹폰트: 문서에 쓰인 글자가 든 조각만 골라 이미지 안에 넣음 */
 const pdfFontData = new Map();
 async function pdfFontCSS() {
+  return [await pdfWebFontCSS(), await pdfLocalFontCSS()].filter(Boolean).join('\n');
+}
+/** 앨범 쪽에 실제로 쓰인 글꼴 이름들 (화면에 그려진 글자의 font-family). 이것만 넣어야 그림 안 글꼴 묶음이 작아져
+    큰 앨범에서도 글꼴을 다 읽은 뒤 그려짐 (너무 크면 일부 글꼴을 못 읽고 기본 글꼴로 그리는 일이 있음) */
+function pdfUsedFamilies() {
+  const fams = new Set(), seen = new Set();
+  for (const el of document.querySelectorAll('#pages *')) {
+    if (![...el.childNodes].some(n => n.nodeType === 3 && n.nodeValue.trim())) continue;
+    const ff = getComputedStyle(el).fontFamily;
+    if (seen.has(ff)) continue;
+    seen.add(ff);
+    ff.split(',').forEach(n => fams.add(n.replace(/["']/g, '').trim()));
+  }
+  return fams;
+}
+/** 앨범 폴더 안의 글꼴(@font-face, 예: 모전 템플릿 제목의 TmonDS · 도산 NanumSquareDS)도 이미지 안에 넣음.
+    빠뜨리면 PDF · JPG에서 다른 글꼴로 바뀌어 글자 폭과 자리가 달라짐. 화면에서 실제로 쓰인(불러온) 글꼴만 넣음 */
+async function pdfLocalFontCSS() {
+  const fams = pdfUsedFamilies(), loaded = new Set([...document.fonts].filter(ff => ff.status === 'loaded').map(ff => ff.family.replace(/["']/g, '')).filter(n => fams.has(n)));
+  const out = [];
+  for (const sh of document.styleSheets) {
+    let rules;
+    try { rules = sh.cssRules; } catch { continue; }      // 다른 사이트 CSS(구글 글꼴)는 읽을 수 없음 → 위에서 따로 처리
+    for (const r of rules || []) {
+      if (!(r instanceof CSSFontFaceRule)) continue;
+      const fam = r.style.getPropertyValue('font-family').replace(/["']/g, '').trim();
+      if (!loaded.has(fam)) continue;
+      const m = r.cssText.match(/url\(["']?([^"')]+)["']?\)/);
+      if (!m) continue;
+      const url = new URL(m[1], sh.href || location.href).href;
+      if (!pdfFontData.has(url)) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          const bytes = new Uint8Array(await res.arrayBuffer());
+          let bin = '';
+          for (let i = 0; i < bytes.length; i += 32768) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
+          const fmt = /\.otf$/i.test(url) ? 'opentype' : /\.woff2$/i.test(url) ? 'woff2' : /\.woff$/i.test(url) ? 'woff' : 'truetype';
+          pdfFontData.set(url, { data: `data:font/${fmt === 'opentype' ? 'otf' : fmt === 'truetype' ? 'ttf' : fmt};base64,${btoa(bin)}`, fmt });
+        } catch (e) { console.warn('글꼴을 넣지 못했습니다', url, e); continue; }
+      }
+      const { data, fmt } = pdfFontData.get(url);
+      out.push(`@font-face{font-family:'${fam}';src:url(${data}) format('${fmt}');font-weight:${r.style.getPropertyValue('font-weight') || 'normal'};font-style:${r.style.getPropertyValue('font-style') || 'normal'}}`);
+    }
+  }
+  return out.join('\n');
+}
+async function pdfWebFontCSS() {
   const link = document.querySelector('link[href*="fonts.googleapis.com/css2"]');
   if (!link) return '';
   const css = await (await fetch(link.href)).text();
@@ -56,7 +104,10 @@ async function pdfFontCSS() {
     for (const c of used) if (c >= lo && c <= hi) return true;
     return false;
   });
+  const fams = pdfUsedFamilies();
   const faces = (css.match(/@font-face\s*{[^}]*}/g) || []).filter(f => {
+    const fm = f.match(/font-family:\s*['"]?([^;'"]+)/);
+    if (fm && !fams.has(fm[1].trim())) return false;      // 앨범에 안 쓰인 글꼴은 넣지 않음
     const m = f.match(/unicode-range:\s*([^;]+);/);
     return !m || hits(m[1]);
   });
@@ -64,8 +115,13 @@ async function pdfFontCSS() {
     const url = (f.match(/url\(([^)]+)\)/) || [])[1];
     if (!url) return f;
     if (!pdfFontData.has(url)) {
-      const blob = await (await fetch(url)).blob();
-      pdfFontData.set(url, await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob); }));
+      // 브라우저 창에서는 fonts.gstatic.com 직접 요청이 막히는 일이 있어(Failed to fetch) 우리 서버(/__font)가 대신 받게 하고, 안 되면 직접 받음
+      // Blob은 쓰지 않음: 브라우저 창의 Blob 저장 공간이 사진으로 차 있으면 Blob 읽기가 "Failed to fetch"로 실패함
+      const get = async u => { const r = await fetch(u); if (!r.ok) throw new Error(`글꼴을 받지 못했습니다 (${r.status})`); return new Uint8Array(await r.arrayBuffer()); };
+      const bytes = await get(url).catch(() => get(`/__font?u=${encodeURIComponent(url)}`));
+      let bin = '';
+      for (let i = 0; i < bytes.length; i += 32768) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
+      pdfFontData.set(url, `data:font/woff2;base64,${btoa(bin)}`);
     }
     return f.replace(url, pdfFontData.get(url));
   }));
@@ -105,7 +161,7 @@ async function pdfRenderPage(page, pr, fontCSS, lossless, jpegQ = .92) {
   try {
     return await htmlToImage.toCanvas(page, {
       pixelRatio: pr, backgroundColor: '#ffffff', fontEmbedCSS: fontCSS, cacheBust: false,
-      width: page.offsetWidth, height: page.offsetHeight, style: { boxShadow: 'none', margin: '0' },
+      width: page.offsetWidth, height: page.offsetHeight, style: { boxShadow: 'none', margin: '0', contentVisibility: 'visible' },
       filter: n => !(n.classList && (PDF_SKIP.some(c => n.classList.contains(c)) || (n.classList.contains('song-sheet') && !n.querySelector('.has-img')))),
     });
   } finally {
@@ -114,7 +170,37 @@ async function pdfRenderPage(page, pr, fontCSS, lossless, jpegQ = .92) {
   }
 }
 
-const pdfBlob = (cv, q) => new Promise(res => cv.toBlob(b => res(b), 'image/jpeg', q));
+/* canvas → 바이트. Blob을 쓰지 않음: 브라우저 창의 Blob 저장 공간이 사진으로 차 있으면 Blob 읽기가 실패함 */
+function pdfCanvasBytes(cv, type, q) {
+  const s = atob(cv.toDataURL(type, q).split(',')[1]), b = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+  return b;
+}
+const pdfBlob = (cv, q) => Promise.resolve({ arrayBuffer: async () => pdfCanvasBytes(cv, 'image/jpeg', q) });
+/** 저장한 PDF가 든 폴더를 윈도우 탐색기 새 창으로 열고 그 파일을 골라 둠 */
+function pdfShowInFolder(path) {
+  fetch(`/__pdf?op=show&name=${encodeURIComponent(path.split('\\').pop())}`, { method: 'POST' }).catch(() => {});
+}
+/** 완료 글자를 누르면 폴더가 열리게 함. path 없이 부르면 원래대로 */
+function pdfLinkify(el, path) {
+  el.classList.toggle('pdf-done-link', !!path);
+  el.title = path ? '누르면 저장 폴더가 열립니다' : '';
+  el.onclick = path ? () => pdfShowInFolder(path) : null;
+}
+/** 우리 서버가 있으면 M:\Model ppa\인쇄용PDF 에 저장하고 경로를 돌려줌. 없으면 null */
+async function pdfSaveToServer(name, bytes) {
+  const srv = await fetch('/__pdf/ping', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null);
+  if (!srv?.ok) return null;
+  const call = async (op, body) => {
+    const r = await fetch(`/__pdf?op=${op}&name=${encodeURIComponent(name)}`, { method: 'POST', body });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) throw new Error(`PDF 파일을 쓰지 못했습니다 (${j.error || r.status})`);
+    return j;
+  };
+  await call('start');
+  for (let i = 0; i < bytes.length; i += 64 << 20) await call('append', bytes.subarray(i, i + (64 << 20)));
+  return (await call('done')).path;
+}
 
 /** 옵션대로 PDF를 만들어 [{ name, bytes }]로 돌려줌 (저장은 하지 않음) */
 async function buildInteractivePdf(o, onProgress = () => {}, stopped = () => false) {
@@ -187,7 +273,7 @@ async function buildInteractivePdf(o, onProgress = () => {}, stopped = () => fal
       for (const p of parts) { g.drawImage(p.c, p.sx, p.sy, p.sw, p.sh, x, 0, p.sw, p.sh); x += p.sw; p.c.width = 0; }
 
       const img = lossless
-        ? await doc.embedPng(await (await new Promise(res => out.toBlob(res, 'image/png'))).arrayBuffer())
+        ? await doc.embedPng(pdfCanvasBytes(out, 'image/png'))
         : await doc.embedJpg(await (await pdfBlob(out, q)).arrayBuffer());
       const pt = px => px / pr * mmPerPx * 72 / 25.4;
       const page = doc.addPage([pt(out.width), pt(out.height)]);
@@ -257,7 +343,7 @@ function bindPdfDialog() {
     q('#pd-show-title').checked = o.titleShow !== 'file'; q('#pd-show-file').checked = o.titleShow === 'file';
     if (!q('#pd-ppi').value) q('#pd-ppi').value = '144';
     if (!q('#pd-range').value) q('#pd-range').value = `1-${total}`;
-    if (!q('#pd-title').value) q('#pd-title').value = `${S.school} 졸업앨범`;
+    if (!q('#pd-title').value || (S.school && !q('#pd-title').value.includes(S.school))) q('#pd-title').value = `${S.school} 졸업앨범`;     // 다른 학교 앨범을 복사해 만든 앨범이면 예전 학교 이름이 남아 있으므로 지금 이름으로
     q('#pd-msg').textContent = '';
     q('#pd-progress').hidden = true;
     sync();
@@ -273,12 +359,15 @@ function bindPdfDialog() {
   q('#pd-export').addEventListener('click', async () => {
     const o = read();
     const msg = q('#pd-msg'), bar = q('#pd-bar'), go = q('#pd-export');
-    busy = true; stop = false; go.disabled = true; msg.textContent = '';
+    busy = true; stop = false; go.disabled = true; msg.textContent = ''; pdfLinkify(q('#pd-state'));
     q('#pd-progress').hidden = false; bar.value = 0;
     S.pdf = o; saveState();
     try {
       const files = await buildInteractivePdf(o, (i, n, text) => { bar.max = n; bar.value = i; q('#pd-state').textContent = text; }, () => stop);
+      const saved = [];
       for (const file of files) {
+        const path = await pdfSaveToServer(file.name, file.bytes);
+        if (path) { saved.push(path); continue; }
         const url = URL.createObjectURL(new Blob([file.bytes], { type: 'application/pdf' }));
         const a = document.createElement('a');
         a.href = url; a.download = file.name;
@@ -287,8 +376,10 @@ function bindPdfDialog() {
         setTimeout(() => URL.revokeObjectURL(url), 120000);
         await new Promise(r => setTimeout(r, 300));
       }
+      if (saved.length) pdfShowInFolder(saved[saved.length - 1]);     // 탐색기 새 창으로 저장 폴더 열기
       const mb = files.reduce((s, x) => s + x.bytes.length, 0) / 1048576;
-      q('#pd-state').textContent = `완료: 파일 ${files.length}개 · ${mb.toFixed(1)}MB`;
+      q('#pd-state').textContent = `완료: 파일 ${files.length}개 · ${mb.toFixed(1)}MB` + (saved.length ? ` → ${saved.length > 1 ? saved[0].replace(/[^\\]+$/, '') : saved[0]}` : '');
+      if (saved.length) pdfLinkify(q('#pd-state'), saved[saved.length - 1]);
     } catch (e) {
       q('#pd-progress').hidden = true;
       msg.textContent = e.message || '내보내기에 실패했습니다.';

@@ -1,0 +1,2064 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>졸업색톤</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="tone-match.js"></script>
+<script src="tone-print.js"></script>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#dcdcd9; --panel:#eeeeec; --ink:#1d1d1c; --muted:#5d5d5a; --line:#c2c2be;
+  --accent:#7b2333; --accent-ink:#ffffff; --stage:#c8c8c5; --handle:#ffffff;
+  --ok:#2f7d4f; --warn:#b5701c; --err:#b3261e; --run:#2b5fa8; --idle:#8a8a86;
+  font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme: dark;
+    --bg:#383837; --panel:#2e2e2d; --ink:#ececea; --muted:#a9a9a5; --line:#4c4c4a;
+    --accent:#d98a96; --accent-ink:#2a0d12; --stage:#434342; --handle:#f3f3f1;
+    --ok:#6cc08f; --warn:#e3a85a; --err:#f08a80; --run:#7fa8e6; --idle:#8d8d89;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);min-height:100vh;line-height:1.5}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:16px 22px;border-bottom:1px solid var(--line)}
+h1{font-size:1.3rem;margin:0;font-weight:700;letter-spacing:-0.015em}
+header p{margin:0;color:var(--muted);font-size:.9rem}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 320px;min-height:calc(100vh - 62px)}
+.stage{padding:20px 22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.stats div{background:var(--panel);padding:8px 10px}
+.stats b{display:block;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.stats span{font-size:.78rem;color:var(--muted)}
+.stats .last{grid-column:1/-1;font-size:.8rem;color:var(--muted)}
+.compare{position:relative;background:var(--stage);border-radius:4px;display:flex;align-items:center;justify-content:center;min-height:52vh;padding:14px;overflow:hidden}
+.frame{position:relative;line-height:0;touch-action:none;user-select:none;cursor:ew-resize;max-width:100%}
+.frame canvas{display:block;max-width:100%;max-height:68vh;height:auto}
+.frame .orig{position:absolute;inset:0;width:100%;height:100%}
+.divider{position:absolute;top:0;bottom:0;width:2px;background:var(--handle);transform:translateX(-1px);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.divider:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.knob{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:var(--handle);box-shadow:0 1px 4px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;color:#333;font-size:13px;line-height:1}
+.tag{position:absolute;top:10px;font-size:.78rem;line-height:1;padding:6px 8px;border-radius:3px;background:rgba(0,0,0,.55);color:#fff;pointer-events:none}
+.tag.l{left:10px}.tag.r{right:10px}
+.empty{text-align:center;color:var(--muted);max-width:32ch}
+.empty strong{display:block;color:var(--ink);font-size:1.15rem;margin-bottom:6px}
+.strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.thumb{position:relative;flex:0 0 auto;width:72px;height:92px;border:2px solid transparent;border-radius:3px;background:var(--stage);overflow:hidden}
+.thumb[aria-current="true"]{border-color:var(--accent)}
+.thumb .tb{all:unset;display:block;width:100%;height:100%;cursor:pointer}
+.thumb .tb:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .nm{display:flex;align-items:center;justify-content:center;height:100%;padding:4px;font-size:.68rem;text-align:center;word-break:break-all;color:var(--muted);line-height:1.2}
+.thumb input{position:absolute;top:3px;left:3px;width:16px;height:16px;margin:0;accent-color:var(--accent)}
+.thumb .dot{position:absolute;right:4px;bottom:4px;width:11px;height:11px;border-radius:50%;background:var(--idle);border:2px solid var(--handle)}
+.thumb[data-state="processing"] .dot{background:var(--run)}
+.thumb[data-state="done"] .dot{background:var(--ok)}
+.thumb[data-state="review"] .dot{background:var(--warn)}
+.thumb[data-state="failed"] .dot{background:var(--err)}
+.thumb[data-state="skipped"] .dot{background:transparent}
+.info{font-size:.85rem;color:var(--muted);min-height:1.3em}
+.info.err{color:var(--err)}
+aside{background:var(--panel);border-left:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:22px}
+aside h2{font-size:.95rem;margin:0 0 10px;font-weight:700}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink);padding:9px 6px;font:inherit;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.row{margin-bottom:14px}
+.row label{display:flex;justify-content:space-between;font-size:.92rem;margin-bottom:4px}
+.row output{font-variant-numeric:tabular-nums;font-weight:600}
+.row .auto{color:var(--muted);font-size:.8rem;font-weight:400;margin-left:6px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.btn{display:block;width:100%;padding:10px;border-radius:4px;font:inherit;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--ink);margin-bottom:8px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,.seg button:focus-visible,summary:focus-visible,.fld input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.check{display:flex;gap:8px;align-items:center;font-size:.9rem;margin:2px 0 10px}
+.check input{accent-color:var(--accent);width:16px;height:16px}
+.note{font-size:.82rem;color:var(--muted);margin:0 0 10px}
+.conn{font-size:.88rem;margin:0 0 10px}
+.conn.on{color:var(--ok)}
+details{border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
+summary{cursor:pointer;font-size:.9rem;font-weight:600}
+.fld{margin-top:10px}
+.fld label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:3px}
+.fld input{width:100%;padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;font-size:.85rem}
+.hist{list-style:none;margin:10px 0;padding:0;max-height:260px;overflow:auto;font-size:.8rem}
+.hist li{padding:6px 0;border-bottom:1px solid var(--line)}
+.hist .r-ok{color:var(--ok)} .hist .r-fail{color:var(--err)} .hist .r-review{color:var(--warn)}
+.status{font-size:.85rem;color:var(--muted);min-height:1.3em}
+.drop-hint{position:fixed;inset:0;background:rgba(123,35,51,.18);border:4px dashed var(--accent);display:none;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;color:var(--ink);z-index:9}
+body.dragging .drop-hint{display:flex}
+[hidden]{display:none !important}
+.seg.three{grid-template-columns:1fr 1fr 1fr}
+.seg.three button{white-space:nowrap;padding:9px 2px}
+.refcard{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.refcard img{width:64px;height:80px;object-fit:cover;border-radius:3px;background:var(--stage);flex:0 0 auto}
+.refcard b{display:block;font-size:.88rem;word-break:break-all}
+.refcard small{display:block;color:var(--muted);font-size:.76rem;line-height:1.4}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.toolbar .btn{width:auto;margin:0;padding:6px 12px;font-size:.85rem}
+.toolbar .btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.badge{font-size:.78rem;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.badge.ok{color:var(--ok);border-color:var(--ok)} .badge.warn{color:var(--warn);border-color:var(--warn)} .badge.err{color:var(--err);border-color:var(--err)}
+.anal{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:.8rem;margin:0 0 6px}
+.anal dt{color:var(--muted)} .anal dd{margin:0;font-variant-numeric:tabular-nums}
+.anal .warn{color:var(--warn)} .anal .err{color:var(--err)}
+.fld select{width:100%;padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;font-size:.88rem}
+.compare.zoom .frame canvas{max-width:none;max-height:none}
+.thumb.own{outline:2px dashed var(--accent);outline-offset:1px}
+.consist{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px 16px}
+.consist h2{font-size:.95rem;margin:0}
+.cons-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.cons-kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:8px 0 12px}
+.cons-kpi div{background:var(--panel);padding:8px 10px}
+.cons-kpi b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.cons-kpi span{font-size:.76rem;color:var(--muted)}
+.cons-charts{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:14px}
+.cons-charts figure{margin:0}
+.cons-charts figcaption{font-size:.8rem;color:var(--muted);margin-bottom:4px}
+.cons-charts svg{width:100%;height:auto;display:block}
+.cons-charts text{font-size:10px;fill:var(--muted);font-family:inherit}
+.cons-out{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cons-out button{font:inherit;font-size:.8rem;border:1px solid var(--warn);color:var(--ink);background:transparent;border-radius:999px;padding:4px 10px;cursor:pointer}
+.cons-out button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media (max-width:900px){ .cons-charts{grid-template-columns:1fr} .cons-kpi{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  aside{border-left:0;border-top:1px solid var(--line)}
+  .compare{min-height:40vh}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>졸업색톤</h1>
+  <p>사진마다 밝기, 채도, 대비, 선명도, 화이트밸런스를 분석해 앨범용으로 맞춥니다</p>
+</header>
+
+<div class="app">
+  <main class="stage">
+    <div class="stats" id="stats" hidden>
+      <div><b id="n_all">0</b><span>전체</span></div>
+      <div><b id="n_wait">0</b><span>대기</span></div>
+      <div><b id="n_run">0</b><span>처리 중</span></div>
+      <div><b id="n_done">0</b><span>보정 완료</span></div>
+      <div><b id="n_review">0</b><span>검수 필요</span></div>
+      <div><b id="n_fail">0</b><span>실패</span></div>
+      <div class="last" id="n_last">마지막 작업: 없음</div>
+    </div>
+    <div class="toolbar" id="toolbar" hidden>
+      <button class="btn" id="zoomBtn" type="button" aria-pressed="false" title="얼굴 중심을 원본 픽셀 1:1로 비교">100% 확대</button>
+      <button class="btn" id="consBtn" type="button" aria-pressed="false" title="앨범 전체 사진의 얼굴 밝기·피부색이 기준과 얼마나 맞는지">앨범 일관성</button>
+      <span id="badges"></span>
+    </div>
+    <div class="compare" id="compare">
+      <div class="empty" id="empty">
+        <strong>Google Drive 폴더를 선택하세요</strong>
+        오른쪽에서 Google에 연결한 뒤 폴더를 고르면 사진을 바로 불러옵니다.<br>
+        내 컴퓨터 사진은 끌어다 놓아도 됩니다.<br><br>
+        <button class="btn" id="pickBtn" type="button">내 컴퓨터에서 사진 선택</button>
+        <button class="btn" id="pickDirBtn" type="button">내 컴퓨터에서 폴더 선택</button>
+      </div>
+      <div class="frame" id="frame" hidden>
+        <canvas id="outCanvas"></canvas>
+        <canvas id="origCanvas" class="orig"></canvas>
+        <span class="tag l">원본</span><span class="tag r">보정</span>
+        <div class="divider" id="divider" tabindex="0" role="slider" aria-label="원본과 보정 비교 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+          <div class="knob">◀▶</div>
+        </div>
+      </div>
+    </div>
+    <div class="info" id="info"></div>
+    <div class="strip" id="strip" aria-label="불러온 사진"></div>
+    <section class="consist" id="consist" hidden>
+      <div class="cons-head">
+        <h2>앨범 색상 일관성</h2>
+        <div class="toolbar">
+          <button class="btn" id="consAnalyze" type="button" hidden>Drive 사진 전체 분석</button>
+          <button class="btn" id="consCsv" type="button">일관성 보고서 (CSV)</button>
+        </div>
+      </div>
+      <p class="note" id="consNote"></p>
+      <div class="cons-kpi" id="consKpi"></div>
+      <div class="cons-charts">
+        <figure><figcaption>얼굴 밝기 (보정 전 → 후)</figcaption><svg id="consL" viewBox="0 0 520 150" role="img" aria-label="얼굴 밝기 분포"></svg></figure>
+        <figure><figcaption>피부색 a·b (보정 전 → 후, ◆ 기준)</figcaption><svg id="consAB" viewBox="0 0 300 220" role="img" aria-label="피부색 분포"></svg></figure>
+      </div>
+      <h2 style="margin-top:12px">검토가 필요한 사진</h2>
+      <div class="cons-out" id="consOut"></div>
+    </section>
+  </main>
+
+  <aside>
+    <section>
+      <h2>기준 사진 (MASTER)</h2>
+      <div class="refcard" id="refCard" hidden>
+        <img id="refImg" alt="기준 사진">
+        <div><b id="refName"></b><small id="refStats"></small></div>
+      </div>
+      <p class="note" id="refNone">기준 사진을 등록하면 모든 사진을 그 색감에 맞춰 사진마다 따로 보정합니다. 사진 픽셀 크기는 바뀌지 않습니다.</p>
+      <button class="btn primary" id="refBtn" type="button">기준 사진 등록</button>
+      <button class="btn" id="refClear" type="button" hidden>기준 사진 지우기</button>
+    </section>
+
+    <section>
+      <h2>Google Drive</h2>
+      <p class="conn" id="connState">연결 안 됨</p>
+      <button class="btn primary" id="connectBtn" type="button">Google 연결</button>
+      <button class="btn" id="folderBtn" type="button" disabled>폴더 선택</button>
+      <label class="check"><input type="checkbox" id="recursive"> 하위 폴더 사진도 포함</label>
+      <div id="lastFolderBox" hidden>
+        <p class="note" id="lastFolderText"></p>
+        <button class="btn" id="reopenBtn" type="button" disabled>최근 폴더 다시 열기</button>
+      </div>
+      <details id="setup">
+        <summary>Google 연결 설정</summary>
+        <p class="note" style="margin-top:8px">Google Cloud Console에서 발급한 값을 넣어 주세요. 이 컴퓨터의 브라우저에만 저장됩니다.</p>
+        <div class="fld"><label for="cfgClient">OAuth 클라이언트 ID</label><input id="cfgClient" autocomplete="off" spellcheck="false" placeholder="….apps.googleusercontent.com"></div>
+        <div class="fld"><label for="cfgKey">API 키</label><input id="cfgKey" autocomplete="off" spellcheck="false"></div>
+        <div class="fld"><label for="cfgApp">프로젝트 번호</label><input id="cfgApp" autocomplete="off" spellcheck="false" inputmode="numeric"></div>
+        <button class="btn" id="cfgSave" type="button" style="margin-top:10px">설정 저장</button>
+      </details>
+    </section>
+
+    <section>
+      <h2>보정 스타일</h2>
+      <div class="seg three" role="group" aria-label="보정 스타일">
+        <button type="button" data-style="match" aria-pressed="false" title="등록한 기준 사진의 색감에 사진마다 맞춤">기준 매칭</button>
+        <button type="button" data-style="natural" aria-pressed="true">자연스럽게</button>
+        <button type="button" data-style="bright" aria-pressed="false">화사하게</button>
+      </div>
+    </section>
+
+    <section id="matchBox" hidden>
+      <h2>매칭 조정</h2>
+      <div class="row"><label for="m_str">보정 강도 <output id="o_str">80</output></label><input type="range" id="m_str" min="0" max="100" value="80"></div>
+      <div class="row"><label for="m_prot">피부톤 보호 <output id="o_prot">60</output></label><input type="range" id="m_prot" min="0" max="100" value="60"></div>
+      <label class="check"><input type="checkbox" id="m_own"> 이 사진만 따로 조정</label>
+      <dl class="anal" id="anal"></dl>
+      <p class="note" id="analNote"></p>
+    </section>
+
+    <section id="classicBox">
+      <h2>세부 조정</h2>
+      <div class="row"><label for="s_b">밝기 <span><output id="o_b">0</output><span class="auto" id="a_b"></span></span></label><input type="range" id="s_b" min="-50" max="50" value="0"></div>
+      <div class="row"><label for="s_c">대비 <span><output id="o_c">0</output><span class="auto" id="a_c"></span></span></label><input type="range" id="s_c" min="-50" max="50" value="0"></div>
+      <div class="row"><label for="s_s">채도 <span><output id="o_s">0</output><span class="auto" id="a_s"></span></span></label><input type="range" id="s_s" min="-50" max="50" value="0"></div>
+      <div class="row"><label for="s_sh">선명도 <span><output id="o_sh">0</output><span class="auto" id="a_sh"></span></span></label><input type="range" id="s_sh" min="0" max="100" value="0"></div>
+      <div class="row"><label for="s_wb">화이트밸런스 <span><output id="o_wb">0</output><span class="auto" id="a_wb"></span></span></label><input type="range" id="s_wb" min="0" max="100" value="0"></div>
+      <button class="btn" id="resetBtn" type="button" disabled>자동값으로 되돌리기</button>
+    </section>
+
+    <section id="outFmt" hidden>
+      <h2>저장 형식 · 인쇄</h2>
+      <div class="fld" style="margin:0 0 10px"><label for="fmt">저장 형식</label>
+        <select id="fmt">
+          <option value="tif16">TIFF 16비트 · 무손실 (인쇄 권장)</option>
+          <option value="tif8">TIFF 8비트 · 무손실</option>
+          <option value="jpg">JPEG 최고 품질</option>
+          <option value="cmyk">TIFF CMYK 8비트 · 인쇄 프로파일로 변환</option>
+        </select>
+      </div>
+      <p class="note" id="jpgWarn" hidden>JPEG는 다시 압축하면서 화질이 조금 손실될 수 있습니다. 인쇄용은 TIFF를 권장합니다.</p>
+      <p class="note" id="cmykWarn" hidden>출력업체가 CMYK 파일을 요청한 경우에만 쓰세요. 대부분의 업체는 RGB 파일을 받아 직접 변환합니다.</p>
+      <label class="check"><input type="checkbox" id="ppi300" checked> 해상도 정보를 300ppi로 기록 (픽셀 수는 그대로)</label>
+      <div class="fld" style="margin:0 0 6px"><label for="prof">출력업체 인쇄 프로파일 (ICC)</label>
+        <select id="prof">
+          <option value="">사용 안 함</option>
+          <option value="builtin">Japan Color 2001 Coated (기본 제공)</option>
+          <option value="custom">직접 등록…</option>
+        </select>
+      </div>
+      <p class="note" id="profNote">프로파일을 고르면 인쇄 색역·잉크량·인쇄 후 색 변화를 사진마다 검사합니다.</p>
+    </section>
+
+    <section id="driveSave" hidden>
+      <h2>Google Drive에 저장</h2>
+      <div class="fld" style="margin:0 0 8px"><label for="dOut">저장 방식</label>
+        <select id="dOut">
+          <option value="copy">보정본 폴더에 따로 저장 (원본 유지 · 권장)</option>
+          <option value="overwrite">원본 파일 덮어쓰기 (JPEG만)</option>
+        </select>
+      </div>
+      <p class="note" id="dOutNote">사진이 있는 폴더마다 "졸업색톤_보정본" 폴더를 만들어 저장합니다. 원본은 바뀌지 않습니다.</p>
+      <label class="check"><input type="checkbox" id="dSkip" checked> 보정본 폴더에 이미 있는 사진은 건너뛰기</label>
+      <button class="btn primary" id="ovOne" type="button" disabled>이 사진 보정 · 저장</button>
+      <button class="btn" id="ovSel" type="button" disabled>선택 사진 일괄 보정</button>
+      <button class="btn" id="ovAll" type="button" disabled>폴더 전체 보정</button>
+      <div class="pair">
+        <button class="btn" id="pauseBtn" type="button" disabled>일시 정지</button>
+        <button class="btn" id="dStop" type="button" disabled>중지</button>
+      </div>
+      <button class="btn" id="retryBtn" type="button" disabled>실패·검수 다시 처리</button>
+      <div class="pair">
+        <button class="btn" id="selAll" type="button">모두 선택</button>
+        <button class="btn" id="selNone" type="button">선택 해제</button>
+      </div>
+    </section>
+
+    <section id="localSave" hidden>
+      <h2>내 컴퓨터에 저장</h2>
+      <p class="note">원본 파일은 건드리지 않고 보정본을 따로 저장합니다.</p>
+      <div class="pair">
+        <button class="btn" id="addBtn" type="button">사진 추가</button>
+        <button class="btn" id="addDirBtn" type="button">폴더 추가</button>
+      </div>
+      <label class="check"><input type="checkbox" id="lrec" checked> 하위 폴더 사진도 포함 (저장할 때 같은 폴더 구조로)</label>
+      <button class="btn" id="dirBtn" type="button">저장 폴더 지정</button>
+      <p class="note" id="dirNote">폴더를 지정하지 않으면 다운로드 폴더로 저장합니다.</p>
+      <label class="check"><input type="checkbox" id="skipSaved" checked> 지정 폴더에 이미 저장된 사진은 건너뛰기</label>
+      <button class="btn" id="saveOne" type="button" disabled>이 사진 저장</button>
+      <button class="btn primary" id="saveAll" type="button" disabled>전체 보정 · 저장</button>
+      <div class="pair">
+        <button class="btn" id="lPause" type="button" disabled>일시 정지</button>
+        <button class="btn" id="lStop" type="button" disabled>중지</button>
+      </div>
+      <button class="btn" id="retryLocal" type="button" disabled>실패·검수 사진 다시 처리</button>
+    </section>
+
+    <div class="status" id="status" role="status"></div>
+
+    <section>
+      <details id="histBox">
+        <summary>편집 이력</summary>
+        <ul class="hist" id="histList"></ul>
+        <button class="btn" id="histCsv" type="button">이력 내려받기 (CSV)</button>
+        <h2 style="margin-top:14px">일괄 작업 기록</h2>
+        <ul class="hist" id="jobList"></ul>
+      </details>
+    </section>
+  </aside>
+</div>
+
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
+<input type="file" id="refInput" accept="image/jpeg,image/png,image/tiff,image/webp" hidden>
+<input type="file" id="dirInput" webkitdirectory multiple hidden>
+<input type="file" id="profInput" accept=".icc,.icm" hidden>
+<div class="drop-hint">여기에 놓으면 불러옵니다</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+const PREVIEW_MAX = 1600;
+const STYLES = {
+  natural: { mid: 0.50, std: 0.21, sat: 0.30 },
+  bright:  { mid: 0.57, std: 0.19, sat: 0.33 }
+};
+const KEYS = ['b', 'c', 's', 'sh', 'wb'];
+const SIGNED = { b: true, c: true, s: true, sh: false, wb: false };
+const STATE_LABEL = { wait: '대기', processing: '처리 중', done: '보정 완료', review: '검수 필요', failed: '실패', skipped: '건너뜀' };
+const TM = window.ToneMatch;
+let ref = store.get('jt_ref', null);
+let items = [], cur = -1, style = ref ? 'match' : 'natural', split = 0.5, busy = false, mode = 'none';
+let mOpt = store.get('jt_match_opt', { str: 0.8, prot: 0.6 }), zoom = false, outDir = null;
+const isMatch = () => style === 'match' && !!ref;
+
+/* ---------- 기준 사진 매칭 연결 ---------- */
+function computeMatch(it){
+  it.lut = null;
+  const st = it.st || it.sum;
+  if (!isMatch() || !st){ it.m = null; it.qc = null; return; }
+  const o = it.opt || mOpt;   // "이 사진만 따로 조정"이면 사진별 값
+  it.m = TM.compute(ref.stats, st, o.str, o.prot);
+  if (it.st){
+    it.lut = TM.buildLut(it.m);
+    it.qc = TM.qc(ref.stats, it.st, it.m, it.lut, printer ? (d2, N, mask) => TonePrint.check(printer, d2, N, mask) : null);
+    const f = it.qc.after.face;   // 실제 보정 결과 (앨범 일관성 분석용)
+    it.after = f.found ? { L: f.medL, a: f.a, b: f.b, real: true } : null;
+  } else it.qc = null;
+}
+// 분석용 사본에서 계산한 결과가 없으면 피부 평균색에 같은 변환을 적용해 예측
+function afterOf(it){
+  if (it.after && it.after.real) return it.after;
+  const st = it.sum, m = it.m;
+  if (!st || !st.face.found || !m) return null;
+  const o = TM.xform(m, st.face.medL, st.face.a, st.face.b, [0, 0, 0]);
+  return { L: o[0], a: o[1], b: o[2], real: false };
+}
+
+/* ---------- 브라우저 보관함 (IndexedDB: 직접 등록한 프로파일, Drive 사진 통계 캐시) ---------- */
+const idb = (() => {
+  let dbp;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('tone-tool', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const tx = async (mode, fn) => { const db = await open(); return new Promise((res, rej) => { const t = db.transaction('kv', mode), q = fn(t.objectStore('kv')); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); };
+  return { get: k => tx('readonly', s => s.get(k)).catch(() => null), set: (k, v) => tx('readwrite', s => s.put(v, k)).catch(() => null) };
+})();
+
+/* ---------- 인쇄 프로파일 ---------- */
+let printer = null, cmykLutCache = null;
+async function setPrinter(choice, file){
+  try {
+    if (!choice) printer = null;
+    else if (choice === 'builtin'){
+      const r = await fetch('JapanColor2001Coated.icc');
+      if (!r.ok) throw new Error('기본 제공 프로파일 파일(JapanColor2001Coated.icc)을 찾지 못했습니다');
+      printer = TonePrint.load(new Uint8Array(await r.arrayBuffer()), 'JapanColor2001Coated.icc');
+    } else {
+      let saved = null;
+      if (file) saved = { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) };
+      else saved = await idb.get('printer');
+      if (!saved) throw new Error('등록한 프로파일이 없습니다. 파일을 골라 주세요.');
+      printer = TonePrint.load(saved.bytes, saved.name);
+      if (file) await idb.set('printer', saved);
+    }
+    store.set('jt_prof', choice || '');
+  } catch (e) { printer = null; store.set('jt_prof', ''); status(e.message, true); }
+  cmykLutCache = null;
+  $('#prof').value = printer ? choice : '';
+  $('#profNote').textContent = printer ? `${printer.desc || printer.name} · 사진마다 인쇄 색역 · 총 잉크량 · 인쇄 후 피부색 변화를 검사합니다` : '프로파일을 고르면 인쇄 색역·잉크량·인쇄 후 색 변화를 사진마다 검사합니다.';
+  $('#fmt').querySelector('[value=cmyk]').disabled = !printer;
+  if (!printer && $('#fmt').value === 'cmyk'){ $('#fmt').value = 'tif16'; $('#fmt').onchange && $('#fmt').onchange(); }
+  items.forEach(it => { if (items[cur] !== it) computeMatch(it); });
+  const it = items[cur]; if (it && it.st){ computeMatch(it); schedulePreview(); }
+}
+async function prepMatch(it){
+  if (!it.view) return;
+  if (!it.st){ it.st = await TM.analyze(it.view); it.sum = TM.slim(it.st); }
+  computeMatch(it);
+}
+// 원본 픽셀에 LUT 직접 적용 (max=Infinity면 원본 크기 그대로)
+function renderMatch(src, lut, max){
+  const c = drawScaled(src, max), ctx = c.getContext('2d'), W = c.width, H = c.height;
+  for (let y = 0; y < H; y += 512){
+    const h = Math.min(512, H - y), id = ctx.getImageData(0, y, W, h);
+    TM.applyLut(lut, id.data, W * h, id.data, 0, 4, 255);
+    ctx.putImageData(id, 0, y);
+  }
+  return c;
+}
+function matchRec(it){
+  const m = it.m;
+  if (!m) return null;
+  const r = v => Math.round(v * 100) / 100;
+  const o = it.opt || mOpt;
+  return { 강도: o.str, 피부보호: o.prot, 사진별조정: !!it.opt, 화이트밸런스: m.wb.map(r), 노출감마: r(m.g), 명암: r(m.k), 피부이동: m.ss.map(r), 채도: r(m.cs), 얼굴밝기: [r(m.face.from), r(m.face.to)] };
+}
+
+/* =========================================================
+   이미지 분석 · 보정 엔진
+   ========================================================= */
+function dims(src){ return [src.naturalWidth || src.width, src.naturalHeight || src.height]; }
+function drawScaled(src, max){
+  const [W, H] = dims(src);
+  const s = Math.min(1, max / Math.max(W, H));
+  const c = document.createElement('canvas');
+  c.width = Math.round(W * s); c.height = Math.round(H * s);
+  c.getContext('2d', { willReadFrequently: true }).drawImage(src, 0, 0, c.width, c.height);
+  return c;
+}
+function loadImage(file){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => res({ img, url });
+    img.onerror = () => rej(new Error(file.name + '을(를) 열 수 없습니다'));
+    img.src = url;
+  });
+}
+
+// 밝기 분포, 얼굴 영역(가운데) 밝기, 채도, 선명도, 화이트밸런스 분석
+function analyze(src){
+  const c = drawScaled(src, 400), w = c.width, h = c.height;
+  const d = c.getContext('2d').getImageData(0, 0, w, h).data;
+  const hist = new Uint32Array(256), cHist = new Uint32Array(256), gray = new Uint8Array(w * h);
+  let cN = 0, satSum = 0, satN = 0, nr = 0, ng = 0, nb = 0, nN = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++){
+    const i = y * w + x, p = i * 4, r = d[p], g = d[p+1], b = d[p+2];
+    const L = Math.round(0.299*r + 0.587*g + 0.114*b);
+    gray[i] = L; hist[L]++;
+    if (x > w*0.2 && x < w*0.8 && y > h*0.15 && y < h*0.75){ cHist[L]++; cN++; }
+    if (L > 20 && L < 235){
+      const mx = Math.max(r,g,b), mn = Math.min(r,g,b), sp = mx > 0 ? (mx - mn) / mx : 0;
+      satSum += sp; satN++;
+      if (L > 50 && L < 230 && sp < 0.18){ nr += r; ng += g; nb += b; nN++; }
+    }
+  }
+  const N = w * h;
+  const pct = (H, n, q) => { let a = 0, t = n * q; for (let i = 0; i < 256; i++){ a += H[i]; if (a >= t) return i; } return 255; };
+  const lo = pct(hist, N, 0.005), hi = pct(hist, N, 0.995);
+  const bp = Math.min(lo * 0.8, 30), wp = Math.max(255 - (255 - hi) * 0.8, 215);
+  const med = pct(cHist, cN || 1, 0.5);
+  let s1 = 0, s2 = 0;
+  for (let i = 0; i < 256; i++){ const v = clamp((i - bp) / (wp - bp), 0, 1); s1 += hist[i]*v; s2 += hist[i]*v*v; }
+  const mean = s1 / N, std = Math.sqrt(Math.max(0, s2/N - mean*mean));
+  let lap = 0;
+  for (let y = 1; y < h-1; y++) for (let x = 1; x < w-1; x++){
+    const i = y*w + x;
+    lap += Math.abs(4*gray[i] - gray[i-1] - gray[i+1] - gray[i-w] - gray[i+w]);
+  }
+  lap /= Math.max(1, (w-2) * (h-2));
+  // 무채색에 가까운 영역(흰 배경·셔츠·회색 벽)의 색 틀어짐으로 화이트밸런스 추정
+  let wbg = [1, 1, 1];
+  if (nN > N * 0.01){
+    const ar = nr / nN, ag = ng / nN, ab = nb / nN, m = (ar + ag + ab) / 3;
+    wbg = [clamp(m / ar, 0.88, 1.12), clamp(m / ag, 0.88, 1.12), clamp(m / ab, 0.88, 1.12)];
+  }
+  return { bp, wp, med, std, sat: satN ? satSum / satN : 0, lap, wbg };
+}
+
+function autoParams(a, st){
+  const S = STYLES[st] || STYLES.natural;
+  const m = clamp((a.med - a.bp) / (a.wp - a.bp), 0.05, 0.95);
+  const g = clamp(Math.log(S.mid) / Math.log(m), 0.7, 1.4);
+  const cast = Math.max(...a.wbg.map(v => Math.abs(v - 1)));
+  return {
+    b:  clamp(Math.round(-Math.log2(g) / 0.6 * 50), -50, 50),
+    c:  clamp(Math.round((S.std - a.std) * 250), -30, 40),
+    s:  a.sat < 0.04 ? 0 : clamp(Math.round((S.sat / a.sat - 1) * 100), -25, 30),
+    sh: clamp(Math.round(70 - a.lap * 5), 25, 65),
+    wb: cast < 0.01 ? 0 : 70
+  };
+}
+
+function buildLuts(a, p){
+  const g = Math.pow(2, -p.b * 0.6 / 50), k = p.c / 50 * 0.8, base = new Float32Array(256);
+  for (let i = 0; i < 256; i++){
+    let x = clamp((i - a.bp) / (a.wp - a.bp), 0, 1);
+    x = Math.pow(x, g);
+    const s = x * x * (3 - 2 * x);
+    base[i] = clamp((x + k * (s - x)) * 255, 0, 255);
+  }
+  const st = p.wb / 100;
+  return a.wbg.map(gain => {
+    const gc = 1 + (gain - 1) * st, L = new Uint8ClampedArray(256);
+    for (let i = 0; i < 256; i++){
+      const v = clamp(i * gc, 0, 255), lo = Math.floor(v), f = v - lo;
+      L[i] = base[lo] + (base[Math.min(255, lo + 1)] - base[lo]) * f;
+    }
+    return L;
+  });
+}
+function boxH(src, dst, W, H, r){
+  const k = 2*r + 1;
+  for (let y = 0; y < H; y++){
+    const o = y * W; let s = 0;
+    for (let x = -r; x <= r; x++) s += src[o + clamp(x, 0, W-1)];
+    for (let x = 0; x < W; x++){
+      dst[o+x] = s / k;
+      s += src[o + Math.min(W-1, x+r+1)] - src[o + Math.max(0, x-r)];
+    }
+  }
+}
+function boxV(src, dst, W, H, r){
+  const k = 2*r + 1;
+  for (let x = 0; x < W; x++){
+    let s = 0;
+    for (let y = -r; y <= r; y++) s += src[clamp(y, 0, H-1)*W + x];
+    for (let y = 0; y < H; y++){
+      dst[y*W + x] = s / k;
+      s += src[Math.min(H-1, y+r+1)*W + x] - src[Math.max(0, y-r)*W + x];
+    }
+  }
+}
+// 언샤프 마스크 (밝기 채널만, 피부 잡티가 거칠어지지 않게 약한 임계값)
+function sharpen(d, W, H, v, r){
+  const n = W * H, Y = new Uint8ClampedArray(n), t = new Uint8ClampedArray(n), bl = new Uint8ClampedArray(n);
+  for (let i = 0, p = 0; i < n; i++, p += 4) Y[i] = (d[p]*77 + d[p+1]*150 + d[p+2]*29) >> 8;
+  boxH(Y, t, W, H, r); boxV(t, bl, W, H, r); boxH(bl, t, W, H, r); boxV(t, bl, W, H, r);
+  const amt = v / 100 * 1.5, thr = 3;
+  for (let i = 0, p = 0; i < n; i++, p += 4){
+    let dl = Y[i] - bl[i]; const ad = Math.abs(dl);
+    if (ad < thr) continue;
+    dl = (dl > 0 ? ad - thr : thr - ad) * amt;
+    d[p] += dl; d[p+1] += dl; d[p+2] += dl;
+  }
+}
+// 픽셀 크기는 바꾸지 않음 (max=Infinity이면 원본 크기 그대로)
+function render(src, a, p, max){
+  const c = drawScaled(src, max), ctx = c.getContext('2d'), W = c.width, H = c.height;
+  const id = ctx.getImageData(0, 0, W, H), d = id.data;
+  const [lr, lg, lb] = buildLuts(a, p), f = 1 + p.s / 100;
+  for (let i = 0; i < d.length; i += 4){
+    let r = lr[d[i]], g = lg[d[i+1]], b = lb[d[i+2]];
+    if (p.s !== 0){
+      const Y = 0.299*r + 0.587*g + 0.114*b;
+      const mx = Math.max(r,g,b), mn = Math.min(r,g,b), sp = mx > 0 ? (mx - mn) / mx : 0;
+      const fe = f > 1 ? 1 + (f - 1) * (1 - sp) : f;
+      r = Y + (r - Y)*fe; g = Y + (g - Y)*fe; b = Y + (b - Y)*fe;
+    }
+    d[i] = r; d[i+1] = g; d[i+2] = b;
+  }
+  if (p.sh > 0) sharpen(d, W, H, p.sh, Math.max(1, Math.round(Math.max(W, H) / 2000)));
+  ctx.putImageData(id, 0, 0);
+  return c;
+}
+
+/* =========================================================
+   JPEG 메타데이터 (EXIF · ICC · 해상도 정보 보존)
+   ========================================================= */
+const STD_LUMA = [16,11,10,16,24,40,51,61,12,12,14,19,26,58,60,55,14,13,16,24,40,57,69,56,14,17,22,29,51,87,80,62,
+  18,22,37,56,68,109,103,77,24,35,55,64,81,104,113,92,49,64,78,87,103,121,120,101,72,92,95,98,112,100,103,99];
+const STD_SUM = STD_LUMA.reduce((x, y) => x + y, 0);
+
+// 회전 태그 값과 위치를 함께 돌려줌 { v, at, le }
+function readOrientation(b, s, len){
+  const none = { v: 1, at: -1, le: false };
+  if (len < 14 || String.fromCharCode(b[s], b[s+1], b[s+2], b[s+3]) !== 'Exif') return none;
+  const t = s + 6, le = b[t] === 0x49;
+  const u16 = o => le ? b[o] | (b[o+1] << 8) : (b[o] << 8) | b[o+1];
+  const u32 = o => le ? (b[o] | (b[o+1] << 8) | (b[o+2] << 16)) + b[o+3] * 16777216 : b[o] * 16777216 + ((b[o+1] << 16) | (b[o+2] << 8) | b[o+3]);
+  const ifd = t + u32(t + 4);
+  if (ifd + 2 > s + len) return none;
+  const n = u16(ifd);
+  for (let k = 0; k < n; k++){
+    const e = ifd + 2 + k * 12;
+    if (e + 12 > s + len) break;
+    if (u16(e) === 0x0112){ const v = u16(e + 8); return { v: v >= 1 && v <= 8 ? v : 1, at: e + 8, le }; }
+  }
+  return none;
+}
+function parseJpeg(b){
+  if (b[0] !== 0xFF || b[1] !== 0xD8) throw new Error('JPEG 파일이 아닙니다');
+  let i = 2, segs = [], orientation = 1, orientAt = [], width = 0, height = 0, qsum = 0, hasIcc = false;
+  while (i + 4 <= b.length){
+    if (b[i] !== 0xFF) throw new Error('JPEG 구조가 손상되었습니다');
+    const m = b[i+1];
+    if (m === 0xFF){ i++; continue; }
+    if (m === 0xD9 || m === 0xDA) break;
+    if ((m >= 0xD0 && m <= 0xD7) || m === 0x01){ i += 2; continue; }
+    const len = (b[i+2] << 8) | b[i+3];
+    if ((m >= 0xE0 && m <= 0xEF) || m === 0xFE) segs.push(b.subarray(i, i + 2 + len));
+    if (m === 0xE1){
+      const o = readOrientation(b, i + 4, len - 2);
+      if (o.at >= 0){ orientAt.push(o); if (orientation === 1) orientation = o.v; }
+    }
+    if (m === 0xE2 && String.fromCharCode(...b.subarray(i + 4, i + 15)) === 'ICC_PROFILE') hasIcc = true;
+    if (m === 0xDB){
+      let p = i + 4; const end = i + 2 + len;
+      while (p < end){
+        const pq = b[p] >> 4, tq = b[p] & 15; p++;
+        for (let k = 0; k < 64; k++){
+          const v = pq ? (b[p + 2*k] << 8) | b[p + 2*k + 1] : b[p + k];
+          if (tq === 0) qsum += v;
+        }
+        p += pq ? 128 : 64;
+      }
+    }
+    if (m >= 0xC0 && m <= 0xCF && m !== 0xC4 && m !== 0xC8 && m !== 0xCC){
+      height = (b[i+5] << 8) | b[i+6]; width = (b[i+7] << 8) | b[i+8];
+    }
+    i += 2 + len;
+  }
+  if (!width || !height) throw new Error('JPEG 픽셀 크기를 읽을 수 없습니다');
+  let quality = 92;
+  if (qsum){
+    const sc = qsum * 100 / STD_SUM;
+    quality = sc <= 100 ? (200 - sc) / 2 : 5000 / sc;
+  }
+  return { segs, orientation, orientAt, width, height, hasIcc, quality: Math.round(quality) };
+}
+// 새로 인코딩한 JPEG의 머리말을 원본 머리말(EXIF·ICC·해상도)로 교체
+function spliceJpeg(nb, segs){
+  let i = 2;
+  while (i + 4 <= nb.length && nb[i] === 0xFF){
+    const m = nb[i+1];
+    if (!((m >= 0xE0 && m <= 0xEF) || m === 0xFE)) break;
+    i += 2 + ((nb[i+2] << 8) | nb[i+3]);
+  }
+  const body = nb.subarray(i);
+  const total = 2 + segs.reduce((n, s) => n + s.length, 0) + body.length;
+  const out = new Uint8Array(total);
+  out[0] = 0xFF; out[1] = 0xD8;
+  let o = 2;
+  for (const s of segs){ out.set(s, o); o += s.length; }
+  out.set(body, o);
+  return out;
+}
+function orientCanvas(src, o){
+  const [w, h] = dims(src), swap = o >= 5;
+  const c = document.createElement('canvas');
+  c.width = swap ? h : w; c.height = swap ? w : h;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  switch (o){
+    case 2: x.transform(-1, 0, 0, 1, w, 0); break;
+    case 3: x.transform(-1, 0, 0, -1, w, h); break;
+    case 4: x.transform(1, 0, 0, -1, 0, h); break;
+    case 5: x.transform(0, 1, 1, 0, 0, 0); break;
+    case 6: x.transform(0, 1, -1, 0, h, 0); break;
+    case 7: x.transform(0, -1, -1, 0, h, w); break;
+    case 8: x.transform(0, -1, 1, 0, 0, w); break;
+  }
+  x.drawImage(src, 0, 0);
+  return c;
+}
+// 회전·색 변환 없이 파일에 저장된 픽셀 그대로 읽기.
+// 브라우저마다 회전 처리가 달라서, 읽기용 사본에서만 회전 태그를 '정상(1)'으로 바꿔 읽음 (원본 바이트는 그대로)
+async function decodeStored(bytes, jp = parseJpeg(bytes)){
+  let src = bytes;
+  if (jp.orientAt.some(o => o.v !== 1)){
+    src = bytes.slice();
+    for (const o of jp.orientAt){ if (o.le){ src[o.at] = 1; src[o.at + 1] = 0; } else { src[o.at] = 0; src[o.at + 1] = 1; } }
+  }
+  const bmp = await createImageBitmap(new Blob([src], { type: 'image/jpeg' }), { imageOrientation: 'none', colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
+  if (bmp.width !== jp.width || bmp.height !== jp.height){
+    bmp.close();
+    throw new Error('사진을 원본 그대로 읽지 못했습니다. 최신 크롬이나 엣지를 사용하세요.');
+  }
+  return bmp;
+}
+
+/* =========================================================
+   Google 연결 (OAuth · Picker · Drive API v3)
+   ========================================================= */
+const SCOPE = 'https://www.googleapis.com/auth/drive';
+const DRIVE = 'https://www.googleapis.com/drive/v3/files';
+const UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
+const META_FIELDS = 'id,name,mimeType,size,modifiedTime,md5Checksum,parents,driveId,imageMediaMetadata(width,height,rotation),capabilities(canEdit)';
+let cfg = store.get('jt_cfg', { clientId: '', apiKey: '', appId: '' });
+let token = null, tokenExp = 0, tokenClient = null, tokenWaiters = [], everConnected = false;
+
+function loadScript(src){
+  return new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) return res();
+    const s = document.createElement('script');
+    s.src = src; s.async = true; s.onload = res;
+    s.onerror = () => rej(new Error('Google 스크립트를 불러오지 못했습니다. 인터넷 연결을 확인하세요.'));
+    document.head.appendChild(s);
+  });
+}
+function cfgReady(){ return !!(cfg.clientId && cfg.apiKey && cfg.appId); }
+function tokenValid(margin = 60000){ return !!token && Date.now() < tokenExp - margin; }
+
+async function getToken(force = false){
+  if (!force && tokenValid()) return token;
+  if (!cfgReady()) throw new Error('먼저 "Google 연결 설정"에 클라이언트 ID, API 키, 프로젝트 번호를 넣어 주세요.');
+  await loadScript('https://accounts.google.com/gsi/client');
+  if (!tokenClient){
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: cfg.clientId, scope: SCOPE,
+      callback: r => {
+        const ws = tokenWaiters; tokenWaiters = [];
+        if (r.error){ ws.forEach(w => w.rej(new Error('Google 연결 실패: ' + r.error))); return; }
+        if (!google.accounts.oauth2.hasGrantedAllScopes(r, SCOPE)){
+          ws.forEach(w => w.rej(new Error('Google Drive 파일 수정 권한을 허용해야 원본에 저장할 수 있습니다.'))); return;
+        }
+        token = r.access_token; tokenExp = Date.now() + r.expires_in * 1000; everConnected = true;
+        ws.forEach(w => w.res(token)); updateConn();
+      },
+      error_callback: e => {
+        const ws = tokenWaiters; tokenWaiters = [];
+        const msg = e && e.type === 'popup_failed_to_open' ? '팝업이 차단되었습니다. 브라우저에서 팝업을 허용해 주세요.' : 'Google 연결 창이 닫혔습니다.';
+        ws.forEach(w => w.rej(new Error(msg)));
+      }
+    });
+  }
+  return new Promise((res, rej) => {
+    tokenWaiters.push({ res, rej });
+    if (tokenWaiters.length === 1) tokenClient.requestAccessToken({ prompt: everConnected ? '' : 'consent' });
+  });
+}
+
+async function api(url, opt = {}, tries = 0){
+  const t = await getToken();
+  let r;
+  try {
+    r = await fetch(url, { ...opt, headers: { ...(opt.headers || {}), Authorization: 'Bearer ' + t } });
+  } catch (e) {
+    if (tries < 4){ await sleep(1000 * 2 ** tries); return api(url, opt, tries + 1); }
+    throw new Error('네트워크 오류로 Google Drive에 연결하지 못했습니다.');
+  }
+  if (r.status === 401 && tries < 1){ token = null; return api(url, opt, tries + 1); }
+  let rate = r.status === 429 || r.status >= 500;
+  if (r.status === 403){
+    try { const j = await r.clone().json(); rate = /rate ?limit/i.test(JSON.stringify(j.error && j.error.errors)); } catch {}
+  }
+  if (rate && tries < 5){ await sleep(1000 * 2 ** tries + Math.random() * 500); return api(url, opt, tries + 1); }
+  if (!r.ok){
+    let msg = 'HTTP ' + r.status;
+    try { const j = await r.json(); msg = (j.error && j.error.message) || msg; } catch {}
+    throw new Error('Google Drive 오류: ' + msg);
+  }
+  return r;
+}
+async function getMeta(id){
+  return (await api(`${DRIVE}/${id}?supportsAllDrives=true&fields=${encodeURIComponent(META_FIELDS)}`)).json();
+}
+async function downloadBytes(id){
+  return new Uint8Array(await (await api(`${DRIVE}/${id}?alt=media&supportsAllDrives=true`)).arrayBuffer());
+}
+// 기존 파일 내용만 교체 (files.update, 새 파일 생성 없음)
+async function updateContent(id, blob, mime = 'image/jpeg'){
+  const init = await api(`${UPLOAD}/${id}?uploadType=resumable&supportsAllDrives=true`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': mime, 'X-Upload-Content-Length': String(blob.size) },
+    body: '{}'
+  });
+  const loc = init.headers.get('Location');
+  if (loc){
+    let r;
+    try { r = await fetch(loc, { method: 'PUT', headers: { 'Content-Type': mime }, body: blob }); }
+    catch { throw new Error('업로드 중 연결이 끊겼습니다'); }
+    if (!r.ok) throw new Error('업로드 실패 (HTTP ' + r.status + ')');
+    return r.json();
+  }
+  return (await api(`${UPLOAD}/${id}?uploadType=media&supportsAllDrives=true`, {
+    method: 'PATCH', headers: { 'Content-Type': mime }, body: blob
+  })).json();
+}
+// 새 파일 만들기 (재개 가능한 업로드)
+async function createFile(parentId, name, blob, mime){
+  const init = await api(`${UPLOAD}?uploadType=resumable&supportsAllDrives=true&fields=id,name,size,md5Checksum`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': mime, 'X-Upload-Content-Length': String(blob.size) },
+    body: JSON.stringify({ name, parents: [parentId], mimeType: mime })
+  });
+  const loc = init.headers.get('Location');
+  if (!loc) throw new Error('Drive 업로드를 시작하지 못했습니다');
+  let r;
+  try { r = await fetch(loc, { method: 'PUT', headers: { 'Content-Type': mime }, body: blob }); }
+  catch { throw new Error('업로드 중 연결이 끊겼습니다'); }
+  if (!r.ok) throw new Error('업로드 실패 (HTTP ' + r.status + ')');
+  return r.json();
+}
+// 사진이 있는 폴더 안의 "졸업색톤_보정본" 폴더 (없으면 만듦) + 그 안의 파일 목록
+const OUT_DIR = '졸업색톤_보정본';
+const outFolders = new Map();
+async function driveOutFolder(parentId){
+  if (outFolders.has(parentId)) return outFolders.get(parentId);
+  const p = (async () => {
+    const q = `'${parentId}' in parents and trashed=false and mimeType='application/vnd.google-apps.folder' and name='${OUT_DIR}'`;
+    const j = await (await api(`${DRIVE}?q=${encodeURIComponent(q)}&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=files(id,name)`)).json();
+    let id = j.files && j.files[0] && j.files[0].id;
+    if (!id){
+      const r = await api(`${DRIVE}?supportsAllDrives=true&fields=id`, { method: 'POST', headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+        body: JSON.stringify({ name: OUT_DIR, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] }) });
+      id = (await r.json()).id;
+    }
+    const names = new Map(); let pt = '';
+    do {
+      const url = `${DRIVE}?q=${encodeURIComponent(`'${id}' in parents and trashed=false`)}&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=${encodeURIComponent('nextPageToken,files(id,name,size,md5Checksum)')}` + (pt ? '&pageToken=' + encodeURIComponent(pt) : '');
+      const j2 = await (await api(url)).json();
+      for (const f of j2.files || []) names.set(f.name, f);
+      pt = j2.nextPageToken || '';
+    } while (pt);
+    return { id, names };
+  })();
+  outFolders.set(parentId, p);
+  try { return await p; } catch (e) { outFolders.delete(parentId); throw e; }
+}
+const MIME = { tif16: 'image/tiff', tif8: 'image/tiff', cmyk: 'image/tiff', jpg: 'image/jpeg' };
+async function listFolder(root, recursive){
+  const out = [], queue = [{ id: root.id, path: root.name }];
+  while (queue.length){
+    const f = queue.shift();
+    const q = `'${f.id}' in parents and trashed=false and (mimeType='image/jpeg'${recursive ? " or mimeType='application/vnd.google-apps.folder'" : ''})`;
+    let pageToken = '';
+    do {
+      status(`사진 찾는 중… ${out.length}장`);
+      const url = `${DRIVE}?q=${encodeURIComponent(q)}&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true&orderBy=name` +
+        `&fields=${encodeURIComponent('nextPageToken,files(' + META_FIELDS + ',thumbnailLink)')}` + (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : '');
+      const j = await (await api(url)).json();
+      for (const x of j.files || []){
+        if (x.mimeType === 'application/vnd.google-apps.folder') queue.push({ id: x.id, path: f.path + '/' + x.name });
+        else out.push({ ...x, path: f.path });
+      }
+      pageToken = j.nextPageToken || '';
+    } while (pageToken);
+  }
+  return out;
+}
+async function pickFolder(){
+  await getToken();
+  await loadScript('https://apis.google.com/js/api.js');
+  await new Promise((res, rej) => gapi.load('picker', { callback: res, onerror: () => rej(new Error('폴더 선택 창을 불러오지 못했습니다.')) }));
+  const P = google.picker;
+  const mine = new P.DocsView(P.ViewId.FOLDERS).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes('application/vnd.google-apps.folder');
+  const shared = new P.DocsView(P.ViewId.FOLDERS).setEnableDrives(true).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes('application/vnd.google-apps.folder');
+  return new Promise(res => {
+    new P.PickerBuilder()
+      .addView(mine).addView(shared).enableFeature(P.Feature.SUPPORT_DRIVES)
+      .setOAuthToken(token).setDeveloperKey(cfg.apiKey).setAppId(cfg.appId)
+      .setLocale('ko').setTitle('작업할 학교·학년도 폴더 선택')
+      .setCallback(d => {
+        if (d.action === P.Action.PICKED) res({ id: d.docs[0].id, name: d.docs[0].name, driveId: d.docs[0].driveId || '' });
+        if (d.action === P.Action.CANCEL) res(null);
+      })
+      .build().setVisible(true);
+  });
+}
+
+/* =========================================================
+   Drive 사진 불러오기 · 덮어쓰기
+   ========================================================= */
+const locks = new Set();
+function loadDriveItem(it){
+  if (!it.loading) it.loading = loadDriveItemNow(it).catch(e => { it.loading = null; throw e; });
+  return it.loading;
+}
+async function loadDriveItemNow(it){
+  const meta = await getMeta(it.id);
+  if (meta.mimeType !== 'image/jpeg') throw new Error('JPEG 파일이 아닙니다');
+  const bytes = await downloadBytes(it.id);
+  const jp = parseJpeg(bytes);
+  const raw = await decodeStored(bytes, jp);
+  it.meta = meta; it.jp = jp; it.raw = raw;
+  it.view = orientCanvas(drawScaled(raw, PREVIEW_MAX), jp.orientation);
+  if (it.forMd5 !== meta.md5Checksum){
+    it.a = analyze(it.view); it.auto = autoParams(it.a, style); it.p = { ...it.auto }; it.forMd5 = meta.md5Checksum;
+  }
+  it.orientation = jp.orientation; it.st = null; it.kind = 'jpeg';
+  it.icc = TM.jpegIcc(jp.segs); it.dpi = TM.jfifDpi(jp.segs); it.W = raw.width; it.H = raw.height;
+  if (!it.sum || it.sumMd5 !== meta.md5Checksum){
+    it.st = await TM.analyze(it.view); it.sum = TM.slim(it.st); it.sumMd5 = meta.md5Checksum;
+    saveStatCache(it);
+  }
+  if (isMatch()) await prepMatch(it); else computeMatch(it);
+}
+// Drive 사진 통계는 파일 내용(md5)별로 보관 → 다시 열 때 다운로드 없이 앨범 일관성 분석 가능
+let statCache = null;
+async function getStatCache(){ if (!statCache) statCache = (await idb.get('scache')) || {}; return statCache; }
+let statSaveT = 0;
+async function saveStatCache(it){
+  const c = await getStatCache();
+  c[it.id] = { md5: it.sumMd5, sum: it.sum, W: it.W, H: it.H, t: Date.now() };
+  const keys = Object.keys(c); if (keys.length > 5000) keys.sort((x, y) => c[x].t - c[y].t).slice(0, keys.length - 5000).forEach(k => delete c[k]);
+  clearTimeout(statSaveT); statSaveT = setTimeout(() => idb.set('scache', c), 800);
+}
+async function fillFromCache(list){
+  const c = await getStatCache(); let n = 0;
+  for (const it of list){ const e = c[it.id]; if (e && it.meta && e.md5 === it.meta.md5Checksum){ it.sum = e.sum; it.sumMd5 = e.md5; it.W = e.W; it.H = e.H; computeMatch(it); n++; } }
+  return n;
+}
+const loadAny = it => it.src === 'drive' ? loadDriveItem(it) : loadLocalItem(it);
+function unloadDriveItem(it){
+  if (it.raw && it.raw.close) it.raw.close();
+  it.raw = null; it.view = null; it.loading = null; it.st = null; it.lut = null; it.full = null;
+}
+function alreadyEdited(it, md5){
+  return editHistory.some(h => h.fileId === it.id && h.result === '성공' && h.md5After === md5);
+}
+
+async function overwrite(it, { batch = false } = {}){
+  if (locks.has(it.id)) return;
+  locks.add(it.id); setState(it, 'processing');
+  let uploaded = false, before = null, rec = { style };
+  try {
+    if (batch && !it.p) unloadDriveItem(it);
+    if (batch && it.view && items[cur] !== it) unloadDriveItem(it);   // 일괄 처리는 최신 파일로 시작
+    await loadDriveItem(it);
+    before = it.meta;
+    if (!before.capabilities || !before.capabilities.canEdit) throw new Error('이 파일을 수정할 권한이 없습니다');
+    if (!/\.jpe?g$/i.test(before.name)) throw new Error('파일 확장자가 JPEG 형식과 맞지 않습니다');
+    if (alreadyEdited(it, before.md5Checksum)){
+      if (batch){ setState(it, 'skipped', '이미 보정한 사진이라 건너뛰었습니다'); return; }
+      if (!confirm(`${it.name}은(는) 이미 보정한 사진입니다. 한 번 더 보정할까요?`)){ setState(it, 'done'); return; }
+    }
+    const match = isMatch() && it.lut;
+    rec = { style, params: match ? matchRec(it) : { ...it.p } };
+    // 기준 매칭 품질 검사에 걸린 사진은 원본을 덮어쓰지 않음
+    if (match && it.qc && it.qc.fails.length) throw new Error('품질 검사 미통과 (' + it.qc.fails.join(', ') + ') — 원본은 그대로 두었습니다');
+    // 1. 원본 크기 그대로 보정
+    const c = match ? renderMatch(it.raw, it.lut, Infinity) : render(it.raw, it.a, it.p, Infinity);
+    if (c.width !== it.jp.width || c.height !== it.jp.height) throw new Error('보정 결과의 픽셀 크기가 원본과 다릅니다');
+    const q = clamp(it.jp.quality, 90, 98) / 100;
+    const enc = await new Promise(r => c.toBlob(r, 'image/jpeg', q));
+    c.width = c.height = 0;
+    if (!enc) throw new Error('보정 결과를 만들지 못했습니다 (사진이 너무 큽니다)');
+    const out = spliceJpeg(new Uint8Array(await enc.arrayBuffer()), it.jp.segs);
+    // 2. 결과 검사
+    const jp2 = parseJpeg(out);
+    if (jp2.width !== it.jp.width || jp2.height !== it.jp.height) throw new Error('보정 결과의 픽셀 크기가 원본과 다릅니다');
+    (await decodeStored(out, jp2)).close();   // 실제로 열리는지 확인
+    if (jp2.orientation !== it.jp.orientation || jp2.hasIcc !== it.jp.hasIcc) throw new Error('원본 메타데이터를 보존하지 못했습니다');
+    // 3. 덮어쓰기 직전, 원본이 그 사이 바뀌지 않았는지 확인
+    const now = await getMeta(it.id);
+    if (now.md5Checksum !== before.md5Checksum || now.modifiedTime !== before.modifiedTime){
+      unloadDriveItem(it); it.forMd5 = null;
+      throw new Error('작업 중 다른 곳에서 파일이 바뀌었습니다. 다시 불러온 뒤 보정하세요');
+    }
+    if (now.name !== before.name || now.mimeType !== 'image/jpeg') throw new Error('파일 이름이나 형식이 바뀌어 중단했습니다');
+    // 4. 같은 fileId에 내용만 업데이트
+    uploaded = true;
+    await updateContent(it.id, new Blob([out], { type: 'image/jpeg' }));
+    // 5. 업데이트 후 검증
+    const after = await getMeta(it.id);
+    const sameParents = (after.parents || []).slice().sort().join() === (before.parents || []).slice().sort().join();
+    if (after.id !== it.id || after.name !== before.name || !sameParents || after.mimeType !== 'image/jpeg')
+      throw new Error('업데이트 후 파일 ID·이름·위치 확인에 실패했습니다');
+    if (Number(after.size) !== out.length || after.md5Checksum === before.md5Checksum)
+      throw new Error('업데이트된 파일 내용이 보정 결과와 다릅니다');
+    const back = await downloadBytes(it.id);
+    const jp3 = parseJpeg(back);
+    if (jp3.width !== it.jp.width || jp3.height !== it.jp.height) throw new Error('업데이트된 사진을 다시 열어 보니 크기가 다릅니다');
+    (await decodeStored(back, jp3)).close();
+    addHistory({ it, before, after, rec, result: '성공' });
+    it.meta = after; it.forMd5 = null;
+    unloadDriveItem(it);
+    setState(it, 'done');
+  } catch (e) {
+    const msg = uploaded ? e.message + ' (Drive에서 사진을 직접 확인하세요)' : e.message;
+    addHistory({ it, before, after: null, rec, result: uploaded ? '검수 필요' : '실패', error: msg });
+    setState(it, uploaded ? 'review' : 'failed', msg);
+  } finally {
+    locks.delete(it.id); updateButtons();
+    if (items[cur] === it) select(cur);
+  }
+}
+
+/* ---------- Drive: 보정본을 따로 저장 (원본 유지) ---------- */
+async function processDrive(it, { skipSaved = false } = {}){
+  if (locks.has(it.id)) return;
+  locks.add(it.id); setState(it, 'processing');
+  const fmt = $('#fmt').value, ppi = $('#ppi300').checked, t0 = performance.now();
+  const rec = { style, sizeBefore: '', sizeAfter: '' };
+  let uploaded = null;
+  try {
+    const parent = it.meta && it.meta.parents && it.meta.parents[0];
+    if (!parent) throw new Error('원본 폴더를 알 수 없습니다');
+    const out = await driveOutFolder(parent);
+    const names = [false, true].map(rv => outName(it.name, fmt, rv)), have = names.find(n => out.names.has(n));
+    if (skipSaved && have){
+      setState(it, /_검수필요\./.test(have) ? 'review' : 'done', '이미 저장됨: ' + have);
+      it.report = makeReport(it, fmt, { result: '건너뜀 (이미 저장됨)', out: `${it.path}/${OUT_DIR}/${have}` });
+      return;
+    }
+    if (items[cur] !== it) unloadDriveItem(it);          // 최신 파일로 시작
+    const r = await exportItem(it, fmt, ppi);
+    rec.sizeBefore = `${it.W}×${it.H}`; rec.sizeAfter = `${r.W}×${r.H}`;
+    rec.params = isMatch() ? matchRec(it) : { ...it.p };
+    if (r.errors.length) throw new Error('저장 검증 실패: ' + r.errors.join(', '));
+    const review = isMatch() && it.m ? [...it.m.review, ...(it.qc ? it.qc.fails : [])] : [];
+    const name = outName(it.name, fmt, review.length > 0), mime = MIME[fmt];
+    const localMd5 = await TM.md5(r.blob);
+    // 같은 이름이 있으면 그 파일 내용만 교체, 반대쪽 이름(검수필요 여부가 바뀐 경우)은 그대로 둠
+    const exist = out.names.get(name);
+    out.names.delete(name);   // 확인을 마칠 때까지는 "저장됨"으로 치지 않음
+    const res = exist ? await updateContent(exist.id, r.blob, mime) : await createFile(out.id, name, r.blob, mime);
+    const fid = (res && res.id) || (exist && exist.id);
+    uploaded = fid;
+    // 업로드 확인: Drive가 계산한 크기·MD5가 저장 전 파일과 같은지 (전체 내용 일치)
+    const meta = await (await api(`${DRIVE}/${fid}?supportsAllDrives=true&fields=id,name,size,md5Checksum,parents`)).json();
+    if (Number(meta.size) !== r.blob.size) throw new Error(`업로드된 파일 크기가 다릅니다 (${meta.size} / ${r.blob.size})`);
+    if (meta.md5Checksum && meta.md5Checksum !== localMd5) throw new Error('업로드된 파일 내용(MD5)이 다릅니다');
+    if (!(meta.parents || []).includes(out.id)) throw new Error('업로드된 파일 위치가 다릅니다');
+    // 앞부분을 다시 받아 실제로 열리는 형식인지 확인
+    if (mime === 'image/tiff'){
+      const head = new Uint8Array(await (await api(`${DRIVE}/${fid}?alt=media&supportsAllDrives=true`, { headers: { Range: 'bytes=0-' + Math.min(r.blob.size - 1, 2 * 1048576) } })).arrayBuffer());
+      const rt = TM.readTiff(head, true);
+      if (rt.W !== r.W || rt.H !== r.H) throw new Error(`Drive에서 다시 읽은 크기가 다릅니다 (${rt.W}×${rt.H})`);
+    } else {
+      const back = await downloadBytes(fid), jp = parseJpeg(back);
+      if (jp.width !== r.W || jp.height !== r.H) throw new Error('Drive에서 다시 읽은 크기가 다릅니다');
+      (await decodeStored(back, jp)).close();
+    }
+    out.names.set(name, { id: fid, name, size: meta.size, md5Checksum: meta.md5Checksum });
+    rec.outName = `${it.path}/${OUT_DIR}/${name}`; rec.qc = review.length ? review.join(' · ') : (isMatch() ? '통과' : '');
+    addHistory({ it, before: it.meta, after: null, rec, result: review.length ? '검수 필요' : '성공' });
+    it.report = makeReport(it, fmt, { result: review.length ? '검수 필요' : '완료', out: rec.outName, size: rec.sizeAfter, qc: rec.qc, dpi: r.dpi, sec: (performance.now() - t0) / 1000 });
+    setState(it, review.length ? 'review' : 'done', review.join(' · '));
+  } catch (e) {
+    let msg = e.message;
+    // 올렸지만 확인에 실패한 파일은 휴지통으로 (잘못된 보정본이 정상 이름으로 남지 않게. 원본은 그대로)
+    if (uploaded){
+      try { await api(`${DRIVE}/${uploaded}?supportsAllDrives=true`, { method: 'PATCH', headers: { 'Content-Type': 'application/json; charset=UTF-8' }, body: JSON.stringify({ trashed: true }) }); msg += ' — 올린 파일은 휴지통으로 옮겼습니다'; }
+      catch { msg += ' — 올린 보정본을 Drive에서 직접 지워 주세요'; }
+    }
+    addHistory({ it, before: it.meta || null, after: null, rec, result: '실패', error: msg });
+    it.report = makeReport(it, fmt, { result: '실패', error: msg, sec: (performance.now() - t0) / 1000 });
+    setState(it, 'failed', msg);
+  } finally {
+    locks.delete(it.id); updateButtons();
+    if (items[cur] !== it) unloadDriveItem(it);
+    else select(cur);
+  }
+}
+
+/* ---------- 일괄 처리 (Drive) ---------- */
+const batch = { running: false, paused: false, stop: false, wake: null };
+function waitResume(){ return new Promise(r => batch.wake = r); }
+async function runBatch(list, label, { skipSaved = false } = {}){
+  if (batch.running || !list.length) return;
+  const copy = $('#dOut').value === 'copy';
+  const msg = copy
+    ? `${list.length}장을 보정해 각 폴더의 "${OUT_DIR}" 폴더에 저장합니다.\n원본 파일은 바뀌지 않습니다.\n진행할까요?`
+    : `${list.length}장의 원본 파일을 보정 결과로 덮어씁니다.\n파일명·위치·파일 ID는 그대로 유지됩니다.\n진행할까요?`;
+  if (!confirm(msg)) return;
+  try { await getToken(); } catch (e) { status(e.message, true); return; }
+  batch.running = true; batch.paused = false; batch.stop = false;
+  list.forEach(it => { if (copy || it.state !== 'done') setState(it, 'wait'); });
+  updateButtons();
+  const queue = list.slice(), rows = [], t0 = Date.now(); let n = 0, work = 0;
+  while (queue.length){
+    if (batch.stop) break;
+    if (!tokenValid(5 * 60000) && !batch.paused){
+      batch.paused = true; updateButtons();
+      status('Google 연결이 곧 만료됩니다. "Google 다시 연결"을 누르면 이어서 진행합니다.', true);
+    } else if (batch.paused){
+      status(`일시 정지됨 (${n}/${list.length})`);
+    }
+    if (batch.paused){ await waitResume(); continue; }
+    const it = queue.shift(); n++;
+    const eta = work ? Math.round((Date.now() - t0) / 1000 / work * (queue.length + 1)) : 0;
+    status(`${label} ${n}/${list.length}: ${it.path ? it.path + '/' : ''}${it.name}` + (eta ? ` · 남은 시간 약 ${eta >= 60 ? Math.round(eta / 60) + '분' : eta + '초'}` : ''));
+    if (copy){ await processDrive(it, { skipSaved }); if (it.report) rows.push(it.report); }
+    else await overwrite(it, { batch: true });
+    if (!(it.err || '').startsWith('이미 저장됨')) work++;
+    await sleep(0);
+  }
+  const stopped = batch.stop;
+  batch.running = false; batch.paused = false; batch.stop = false; updateButtons();
+  const c = s => list.filter(x => x.state === s && !(x.err || '').startsWith('이미 저장됨')).length;
+  const skip = list.filter(x => (x.err || '').startsWith('이미 저장됨')).length;
+  const sec = Math.round((Date.now() - t0) / 1000);
+  const job = { date: new Date().toISOString(), label: 'Drive ' + label, total: list.length, ok: c('done'), review: c('review'), fail: c('failed'), skip, stopped, sec,
+    fmt: copy ? $('#fmt').value : 'jpg(덮어쓰기)', ref: isMatch() ? ref.name : style, dir: copy ? `Drive/${OUT_DIR}` : 'Drive 원본', report: '' };
+  // 처리 결과 보고서를 고른 폴더의 보정본 폴더에 올림
+  const root = store.get('jt_folder', null);
+  if (copy && rows.length && root){
+    try {
+      const stamp = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '_');
+      const of = await driveOutFolder(root.id);
+      job.report = `졸업색톤_처리결과_${stamp}.csv`;
+      await createFile(of.id, job.report, reportCsv(rows), 'text/csv');
+    } catch (e) { job.report = '보고서 업로드 실패: ' + e.message; }
+  }
+  jobs.unshift(job); if (jobs.length > 200) jobs.length = 200; store.set('jt_jobs', jobs); renderJobs();
+  status(`${stopped ? '중지했습니다' : '끝났습니다'} (${sec}초). 완료 ${job.ok}장 · 검수 필요 ${job.review}장 · 실패 ${job.fail}장` + (skip ? ` · 이미 저장되어 건너뜀 ${skip}장` : '') + (job.report && !job.report.startsWith('보고서') ? ` · 보고서 ${OUT_DIR}/${job.report}` : ''), job.fail > 0);
+  if (consOpen) renderConsistency();
+}
+
+/* =========================================================
+   작업 이력 (사진 파일은 따로 보관하지 않고 기록만 남김)
+   ========================================================= */
+let editHistory = store.get('jt_history', []);
+function addHistory({ it, before, after, rec, result, error = '' }){
+  const w = it.jp ? it.jp.width : '', h = it.jp ? it.jp.height : '';
+  editHistory.unshift({
+    date: new Date().toISOString(), fileId: it.id || '', name: it.name, path: it.path || (it.src === 'local' ? '내 컴퓨터' : ''),
+    md5Before: before ? before.md5Checksum : '', md5After: after ? after.md5Checksum : '',
+    style: rec.style === 'match' ? '기준 사진 매칭' + (ref ? ` (${ref.name})` : '') : rec.style === 'bright' ? '화사하게' : '자연스럽게', params: rec.params || null,
+    sizeBefore: rec.sizeBefore || (w ? `${w}×${h}` : ''), sizeAfter: rec.sizeAfter || (after && w ? `${w}×${h}` : ''),
+    outName: rec.outName || '', qc: rec.qc || '',
+    result, error
+  });
+  if (editHistory.length > 3000) editHistory.length = 3000;
+  store.set("jt_history", editHistory);
+  renderHistory();
+}
+function renderHistory(){
+  const ul = $('#histList'); ul.innerHTML = '';
+  if (!editHistory.length){ ul.innerHTML = '<li>아직 기록이 없습니다.</li>'; return; }
+  editHistory.slice(0, 60).forEach(h => {
+    const li = document.createElement('li');
+    const cls = h.result === '성공' ? 'r-ok' : h.result === '실패' ? 'r-fail' : 'r-review';
+    li.innerHTML = `<b class="${cls}"></b> <span></span><br><small></small>`;
+    li.querySelector('b').textContent = h.result;
+    li.querySelector('span').textContent = h.name;
+    li.querySelector('small').textContent = new Date(h.date).toLocaleString('ko-KR') + (h.error ? ' · ' + h.error : '');
+    ul.appendChild(li);
+  });
+}
+$('#histCsv').onclick = () => {
+  download(historyCsv(editHistory), '졸업색톤_편집이력.csv');
+};
+function historyCsv(list){
+  const cols = ['date','fileId','name','path','md5Before','md5After','style','params','sizeBefore','sizeAfter','outName','qc','result','error'];
+  const head = ['작업 날짜','원본 파일 ID','원본 파일명','폴더','원본 MD5','업데이트 후 MD5','보정 프리셋','보정값','원본 픽셀 크기','편집 후 픽셀 크기','저장 파일','품질 검사','처리 결과','오류 내용'];
+  const esc = v => '"' + String(v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : v).replace(/"/g, '""') + '"';
+  const csv = '﻿' + [head.map(esc).join(','), ...list.map(h => cols.map(c => esc(h[c])).join(','))].join('\r\n');
+  return new Blob([csv], { type: 'text/csv' });
+}
+
+/* =========================================================
+   화면
+   ========================================================= */
+const outCanvas = $('#outCanvas'), origCanvas = $('#origCanvas');
+let rafId = 0;
+function status(t, err = false){ const s = $('#status'); s.textContent = t; s.style.color = err ? 'var(--err)' : ''; }
+function fmt(k, v){ return SIGNED[k] && v > 0 ? '+' + v : String(v); }
+function schedulePreview(){
+  cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(() => {
+    const it = items[cur]; if (!it || !it.view) return;
+    const base = it.base || it.view;
+    const c = isMatch() ? (it.lut ? renderMatch(base, it.lut, Infinity) : drawScaled(base, Infinity)) : render(base, it.a, it.p, Infinity);
+    outCanvas.width = c.width; outCanvas.height = c.height;
+    outCanvas.getContext('2d').drawImage(c, 0, 0);
+    renderAnal(it);
+  });
+}
+// 비교 화면의 바탕: 맞춤 보기는 미리보기, 100% 확대는 얼굴 중심을 원본 픽셀 1:1로 잘라 보여 줌 (화면용 사본만, 저장과 무관)
+async function drawCompare(it){
+  let base = it.view;
+  if (zoom){
+    if (!it.raw) await (it.src === 'drive' ? loadDriveItem(it) : loadLocalItem(it));
+    if (!it.full) it.full = orientCanvas(it.raw, it.orientation || 1);
+    const F = it.full, dpr = devicePixelRatio || 1, box = $('#compare');
+    const cw = Math.min(F.width, Math.round((box.clientWidth - 28) * dpr)), ch = Math.min(F.height, Math.round(innerHeight * 0.66 * dpr));
+    let cx = F.width / 2, cy = F.height / 2;
+    const st = it.st, b = st && st.boxes && st.boxes[0];
+    if (b){ const k = F.width / st.W; cx = (b.x + b.w / 2) * k; cy = (b.y + b.h / 2) * k; }
+    const sx = Math.round(clamp(cx - cw / 2, 0, F.width - cw)), sy = Math.round(clamp(cy - ch / 2, 0, F.height - ch));
+    base = document.createElement('canvas'); base.width = cw; base.height = ch;
+    base.getContext('2d', { willReadFrequently: true }).drawImage(F, sx, sy, cw, ch, 0, 0, cw, ch);
+    outCanvas.style.width = origCanvas.style.width = cw / dpr + 'px';
+  } else outCanvas.style.width = origCanvas.style.width = '';
+  it.base = base;
+  origCanvas.width = base.width; origCanvas.height = base.height;
+  origCanvas.getContext('2d').drawImage(base, 0, 0);
+}
+function renderAnal(it){
+  const dl = $('#anal'), note = $('#analNote'), bd = $('#badges');
+  dl.innerHTML = ''; note.textContent = ''; bd.innerHTML = '';
+  const badge = (t, c) => { const s = document.createElement('span'); s.className = 'badge ' + c; s.textContent = t; bd.appendChild(s); };
+  if (!it) return;
+  if (it.jp || it.W) badge(`원본 ${it.W || it.jp.width}×${it.H || it.jp.height}px 유지`, 'ok');
+  if (style !== 'match') return;
+  if (!ref){ note.textContent = '먼저 위에서 기준 사진을 등록하세요.'; return; }
+  const st = it.st || it.sum, m = it.m;
+  if (!st || !m){ note.textContent = '분석 중…'; return; }
+  const row = (k, v, c = '') => { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; if (c) dd.className = c; dl.append(dt, dd); };
+  const f1 = v => (v > 0 ? '+' : '') + v.toFixed(1);
+  row('얼굴 영역', st.face.found ? `${st.by || ''} · ${(st.face.frac * 100).toFixed(1)}%` : '찾지 못함', st.face.found ? '' : 'warn');
+  if (st.face.found) row('얼굴 밝기', `${m.face.from.toFixed(0)} → ${m.face.to.toFixed(0)} (기준 ${ref.stats.face.found ? ref.stats.face.medL.toFixed(0) : '-'})`);
+  else row('중간 밝기', `${m.face.from.toFixed(0)} → ${m.face.to.toFixed(0)}`);
+  row('화이트밸런스', m.wbBy === '없음' ? '보정 없음' : `a ${f1(m.wb[0])} · b ${f1(m.wb[1])} (${m.wbBy})`);
+  if (st.face.found) row('피부톤', `a ${st.face.a.toFixed(1)} b ${st.face.b.toFixed(1)} → 이동 ${f1(m.ss[0])}, ${f1(m.ss[1])}`);
+  row('명암 · 채도', `S커브 ${f1(m.k * 100)} · 채도 ×${m.cs.toFixed(2)}`);
+  row('하이라이트', `날아간 부분 ${(st.clip * 100).toFixed(2)}%` + (it.qc ? ` → ${(it.qc.after.clip * 100).toFixed(2)}%` : ''), st.clip > 0.03 ? 'warn' : '');
+  const pr = it.qc && it.qc.print;
+  if (pr){
+    row('인쇄 색역', `밖 ${(pr.oog * 100).toFixed(1)}% · 피부 ${(pr.oogSkin * 100).toFixed(1)}%`, pr.oogSkin > 0.02 || pr.oog > 0.05 ? 'warn' : '');
+    row('인쇄 후 피부', `ΔE ${pr.dEskin.toFixed(1)} · 잉크 ${pr.tac995}%`, pr.fail.length ? 'err' : pr.warn.length ? 'warn' : '');
+  }
+  const fails = it.qc ? it.qc.fails : [], rv = m.review;
+  if (it.qc) row('품질 검사', fails.length ? fails.join(', ') : '통과', fails.length ? 'err' : '');
+  if (pr && pr.warn.length) badge('인쇄 경고', 'warn');
+  note.textContent = [...rv, ...m.notes].join(' · ');
+  if (fails.length || rv.length) badge('검수 필요', 'warn'); else if (it.qc) badge('품질 검사 통과', 'ok');
+}
+function setSplit(v){
+  split = clamp(v, 0, 1);
+  origCanvas.style.clipPath = `inset(0 ${(1 - split) * 100}% 0 0)`;
+  const dv = $('#divider');
+  dv.style.left = split * 100 + '%';
+  dv.setAttribute('aria-valuenow', Math.round(split * 100));
+}
+function syncSliders(){
+  const it = items[cur], ready = !!(it && it.p);
+  KEYS.forEach(k => {
+    const v = ready ? it.p[k] : 0;
+    $('#s_' + k).value = v; $('#s_' + k).disabled = !ready;
+    $('#o_' + k).textContent = fmt(k, v);
+    $('#a_' + k).textContent = ready ? '자동 ' + fmt(k, it.auto[k]) : '';
+  });
+}
+function setInfo(it){
+  const el = $('#info');
+  if (!it){ el.textContent = ''; el.className = 'info'; return; }
+  let t = it.name;
+  if (it.W) t += ` · ${it.W}×${it.H}px`; else if (it.jp) t += ` · ${it.jp.width}×${it.jp.height}px`;
+  if (it.path) t += ` · ${it.path}`;
+  if (it.state && (it.src === 'drive' || it.state !== 'wait')) t += ` · ${STATE_LABEL[it.state]}`;
+  if (it.err) t += ` — ${it.err}`;
+  el.textContent = t;
+  el.className = 'info' + (it.state === 'failed' || it.state === 'review' ? ' err' : '');
+}
+async function select(i){
+  const prev = items[cur], it = items[i];
+  if (!it) return;
+  if (prev && prev !== it && prev.src === 'drive' && !locks.has(prev.id)) unloadDriveItem(prev);
+  if (prev && prev !== it && prev.src === 'local' && !prev.busy) unloadLocalItem(prev);
+  cur = i;
+  document.querySelectorAll('.thumb').forEach((t, j) => t.setAttribute('aria-current', j === i));
+  $('#empty').hidden = true; $('#frame').hidden = false;
+  setInfo(it); syncSliders(); syncMatch(); updateButtons(); renderAnal(null);
+  if (!it.view){
+    if (it.src === 'drive' && locks.has(it.id)) return;
+    status('사진 불러오는 중…');
+    try { await (it.src === 'drive' ? loadDriveItem(it) : loadLocalItem(it)); }
+    catch (e) { if (cur === i){ status(e.message, true); setInfo(it); } return; }
+    if (cur !== i) return;
+    status('');
+  }
+  if (!it.view) return;
+  if (isMatch() && !it.lut){ await prepMatch(it); if (cur !== i) return; }
+  try { await drawCompare(it); } catch (e) { status(e.message, true); }
+  if (cur !== i) return;
+  setInfo(it); syncSliders(); setSplit(split); schedulePreview(); updateButtons();
+}
+function counts(){
+  const c = { all: 0, wait: 0, processing: 0, done: 0, review: 0, failed: 0 };
+  items.forEach(it => { if (it.state === 'skipped') return; c.all++; if (c[it.state] != null) c[it.state]++; });
+  return c;
+}
+function updateStats(){
+  const c = counts();
+  $('#n_all').textContent = c.all; $('#n_wait').textContent = c.wait; $('#n_run').textContent = c.processing;
+  $('#n_done').textContent = c.done; $('#n_review').textContent = c.review; $('#n_fail').textContent = c.failed;
+  const last = editHistory[0];
+  $('#n_last').textContent = '마지막 작업: ' + (last ? new Date(last.date).toLocaleString('ko-KR') : '없음');
+}
+function setState(it, state, err = ''){
+  it.state = state; it.err = err;
+  if (it.el){
+    it.el.dataset.state = state;
+    it.el.title = `${it.name} — ${STATE_LABEL[state]}${err ? ': ' + err : ''}`;
+  }
+  if (items[cur] === it) setInfo(it);
+  updateStats(); updateButtons();
+}
+function updateButtons(){
+  const it = items[cur], drive = mode === 'drive', local = mode === 'local';
+  $('#stats').hidden = !(drive || local); $('#driveSave').hidden = !drive; $('#localSave').hidden = !local;
+  $('#lPause').disabled = $('#lStop').disabled = !local || !busy;
+  $('#lPause').textContent = lb.paused ? '이어서 진행' : '일시 정지';
+  $('#addBtn').disabled = $('#addDirBtn').disabled = busy;
+  $('#m_own').disabled = !it || !it.sum;
+  $('#folderBtn').disabled = batch.running || !cfgReady();
+  $('#reopenBtn').disabled = batch.running || !cfgReady();
+  $('#resetBtn').disabled = !(it && it.p);
+  $('#saveOne').disabled = !local || !it || busy;
+  $('#saveAll').disabled = !local || !items.length || busy;
+  $('#retryLocal').disabled = !local || busy || !items.some(x => x.state === 'failed' || x.state === 'review');
+  $('#toolbar').hidden = !it;
+  $('#matchBox').hidden = style !== 'match';
+  $('#classicBox').hidden = style === 'match';
+  $('#refBtn').disabled = busy || batch.running;
+  $('#ovOne').disabled = !drive || !it || !it.view || batch.running || locks.has(it.id) || it.state === 'skipped';
+  $('#ovSel').disabled = !drive || batch.running || !items.some(x => x.checked && x.state !== 'skipped');
+  const copy = $('#dOut').value === 'copy';
+  $('#ovAll').disabled = !drive || batch.running || busy || !items.some(x => x.state !== 'skipped' && (copy || x.state !== 'done'));
+  $('#ovSel').disabled = $('#ovSel').disabled || busy;
+  $('#pauseBtn').disabled = !batch.running;
+  $('#pauseBtn').textContent = batch.paused ? '이어서 진행' : '일시 정지';
+  $('#dStop').disabled = !batch.running;
+  $('#retryBtn').disabled = !drive || batch.running || busy || !items.some(x => x.state === 'failed' || (copy && x.state === 'review'));
+  $('#outFmt').hidden = !(drive || local);
+  $('#fmt').disabled = drive && !copy;
+  $('#consAnalyze').disabled = busy || batch.running;
+}
+function updateConn(){
+  const on = tokenValid(0);
+  $('#connState').textContent = on ? 'Google Drive 연결됨' : (everConnected ? '연결이 만료되었습니다' : (cfgReady() ? '연결 안 됨' : '먼저 연결 설정이 필요합니다'));
+  $('#connState').className = 'conn' + (on ? ' on' : '');
+  $('#connectBtn').textContent = everConnected ? 'Google 다시 연결' : 'Google 연결';
+  updateButtons();
+}
+setInterval(updateConn, 30000);
+
+function makeThumb(it, idx){
+  const wrap = document.createElement('div');
+  wrap.className = 'thumb' + (it.opt ? ' own' : ''); wrap.dataset.state = it.state || 'wait'; wrap.title = (it.path ? it.path + '/' : '') + it.name;
+  const b = document.createElement('button');
+  b.className = 'tb'; b.type = 'button'; b.setAttribute('aria-label', it.name + ' 보기');
+  const fallback = () => { b.innerHTML = '<span class="nm"></span>'; b.firstChild.textContent = it.name; };
+  if (it.thumb){
+    const img = document.createElement('img');
+    img.alt = ''; img.referrerPolicy = 'no-referrer'; img.loading = 'lazy'; img.src = it.thumb;
+    img.onerror = fallback; b.appendChild(img);
+  } else fallback();
+  b.onclick = () => select(idx);
+  wrap.appendChild(b);
+  if (it.src === 'drive'){
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.setAttribute('aria-label', it.name + ' 선택'); cb.checked = !!it.checked;
+    cb.disabled = it.state === 'skipped';
+    cb.onchange = () => { it.checked = cb.checked; updateButtons(); };
+    it.cb = cb; wrap.appendChild(cb);
+    const dot = document.createElement('span'); dot.className = 'dot'; wrap.appendChild(dot);
+    if (it.err) wrap.title = `${it.name} — ${STATE_LABEL[it.state]}: ${it.err}`;
+  } else {
+    const dot = document.createElement('span'); dot.className = 'dot'; wrap.appendChild(dot);
+  }
+  it.el = wrap;
+  return wrap;
+}
+function renderStrip(){
+  const s = $('#strip'); s.innerHTML = '';
+  items.forEach((it, i) => s.appendChild(makeThumb(it, i)));
+}
+function resetView(){
+  items.forEach(it => { if (it.src === 'drive') unloadDriveItem(it); else unloadLocalItem(it); });
+  items = []; cur = -1;
+  $('#frame').hidden = true; $('#empty').hidden = false; setInfo(null); syncSliders();
+}
+
+/* ---------- 폴더 열기 ---------- */
+function showLastFolder(){
+  const f = store.get('jt_folder', null);
+  $('#lastFolderBox').hidden = !f;
+  if (f){
+    $('#lastFolderText').textContent = `최근 폴더: ${f.name} (${new Date(f.date).toLocaleDateString('ko-KR')})`;
+    $('#recursive').checked = !!f.recursive;
+  }
+}
+async function openFolder(f){
+  if (batch.running) return;
+  const recursive = $('#recursive').checked;
+  try {
+    const files = await listFolder(f, recursive);
+    resetView(); mode = 'drive';
+    items = files.map(x => {
+      const it = { src: 'drive', id: x.id, name: x.name, path: x.path, thumb: x.thumbnailLink || '', meta: x, state: 'wait', err: '', checked: false };
+      if (!x.capabilities || !x.capabilities.canEdit){ it.state = 'skipped'; it.err = '수정 권한 없음'; }
+      else if (!/\.jpe?g$/i.test(x.name)){ it.state = 'skipped'; it.err = '확장자와 형식이 맞지 않음'; }
+      else if (alreadyEdited(it, x.md5Checksum)) it.state = 'done';
+      return it;
+    });
+    store.set('jt_folder', { id: f.id, name: f.name, driveId: f.driveId || '', recursive, date: new Date().toISOString() });
+    outFolders.clear();
+    const cached = await fillFromCache(items);
+    showLastFolder(); renderStrip(); updateStats(); updateButtons();
+    status(items.length ? `${f.name}: JPG 사진 ${items.length}장` + (cached ? ` · 이전 분석 ${cached}장 재사용` : '') : `${f.name}에 JPG 사진이 없습니다.`);
+    if (consOpen) renderConsistency();
+    if (items.length) select(0);
+  } catch (e) { status(e.message, true); }
+}
+
+/* ---------- 내 컴퓨터 사진 ---------- */
+// 파일에 저장된 픽셀 그대로 읽기 (회전·색 변환 없음). ICC와 해상도 정보도 함께
+async function decodeLocal(file){
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (bytes[0] === 0xFF && bytes[1] === 0xD8){
+    const jp = parseJpeg(bytes), raw = await decodeStored(bytes, jp);
+    return { raw, jp, kind: 'jpeg', icc: TM.jpegIcc(jp.segs), dpi: TM.jfifDpi(jp.segs), orientation: jp.orientation };
+  }
+  const meta = await TM.pngMeta(bytes);
+  let raw;
+  try { raw = await createImageBitmap(file, { imageOrientation: 'none', colorSpaceConversion: 'none', premultiplyAlpha: 'none' }); }
+  catch { throw new Error(file.name + '을(를) 열 수 없습니다 (JPEG·PNG 권장)'); }
+  return { raw, jp: null, kind: bytes[0] === 0x89 ? 'png' : 'other', icc: meta.icc, dpi: meta.dpi, orientation: 1 };
+}
+function loadLocalItem(it){
+  if (it.view && it.raw) return Promise.resolve();
+  if (!it.loading) it.loading = (async () => {
+    const d = await decodeLocal(it.file);
+    it.raw = d.raw; it.jp = d.jp; it.kind = d.kind; it.icc = d.icc; it.dpi = d.dpi; it.orientation = d.orientation;
+    it.W = d.raw.width; it.H = d.raw.height;
+    if (!it.view) it.view = orientCanvas(drawScaled(d.raw, PREVIEW_MAX), d.orientation);
+  })().finally(() => { it.loading = null; });
+  return it.loading;
+}
+function unloadLocalItem(it){
+  if (it.raw && it.raw.close) it.raw.close();
+  it.raw = null; it.view = null; it.full = null; it.base = null; it.st = null; it.lut = null;
+}
+async function addFiles(list){
+  if (batch.running || busy) return;
+  // File 또는 { file, path(하위 폴더) }
+  const entries = [...list].map(x => x instanceof Blob ? { file: x, path: '' } : x)
+    .filter(x => x.file.type.startsWith('image/') || IMG_RE.test(x.file.name));
+  if (!entries.length){ status('이미지 파일만 불러올 수 있습니다.', true); return; }
+  if (mode !== 'local'){ resetView(); mode = 'local'; renderStrip(); updateButtons(); }
+  const have = new Set(items.map(x => x.path + '/' + x.name + '/' + x.file.size));
+  const todo = entries.filter(x => !have.has(x.path + '/' + x.file.name + '/' + x.file.size)), skipped = entries.length - todo.length;
+  let n = 0, bad = 0;
+  for (const { file: f, path } of todo){
+    status(`분석 중 ${++n}/${todo.length}: ${path ? path + '/' : ''}${f.name}`);
+    const it = { src: 'local', file: f, name: f.name, path, state: 'wait', err: '' };
+    try {
+      await loadLocalItem(it);
+      it.a = analyze(it.view); it.auto = autoParams(it.a, style); it.p = { ...it.auto };
+      it.thumb = drawScaled(it.view, 180).toDataURL('image/jpeg', 0.8);
+      // 통계만 남기고 무거운 분석 픽셀은 버림 (수백 장이어도 메모리가 늘지 않게). 보정값은 저장할 때 다시 정밀 계산
+      const st = await TM.analyze(it.view); it.sum = TM.slim(st);
+      if (ref) computeMatch(it);
+      items.push(it);
+      $('#strip').appendChild(makeThumb(it, items.length - 1));
+      if (cur < 0) await select(0);
+      else if (items[cur] !== it) unloadLocalItem(it);
+    } catch (e) {
+      // 열리지 않는 파일도 목록·보고서에 '실패'로 남김 (나중에 다시 처리 가능)
+      bad++; unloadLocalItem(it);
+      it.state = 'failed'; it.err = '파일을 열 수 없습니다: ' + e.message;
+      items.push(it); $('#strip').appendChild(makeThumb(it, items.length - 1));
+    }
+    if (n % 5 === 0) updateStats();
+    await sleep(0);
+  }
+  updateStats();
+  status(`${items.length}장 준비됨` + (skipped ? ` · 이미 불러온 사진 ${skipped}장 제외` : '') + (bad ? ` · 열지 못한 파일 ${bad}개` : ''), !!bad);
+  updateButtons();
+}
+/* ---------- 폴더 불러오기 ---------- */
+const IMG_RE = /\.(jpe?g|png|tiff?|webp)$/i;
+// 보정본(파일명에 _보정)은 다시 불러오지 않음
+const isOwnOutput = n => /_보정(_CMYK)?(_검수필요)?\.(tif|jpg)$/i.test(n);
+async function filesFromDir(dir, recursive, path = '', out = []){
+  for await (const [name, h] of dir.entries()){
+    if (name.startsWith('.')) continue;
+    if (h.kind === 'file'){ if (IMG_RE.test(name) && !isOwnOutput(name)) out.push({ file: await h.getFile(), path }); }
+    else if (recursive) await filesFromDir(h, true, path ? path + '/' + name : name, out);
+  }
+  return out;
+}
+// 폴더 순서 → 그 폴더 사진 → 하위 폴더 (상위 폴더 사진이 먼저)
+const byPath = (x, y) => x.path.localeCompare(y.path, 'ko', { numeric: true }) || x.file.name.localeCompare(y.file.name, 'ko', { numeric: true });
+async function pickLocalFolder(fresh){
+  if (batch.running || busy) return;
+  if (!('showDirectoryPicker' in window)){ dirFresh = fresh; $('#dirInput').click(); return; }
+  let dir;
+  try { dir = await showDirectoryPicker({ id: 'tone-in', mode: 'read' }); }
+  catch (e) { if (e.name !== 'AbortError') status(e.message, true); return; }
+  status(`${dir.name} 폴더에서 사진 찾는 중…`);
+  const list = (await filesFromDir(dir, $('#lrec').checked)).sort(byPath);
+  if (!list.length){ status(`${dir.name}에 사진이 없습니다.`, true); return; }
+  if (fresh && mode === 'local' && items.length){ resetView(); renderStrip(); }
+  await addFiles(list);
+}
+let dirFresh = false;
+$('#dirInput').onchange = () => {
+  const rec = $('#lrec').checked;
+  const list = [...$('#dirInput').files].map(f => {
+    const parts = (f.webkitRelativePath || f.name).split('/'); parts.shift(); parts.pop();   // 맨 앞 = 고른 폴더 이름
+    return { file: f, path: parts.join('/') };
+  }).filter(x => IMG_RE.test(x.file.name) && !isOwnOutput(x.file.name) && (rec || !x.path)).sort(byPath);
+  $('#dirInput').value = '';
+  if (!list.length){ status('폴더에 사진이 없습니다.', true); return; }
+  if (dirFresh && mode === 'local' && items.length){ resetView(); renderStrip(); }
+  addFiles(list);
+};
+$('#pickDirBtn').onclick = () => pickLocalFolder(true);
+$('#addDirBtn').onclick = () => pickLocalFolder(false);
+
+/* ---------- 저장 (TIFF · JPEG) + 저장 결과 검증 ---------- */
+const FMT_EXT = { tif16: '.tif', tif8: '.tif', jpg: '.jpg', cmyk: '.tif' };
+function outName(n, fmt, review){ return n.replace(/\.[^.]+$/, '') + '_보정' + (fmt === 'cmyk' ? '_CMYK' : '') + (review ? '_검수필요' : '') + FMT_EXT[fmt]; }
+async function exportItem(it, fmt, ppi300){
+  await loadAny(it);
+  if (fmt === 'cmyk' && !printer) throw new Error('CMYK로 저장하려면 인쇄 프로파일을 먼저 고르세요');
+  const match = isMatch();
+  if (match){ await prepMatch(it); if (!it.lut) throw new Error('기준 매칭 보정값을 만들지 못했습니다'); }
+  const W = it.raw.width, H = it.raw.height, dpi = ppi300 ? 300 : (it.dpi || 72);
+  // 원본 크기 그대로의 작업 캔버스 (기존 스타일은 선명도까지 포함해 렌더)
+  const cv = match ? drawScaled(it.raw, Infinity) : render(it.raw, it.a, it.p, Infinity);
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  if (cv.width !== W || cv.height !== H) throw new Error('작업 중 픽셀 크기가 달라졌습니다');
+  const errors = [];
+  let blob;
+  try {
+    if (fmt === 'tif16' || fmt === 'tif8'){
+      const bits = fmt === 'tif16' ? 16 : 8, scale = bits === 16 ? 65535 : 255;
+      const { buf, pix } = TM.tiffLayout(W, H, bits, { icc: it.icc, dpi, orientation: it.orientation });
+      const samples = [];
+      for (let y = 0; y < H; y += 256){
+        const h = Math.min(256, H - y), d = ctx.getImageData(0, y, W, h).data;
+        if (match) TM.applyLut(it.lut, d, W * h, pix, y * W * 3, 3, scale);
+        else for (let i = 0, p = 0, q = y * W * 3; i < W * h; i++, p += 4, q += 3){ pix[q] = d[p] * (scale / 255); pix[q+1] = d[p+1] * (scale / 255); pix[q+2] = d[p+2] * (scale / 255); }
+        const sx = Math.floor(Math.random() * W), sy = y + Math.floor(Math.random() * h), o = (sy * W + sx) * 3;
+        samples.push({ x: sx, y: sy, v: [pix[o], pix[o+1], pix[o+2]] });
+        if ((y / 256) % 8 === 7) await sleep(0);
+      }
+      const rt = TM.readTiff(new Uint8Array(buf));
+      if (rt.W !== W || rt.H !== H) errors.push(`픽셀 크기 불일치 (${rt.W}×${rt.H})`);
+      if (rt.bits !== bits || rt.spp !== 3) errors.push('비트 수 오류');
+      if (rt.dpi !== dpi || rt.unit !== 2) errors.push('해상도 정보 오류');
+      if (rt.orientation !== it.orientation) errors.push('방향 정보 오류');
+      if (!TM.sameBytes(rt.icc, it.icc)) errors.push('ICC 프로파일 저장 오류');
+      if (samples.some(s => rt.px(s.x, s.y).some((v, k) => v !== s.v[k]))) errors.push('저장된 픽셀 값이 다릅니다');
+      blob = new Blob([buf], { type: 'image/tiff' });
+    } else if (fmt === 'cmyk'){
+      // 보정 → 인쇄 프로파일(지각적 의도)로 CMYK 변환, 프로파일을 파일에 넣음
+      if (!cmykLutCache) cmykLutCache = TonePrint.cmykLut(printer, 0);
+      const { buf, pix } = TM.tiffLayout(W, H, 8, { icc: printer.bytes, dpi, orientation: it.orientation, spp: 4 });
+      const samples = [];
+      for (let y = 0; y < H; y += 256){
+        const h = Math.min(256, H - y), d = ctx.getImageData(0, y, W, h).data;
+        if (match) TM.applyLut(it.lut, d, W * h, d, 0, 4, 255);
+        TonePrint.applyCmyk(cmykLutCache, d, W * h, pix, y * W * 4);
+        const sx = Math.floor(Math.random() * W), sy = y + Math.floor(Math.random() * h), o = (sy * W + sx) * 4;
+        samples.push({ x: sx, y: sy, v: [pix[o], pix[o+1], pix[o+2], pix[o+3]] });
+        if ((y / 256) % 8 === 7) await sleep(0);
+      }
+      const rt = TM.readTiff(new Uint8Array(buf));
+      if (rt.W !== W || rt.H !== H) errors.push(`픽셀 크기 불일치 (${rt.W}×${rt.H})`);
+      if (rt.spp !== 4 || rt.photometric !== 5) errors.push('CMYK 형식 오류');
+      if (rt.dpi !== dpi) errors.push('해상도 정보 오류');
+      if (!TM.sameBytes(rt.icc, printer.bytes)) errors.push('인쇄 프로파일 저장 오류');
+      if (samples.some(s => rt.px(s.x, s.y).some((v, k) => v !== s.v[k]))) errors.push('저장된 픽셀 값이 다릅니다');
+      blob = new Blob([buf], { type: 'image/tiff' });
+    } else {
+      if (match) for (let y = 0; y < H; y += 512){
+        const h = Math.min(512, H - y), id = ctx.getImageData(0, y, W, h);
+        TM.applyLut(it.lut, id.data, W * h, id.data, 0, 4, 255); ctx.putImageData(id, 0, y);
+      }
+      const enc = await new Promise(r => cv.toBlob(r, 'image/jpeg', 1));
+      if (!enc) throw new Error('JPEG를 만들지 못했습니다 (사진이 너무 큽니다)');
+      let segs = it.jp ? it.jp.segs : (it.icc ? TM.iccSegs(it.icc) : []);
+      if (ppi300 || !it.jp) segs = TM.setJpegDpi(segs, dpi);
+      const out = spliceJpeg(new Uint8Array(await enc.arrayBuffer()), segs);
+      const jp2 = parseJpeg(out);
+      if (jp2.width !== W || jp2.height !== H) errors.push(`픽셀 크기 불일치 (${jp2.width}×${jp2.height})`);
+      if (jp2.orientation !== it.orientation) errors.push('방향 정보 오류');
+      if (!TM.sameBytes(TM.jpegIcc(jp2.segs), it.icc)) errors.push('ICC 프로파일 저장 오류');
+      if (TM.jfifDpi(jp2.segs) !== dpi) errors.push('해상도 정보 오류');
+      try { (await decodeStored(out, jp2)).close(); } catch { errors.push('저장한 파일이 열리지 않습니다'); }
+      blob = new Blob([out], { type: 'image/jpeg' });
+    }
+  } finally { cv.width = cv.height = 0; }
+  return { blob, W, H, dpi, errors };
+}
+// 저장: 지정 폴더가 있으면 그 폴더에 쓰고 다시 읽어 확인, 없으면 다운로드
+// 하위 폴더 구조를 그대로 만들어 저장
+async function subDir(sub, create){
+  let d = outDir;
+  if (sub) for (const p of sub.split('/')) d = await d.getDirectoryHandle(p, { create });
+  return d;
+}
+async function writeOut(name, blob, sub = ''){
+  if (!outDir){ download(blob, (sub ? sub.replace(/\//g, '_') + '_' : '') + name); return '다운로드 폴더'; }
+  const fh = await (await subDir(sub, true)).getFileHandle(name, { create: true });
+  const w = await fh.createWritable(); await w.write(blob); await w.close();
+  const f = await fh.getFile();
+  if (f.size !== blob.size) throw new Error('저장된 파일 크기가 다릅니다');
+  const where = outDir.name + (sub ? '/' + sub : '');
+  if (/\.tif$/.test(name)){ const rt = TM.readTiff(new Uint8Array(await f.arrayBuffer())); return `${where} (${rt.W}×${rt.H} 다시 읽어 확인)`; }
+  return where;
+}
+// 지정 폴더에 이 사진의 보정본이 이미 있으면 그 이름
+async function savedName(it, fmt){
+  if (!outDir) return null;
+  let d; try { d = await subDir(it.path, false); } catch { return null; }
+  for (const rv of [false, true]){
+    const n = outName(it.name, fmt, rv);
+    try { await d.getFileHandle(n); return n; } catch {}
+  }
+  return null;
+}
+const r1 = v => Math.round(v * 10) / 10;
+function makeReport(it, fmt, extra){
+  const st = it.st || it.sum, m = it.m, f = st && st.face, af = it.qc && it.qc.after.face, o = it.opt || mOpt, pr = it.qc && it.qc.print;
+  return {
+    파일: it.name, 폴더: it.path || '', 결과: extra.result, 저장파일: extra.out || '', 원본크기: it.W ? `${it.W}×${it.H}` : '', 저장크기: extra.size || '',
+    형식: { tif16: 'TIFF 16비트', tif8: 'TIFF 8비트', jpg: 'JPEG' }[fmt], 보정방식: isMatch() ? '기준 매칭' : style,
+    얼굴검출: f ? (f.found ? st.by : '없음') : '',
+    얼굴밝기: m && f && f.found ? `${r1(f.medL)} → ${af ? r1(af.medL) : r1(m.face.to)} (기준 ${r1(ref.stats.face.medL)})` : '',
+    피부색: f && f.found ? `a${r1(f.a)} b${r1(f.b)}` + (af ? ` → a${r1(af.a)} b${r1(af.b)}` : '') : '',
+    화이트밸런스: m ? `a${r1(m.wb[0])} b${r1(m.wb[1])} (${m.wbBy})` : '',
+    노출감마: m ? m.g.toFixed(2) : '', 명암: m ? r1(m.k * 100) : '', 채도: m ? m.cs.toFixed(2) : '',
+    강도: isMatch() ? Math.round(o.str * 100) : '', 피부보호: isMatch() ? Math.round(o.prot * 100) : '', 사진별조정: it.opt ? '예' : '',
+    하이라이트: st ? `${(st.clip * 100).toFixed(2)}%` + (it.qc ? ` → ${(it.qc.after.clip * 100).toFixed(2)}%` : '') : '',
+    인쇄크기: it.W && extra.dpi ? `${(it.W / extra.dpi * 2.54).toFixed(1)}×${(it.H / extra.dpi * 2.54).toFixed(1)}cm (${extra.dpi}ppi)` : '',
+    인쇄프로파일: pr ? (printer.desc || printer.name) : '',
+    인쇄색역밖: pr ? `${(pr.oog * 100).toFixed(1)}% (피부 ${(pr.oogSkin * 100).toFixed(1)}%)` : '',
+    인쇄후피부색변화: pr ? `ΔE ${pr.dEskin.toFixed(1)}` : '',
+    총잉크량: pr ? `${pr.tac995}% (최대 ${pr.tacMax}%)` : '',
+    인쇄경고: pr ? pr.warn.join(' · ') : '',
+    품질검사: extra.qc || '', 오류: extra.error || '', 처리초: extra.sec != null ? extra.sec.toFixed(1) : ''
+  };
+}
+function reportCsv(rows){
+  if (!rows.length) return new Blob([''], { type: 'text/csv' });
+  const head = Object.keys(rows[0]), esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  return new Blob(['﻿' + [head.map(esc).join(','), ...rows.map(r => head.map(k => esc(r[k])).join(','))].join('\r\n')], { type: 'text/csv' });
+}
+async function processLocal(it){
+  const fmt = $('#fmt').value, ppi = $('#ppi300').checked, t0 = performance.now();
+  it.busy = true; setState(it, 'processing');
+  const rec = { style, sizeBefore: '', sizeAfter: '' };
+  try {
+    const r = await exportItem(it, fmt, ppi);
+    rec.sizeBefore = `${it.W}×${it.H}`; rec.sizeAfter = `${r.W}×${r.H}`;
+    rec.params = isMatch() ? matchRec(it) : { ...it.p };
+    if (r.errors.length) throw new Error('저장 검증 실패: ' + r.errors.join(', '));
+    const review = isMatch() && it.m ? [...it.m.review, ...(it.qc ? it.qc.fails : [])] : [];
+    const name = outName(it.name, fmt, review.length > 0);
+    const where = await writeOut(name, r.blob, it.path);
+    rec.outName = (it.path ? it.path + '/' : '') + name; rec.qc = review.length ? review.join(' · ') : (isMatch() ? '통과' : '');
+    addHistory({ it, before: null, after: null, rec, result: review.length ? '검수 필요' : '성공' });
+    it.report = makeReport(it, fmt, { result: review.length ? '검수 필요' : '완료', out: rec.outName, size: rec.sizeAfter, qc: rec.qc, dpi: r.dpi, sec: (performance.now() - t0) / 1000 });
+    setState(it, review.length ? 'review' : 'done', review.join(' · '));
+    return `${name} → ${where}`;
+  } catch (e) {
+    addHistory({ it, before: null, after: null, rec, result: '실패', error: e.message });
+    it.report = makeReport(it, fmt, { result: '실패', error: e.message, sec: (performance.now() - t0) / 1000 });
+    setState(it, 'failed', e.message);
+    return null;
+  } finally {
+    it.busy = false;
+    if (items[cur] !== it) unloadLocalItem(it);
+  }
+}
+/* ---------- 내 컴퓨터 일괄 처리 (한 장씩 순서대로 → 수백 장이어도 메모리 일정) ---------- */
+const lb = { paused: false, stop: false, wake: null };
+let jobs = store.get('jt_jobs', []);
+async function runLocal(list, label, { skipSaved = false } = {}){
+  if (busy || !list.length) return;
+  busy = true; lb.paused = false; lb.stop = false; updateButtons();
+  const fmt = $('#fmt').value, t0 = Date.now(), rows = [];
+  list.forEach(it => setState(it, 'wait'));
+  let done = 0, skip = 0, work = 0;
+  for (let i = 0; i < list.length; i++){
+    while (lb.paused && !lb.stop){ status(`일시 정지됨 (${i}/${list.length})`); await new Promise(r => lb.wake = r); }
+    if (lb.stop) break;
+    const it = list[i];
+    if (skipSaved){
+      const ex = await savedName(it, fmt);
+      if (ex){ skip++; setState(it, /_검수필요\./.test(ex) ? 'review' : 'done', '이미 저장됨: ' + ex); rows.push(makeReport(it, fmt, { result: '건너뜀 (이미 저장됨)', out: (it.path ? it.path + '/' : '') + ex })); continue; }
+    }
+    const el = (Date.now() - t0) / 1000, eta = work ? Math.round(el / work * (list.length - i)) : 0;
+    status(`${label} ${i + 1}/${list.length}: ${it.path ? it.path + '/' : ''}${it.name}` + (eta ? ` · 남은 시간 약 ${eta >= 60 ? Math.round(eta / 60) + '분' : eta + '초'}` : ''));
+    await sleep(15);
+    await processLocal(it);
+    work++; done++;
+    rows.push(it.report);
+  }
+  const stopped = lb.stop;
+  if (stopped) list.forEach(it => { if (it.state === 'wait') setState(it, 'wait', '중지되어 처리하지 않음'); });
+  const c = s => list.filter(x => x.state === s && !(x.err || '').startsWith('이미 저장됨')).length;
+  const sec = Math.round((Date.now() - t0) / 1000);
+  const job = { date: new Date().toISOString(), label, total: list.length, ok: c('done'), review: c('review'), fail: c('failed'), skip, stopped, sec,
+    fmt, ref: isMatch() ? ref.name : style, dir: outDir ? outDir.name : '다운로드 폴더', report: '' };
+  // 처리 결과 보고서 (사진별 분석·보정값·검사 결과)
+  if (rows.length > 1 || list.length > 1){
+    const stamp = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '_');
+    job.report = `졸업색톤_처리결과_${stamp}.csv`;
+    try { await writeOut(job.report, reportCsv(rows)); } catch (e) { job.report = '보고서 저장 실패: ' + e.message; }
+  }
+  jobs.unshift(job); if (jobs.length > 200) jobs.length = 200; store.set('jt_jobs', jobs); renderJobs();
+  busy = false; updateButtons();
+  status(`${stopped ? '중지했습니다' : '끝났습니다'} (${sec}초). 완료 ${job.ok}장 · 검수 필요 ${job.review}장 · 실패 ${job.fail}장` + (skip ? ` · 이미 저장되어 건너뜀 ${skip}장` : '') + (job.report && !job.report.startsWith('보고서') ? ` · 보고서 ${job.report}` : ''), job.fail > 0);
+  if (items[cur]) select(cur);
+  if (consOpen) renderConsistency();
+}
+function renderJobs(){
+  const ul = $('#jobList'); if (!ul) return;
+  ul.innerHTML = '';
+  if (!jobs.length){ ul.innerHTML = '<li>아직 일괄 작업이 없습니다.</li>'; return; }
+  jobs.slice(0, 20).forEach(j => {
+    const li = document.createElement('li');
+    li.textContent = `${new Date(j.date).toLocaleString('ko-KR')} · ${j.label} ${j.total}장 → 완료 ${j.ok} · 검수 ${j.review} · 실패 ${j.fail}` + (j.skip ? ` · 건너뜀 ${j.skip}` : '') + (j.stopped ? ' · 중지됨' : '') + ` · ${j.sec}초 · ${j.dir}` + (j.report ? ` · ${j.report}` : '');
+    ul.appendChild(li);
+  });
+}
+function download(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+$('#saveOne').onclick = async () => {
+  const it = items[cur]; if (!it || busy) return;
+  busy = true; updateButtons(); status('원본 해상도로 보정 · 저장 중…');
+  await sleep(30);
+  const r = await processLocal(it);
+  busy = false; updateButtons();
+  status(r ? `저장했습니다: ${r}` + (it.state === 'review' ? ` (검수 필요: ${it.err})` : '') : `${it.name}: ${it.err}`, !r || it.state === 'review');
+};
+$('#saveAll').onclick = () => {
+  if (!outDir && items.length > 3 && 'showDirectoryPicker' in window && !confirm('저장 폴더를 지정하지 않아 사진마다 다운로드됩니다. 계속할까요?\n(취소 후 "저장 폴더 지정"을 권장합니다)')) return;
+  runLocal(items.slice(), '보정 · 저장', { skipSaved: $('#skipSaved').checked });
+};
+$('#retryLocal').onclick = () => runLocal(items.filter(x => x.state === 'failed' || x.state === 'review'), '다시 처리');
+$('#lPause').onclick = () => {
+  if (!busy) return;
+  lb.paused = !lb.paused; if (!lb.paused && lb.wake) lb.wake();
+  updateButtons();
+};
+$('#lStop').onclick = () => {
+  if (!busy || !confirm('지금 처리 중인 사진까지만 저장하고 멈출까요?')) return;
+  lb.stop = true; if (lb.wake) lb.wake(); status('지금 사진까지 마치고 멈춥니다…');
+};
+$('#dirBtn').onclick = async () => {
+  if (!('showDirectoryPicker' in window)){ status('이 브라우저는 폴더 지정을 지원하지 않습니다. 크롬이나 엣지를 사용하세요.', true); return; }
+  try {
+    outDir = await showDirectoryPicker({ id: 'tone-out', mode: 'readwrite' });
+    $('#dirNote').textContent = `저장 폴더: ${outDir.name}`;
+  } catch (e) { if (e.name !== 'AbortError') status(e.message, true); }
+};
+$('#fmt').onchange = () => {
+  $('#jpgWarn').hidden = $('#fmt').value !== 'jpg'; $('#cmykWarn').hidden = $('#fmt').value !== 'cmyk';
+  store.set('jt_fmt', $('#fmt').value);
+};
+$('#fmt').value = store.get('jt_fmt', 'tif16') === 'cmyk' ? 'tif16' : store.get('jt_fmt', 'tif16'); $('#fmt').onchange();
+
+/* ---------- 기준 사진 ---------- */
+function showRef(){
+  $('#refCard').hidden = !ref; $('#refNone').hidden = !!ref; $('#refClear').hidden = !ref;
+  $('#refBtn').textContent = ref ? '기준 사진 바꾸기' : '기준 사진 등록';
+  if (!ref) return;
+  const s = ref.stats, f = s.face;
+  $('#refImg').src = ref.thumb; $('#refName').textContent = ref.name;
+  $('#refStats').textContent = (f.found ? `얼굴 밝기 ${f.medL.toFixed(0)} · 피부 a${f.a.toFixed(1)} b${f.b.toFixed(1)}` : '얼굴 없음 (피부 매칭 안 함)') +
+    ` · 중립색 a${s.neu.a.toFixed(1)} b${s.neu.b.toFixed(1)} · ${ref.size}`;
+}
+async function setReference(file){
+  if (busy) return;
+  status('기준 사진 분석 중…');
+  try {
+    const d = await decodeLocal(file);
+    const size = `${d.raw.width}×${d.raw.height}`;
+    const view = orientCanvas(drawScaled(d.raw, PREVIEW_MAX), d.orientation);
+    d.raw.close();
+    const st = await TM.analyze(view);
+    if (!st.face.found && !confirm('기준 사진에서 얼굴을 찾지 못했습니다. 피부톤 매칭 없이 등록할까요?')){ status(''); return; }
+    ref = { name: file.name, date: new Date().toISOString(), size, stats: TM.slim(st), thumb: drawScaled(view, 200).toDataURL('image/jpeg', 0.85) };
+    store.set('jt_ref', ref);
+    showRef(); setStyle('match');
+    status(`기준 사진을 등록했습니다: ${file.name}` + (st.face.found ? ` (${st.by})` : ''));
+  } catch (e) { status(e.message, true); }
+}
+$('#refBtn').onclick = () => $('#refInput').click();
+$('#refInput').onchange = () => { const f = $('#refInput').files[0]; $('#refInput').value = ''; if (f) setReference(f); };
+$('#refClear').onclick = () => {
+  if (!confirm('기준 사진을 지울까요? 보정 방식은 "자연스럽게"로 바뀝니다.')) return;
+  ref = null; store.set('jt_ref', null); showRef(); setStyle('natural');
+};
+function setStyle(s){
+  if (s === 'match' && !ref){ status('먼저 기준 사진을 등록하세요.', true); $('#refInput').click(); return; }
+  style = s;
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', x.dataset.style === s));
+  items.forEach(it => {
+    if (it.a){ it.auto = autoParams(it.a, style); it.p = { ...it.auto }; }
+    if (it.src === 'drive' && !it.view) it.forMd5 = null;
+    computeMatch(it);
+  });
+  updateButtons(); syncSliders();
+  const it = items[cur];
+  if (it && it.view){ (isMatch() ? prepMatch(it) : Promise.resolve()).then(() => { if (items[cur] === it) schedulePreview(); }); }
+  else renderAnal(it);
+}
+function setOpt(){
+  const o = { str: +$('#m_str').value / 100, prot: +$('#m_prot').value / 100 };
+  $('#o_str').textContent = $('#m_str').value; $('#o_prot').textContent = $('#m_prot').value;
+  const it = items[cur];
+  if (it && it.opt){ it.opt = o; computeMatch(it); }   // 이 사진만
+  else { mOpt = o; store.set('jt_match_opt', mOpt); items.forEach(it => { if (!it.opt) computeMatch(it); }); }
+  schedulePreview();
+}
+// 선택한 사진에 맞게 매칭 슬라이더 표시 (사진별 값이 있으면 그 값)
+function syncMatch(){
+  const it = items[cur], o = (it && it.opt) || mOpt;
+  $('#m_str').value = Math.round(o.str * 100); $('#m_prot').value = Math.round(o.prot * 100);
+  $('#o_str').textContent = $('#m_str').value; $('#o_prot').textContent = $('#m_prot').value;
+  $('#m_own').checked = !!(it && it.opt);
+}
+$('#m_own').onchange = () => {
+  const it = items[cur]; if (!it) return;
+  if ($('#m_own').checked) it.opt = { ...mOpt }; else delete it.opt;
+  if (it.el) it.el.classList.toggle('own', !!it.opt);
+  computeMatch(it); syncMatch(); schedulePreview();
+};
+syncMatch();
+$('#m_str').addEventListener('input', setOpt); $('#m_prot').addEventListener('input', setOpt);
+$('#zoomBtn').onclick = async () => {
+  zoom = !zoom;
+  $('#zoomBtn').setAttribute('aria-pressed', zoom); $('#zoomBtn').textContent = zoom ? '맞춤 보기' : '100% 확대';
+  $('#compare').classList.toggle('zoom', zoom);
+  const it = items[cur];
+  if (it && it.view){ status(zoom ? '원본 크기로 불러오는 중…' : ''); try { await drawCompare(it); } catch (e) { status(e.message, true); } status(''); schedulePreview(); }
+};
+
+/* ---------- 이벤트 ---------- */
+KEYS.forEach(k => {
+  $('#s_' + k).addEventListener('input', e => {
+    const it = items[cur]; if (!it || !it.p) return;
+    it.p[k] = +e.target.value;
+    $('#o_' + k).textContent = fmt(k, it.p[k]);
+    schedulePreview();
+  });
+});
+$('#resetBtn').onclick = () => { const it = items[cur]; if (!it || !it.auto) return; it.p = { ...it.auto }; syncSliders(); schedulePreview(); };
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => {
+  if (batch.running || busy) return;
+  setStyle(b.dataset.style);
+  if (items.length && style === b.dataset.style) status(`모든 사진을 "${b.textContent}" 기준으로 다시 맞췄습니다.`);
+});
+
+$('#connectBtn').onclick = async () => {
+  try {
+    await getToken(true);
+    status('Google Drive에 연결했습니다.');
+    if (batch.running && batch.paused && batch.wake){ batch.paused = false; updateButtons(); batch.wake(); }
+  } catch (e) { status(e.message, true); if (!cfgReady()) $('#setup').open = true; }
+  updateConn();
+};
+$('#folderBtn').onclick = async () => {
+  try { const f = await pickFolder(); if (f) await openFolder(f); }
+  catch (e) { status(e.message, true); }
+  updateConn();
+};
+$('#reopenBtn').onclick = async () => {
+  const f = store.get('jt_folder', null); if (!f) return;
+  try { await getToken(); await openFolder(f); } catch (e) { status(e.message, true); }
+  updateConn();
+};
+$('#ovOne').onclick = async () => {
+  const it = items[cur]; if (!it) return;
+  const copy = $('#dOut').value === 'copy';
+  if (!copy && !confirm(`${it.name} 원본 파일을 보정 결과로 덮어씁니다.\n파일명·위치·파일 ID는 그대로 유지됩니다.\n진행할까요?`)) return;
+  try { await getToken(); } catch (e) { status(e.message, true); return; }
+  status(`저장 중: ${it.name}`);
+  if (copy) await processDrive(it); else await overwrite(it);
+  const where = copy ? `"${OUT_DIR}" 폴더에 저장했습니다` : '원본에 저장했습니다';
+  status(it.state === 'done' ? `${it.name} ${where}.` : `${it.name}: ${it.err || '취소했습니다'}`, it.state === 'failed' || it.state === 'review');
+};
+const dCopy = () => $('#dOut').value === 'copy';
+$('#ovSel').onclick = () => runBatch(items.filter(x => x.checked && x.state !== 'skipped'), '선택 사진 보정', { skipSaved: $('#dSkip').checked });
+$('#ovAll').onclick = () => runBatch(items.filter(x => x.state !== 'skipped' && (dCopy() || x.state !== 'done')), '폴더 전체 보정', { skipSaved: $('#dSkip').checked });
+$('#retryBtn').onclick = () => runBatch(items.filter(x => x.state === 'failed' || (dCopy() && x.state === 'review')), '다시 처리');
+$('#dStop').onclick = () => { if (batch.running && confirm('지금 처리 중인 사진까지만 저장하고 멈출까요?')){ batch.stop = true; if (batch.paused && batch.wake){ batch.paused = false; batch.wake(); } } };
+$('#dOut').onchange = () => {
+  const copy = dCopy();
+  $('#dOutNote').textContent = copy ? `사진이 있는 폴더마다 "${OUT_DIR}" 폴더를 만들어 저장합니다. 원본은 바뀌지 않습니다.` : '보정 결과를 같은 파일에 JPEG로 덮어씁니다. 파일명·위치·파일 ID는 그대로입니다. 저장 형식 설정은 쓰지 않습니다.';
+  $('#ovOne').textContent = copy ? '이 사진 보정 · 저장' : '이 사진 덮어쓰기';
+  store.set('jt_dout', $('#dOut').value); updateButtons();
+};
+$('#dOut').value = store.get('jt_dout', 'copy'); $('#dOut').onchange();
+$('#prof').onchange = () => { const v = $('#prof').value; if (v === 'custom') $('#profInput').click(); else setPrinter(v); };
+$('#profInput').onchange = () => { const f = $('#profInput').files[0]; $('#profInput').value = ''; if (f) setPrinter('custom', f); else setPrinter(store.get('jt_prof', '')); };
+
+/* ---------- 앨범 전체 색상 일관성 ---------- */
+let consOpen = false;
+function consData(){
+  const rs = ref && ref.stats.face.found ? ref.stats.face : null;
+  return items.map((it, i) => {
+    const st = it.sum, f = st && st.face;
+    if (!f || !f.found) return { i, it, face: false, analyzed: !!st };
+    const af = isMatch() ? afterOf(it) : null;
+    const dE0 = rs ? Math.hypot(f.medL - rs.medL, f.a - rs.a, f.b - rs.b) : null;
+    const dE1 = rs && af ? Math.hypot(af.L - rs.medL, af.a - rs.a, af.b - rs.b) : null;
+    return { i, it, face: true, analyzed: true, L0: f.medL, a0: f.a, b0: f.b, L1: af ? af.L : null, a1: af ? af.a : null, b1: af ? af.b : null, real: af ? af.real : false, dE0, dE1 };
+  });
+}
+const mean = a => a.reduce((x, y) => x + y, 0) / (a.length || 1);
+const sd = a => { const m = mean(a); return Math.sqrt(mean(a.map(v => (v - m) ** 2))); };
+function renderConsistency(){
+  const data = consData(), fs = data.filter(d => d.face), rs = ref && ref.stats.face.found ? ref.stats.face : null;
+  const notAnalyzed = data.filter(d => !d.analyzed).length, noFace = data.filter(d => d.analyzed && !d.face);
+  $('#consAnalyze').hidden = !(mode === 'drive' && notAnalyzed);
+  $('#consNote').textContent = !items.length ? '사진을 불러오면 분석합니다.' :
+    `분석 ${data.length - notAnalyzed}/${data.length}장 · 얼굴 찾음 ${fs.length}장` + (notAnalyzed ? ` · 아직 분석 안 한 사진 ${notAnalyzed}장` : '') +
+    (isMatch() ? ' · 보정 후 값은 처리한 사진은 실제 결과, 나머지는 예측값' : ' · 기준 매칭 방식에서 보정 후 값을 보여 줍니다');
+  const L0 = fs.map(d => d.L0), L1 = fs.filter(d => d.L1 != null).map(d => d.L1);
+  const e0 = fs.filter(d => d.dE0 != null).map(d => d.dE0), e1 = fs.filter(d => d.dE1 != null).map(d => d.dE1);
+  const kpi = (v, t) => `<div><b>${v}</b><span>${t}</span></div>`;
+  $('#consKpi').innerHTML = fs.length ? [
+    kpi(`${sd(L0).toFixed(1)} → ${L1.length ? sd(L1).toFixed(1) : '-'}`, '얼굴 밝기 편차 (작을수록 고름)'),
+    kpi(`${mean(L0).toFixed(1)} → ${L1.length ? mean(L1).toFixed(1) : '-'}`, `얼굴 밝기 평균 (기준 ${rs ? rs.medL.toFixed(1) : '-'})`),
+    kpi(`${e0.length ? mean(e0).toFixed(1) : '-'} → ${e1.length ? mean(e1).toFixed(1) : '-'}`, '기준 피부색과의 차이 ΔE 평균'),
+    kpi(`${e0.length ? Math.max(...e0).toFixed(1) : '-'} → ${e1.length ? Math.max(...e1).toFixed(1) : '-'}`, '가장 많이 다른 사진 ΔE')
+  ].join('') : '';
+  // 차트 1: 얼굴 밝기 점그림 (전·후 두 줄 + 기준선)
+  const cs = getComputedStyle(document.documentElement), col = n => cs.getPropertyValue(n).trim();
+  const lo = 35, hi = 95, X = v => 40 + (clamp(v, lo, hi) - lo) / (hi - lo) * 460;
+  let s = '';
+  for (let v = 40; v <= 90; v += 10) s += `<line x1="${X(v)}" x2="${X(v)}" y1="16" y2="122" stroke="${col('--line')}"/><text x="${X(v)}" y="140" text-anchor="middle">${v}</text>`;
+  if (rs) s += `<line x1="${X(rs.medL)}" x2="${X(rs.medL)}" y1="12" y2="126" stroke="${col('--accent')}" stroke-width="2" stroke-dasharray="4 3"/><text x="${X(rs.medL)}" y="10" text-anchor="middle" style="fill:${col('--accent')}">기준</text>`;
+  s += `<text x="4" y="48">전</text><text x="4" y="100">후</text>`;
+  fs.forEach(d => {
+    const j = ((d.i * 37) % 17 - 8) * 1.4;
+    s += `<circle cx="${X(d.L0)}" cy="${44 + j}" r="3.5" fill="${col('--idle')}" opacity=".8"><title>${d.it.name}: ${d.L0.toFixed(1)}</title></circle>`;
+    if (d.L1 != null) s += `<circle cx="${X(d.L1)}" cy="${96 + j}" r="3.5" fill="${d.real ? col('--ok') : col('--run')}" opacity=".85"><title>${d.it.name}: ${d.L1.toFixed(1)}${d.real ? '' : ' (예측)'}</title></circle>`;
+  });
+  $('#consL').innerHTML = s;
+  // 차트 2: 피부색 a·b 산점도 (전 → 후 화살표, 기준 ◆)
+  const A = v => 30 + (clamp(v, 0, 30) / 30) * 255, B = v => 200 - (clamp(v, 0, 35) / 35) * 185;
+  let t = `<rect x="30" y="15" width="255" height="185" fill="none" stroke="${col('--line')}"/>`;
+  for (let v = 0; v <= 30; v += 10) t += `<text x="${A(v)}" y="214" text-anchor="middle">a ${v}</text>`;
+  for (let v = 0; v <= 35; v += 10) t += `<text x="26" y="${B(v) + 3}" text-anchor="end">${v}</text>`;
+  fs.forEach(d => {
+    t += `<circle cx="${A(d.a0)}" cy="${B(d.b0)}" r="3" fill="${col('--idle')}" opacity=".7"><title>${d.it.name} 보정 전 a${d.a0.toFixed(1)} b${d.b0.toFixed(1)}</title></circle>`;
+    if (d.a1 != null){
+      t += `<line x1="${A(d.a0)}" y1="${B(d.b0)}" x2="${A(d.a1)}" y2="${B(d.b1)}" stroke="${col('--line')}"/>`;
+      t += `<circle cx="${A(d.a1)}" cy="${B(d.b1)}" r="3.2" fill="${d.real ? col('--ok') : col('--run')}"><title>${d.it.name} 보정 후 a${d.a1.toFixed(1)} b${d.b1.toFixed(1)}</title></circle>`;
+    }
+  });
+  if (rs) t += `<path d="M${A(rs.a)} ${B(rs.b) - 7}l7 7l-7 7l-7-7z" fill="${col('--accent')}"><title>기준 피부색 a${rs.a.toFixed(1)} b${rs.b.toFixed(1)}</title></path>`;
+  $('#consAB').innerHTML = t;
+  // 검토 대상: 얼굴 없음, 기준과 차이가 큰 사진, 밝기 차이가 큰 사진, 인쇄 경고
+  const out = [];
+  noFace.forEach(d => out.push([d.i, '얼굴 없음']));
+  fs.forEach(d => {
+    const L = d.L1 != null ? d.L1 : d.L0, e = d.dE1 != null ? d.dE1 : d.dE0;
+    if (rs && Math.abs(L - rs.medL) > 6) out.push([d.i, `밝기 ${L.toFixed(0)}`]);
+    else if (e != null && e > 8) out.push([d.i, `피부색 차이 ΔE ${e.toFixed(1)}`]);
+  });
+  items.forEach((it, i) => { if (it.qc && it.qc.print && it.qc.print.warn.length) out.push([i, '인쇄 경고']); });
+  const box = $('#consOut'); box.innerHTML = '';
+  if (!out.length){ box.innerHTML = '<span class="note">없음</span>'; }
+  out.slice(0, 80).forEach(([i, why]) => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.textContent = `${items[i].name} · ${why}`; b.onclick = () => select(i); box.appendChild(b);
+  });
+  consRows = data.map(d => ({
+    파일: d.it.name, 폴더: d.it.path || '', 얼굴: d.face ? '찾음' : d.analyzed ? '없음' : '분석 안 함',
+    '얼굴밝기 전': d.face ? d.L0.toFixed(1) : '', '얼굴밝기 후': d.L1 != null ? d.L1.toFixed(1) : '',
+    '피부 a·b 전': d.face ? `${d.a0.toFixed(1)} / ${d.b0.toFixed(1)}` : '', '피부 a·b 후': d.a1 != null ? `${d.a1.toFixed(1)} / ${d.b1.toFixed(1)}` : '',
+    '기준과 ΔE 전': d.dE0 != null ? d.dE0.toFixed(1) : '', '기준과 ΔE 후': d.dE1 != null ? d.dE1.toFixed(1) : '',
+    '후 값': d.L1 == null ? '' : d.real ? '실제' : '예측', 상태: STATE_LABEL[d.it.state] || ''
+  }));
+}
+let consRows = [];
+$('#consBtn').onclick = () => {
+  consOpen = !consOpen; $('#consist').hidden = !consOpen; $('#consBtn').setAttribute('aria-pressed', consOpen);
+  if (consOpen){ renderConsistency(); $('#consist').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+};
+$('#consCsv').onclick = () => { renderConsistency(); download(reportCsv(consRows), '졸업색톤_앨범일관성.csv'); };
+$('#consAnalyze').onclick = async () => {
+  if (batch.running || busy) return;
+  const list = items.filter(it => it.src === 'drive' && !it.sum && it.state !== 'skipped');
+  busy = true; updateButtons();
+  try {
+    await getToken();
+    for (let k = 0; k < list.length; k++){
+      const it = list[k];
+      status(`Drive 사진 분석 ${k + 1}/${list.length}: ${it.name}`);
+      try { await loadDriveItem(it); } catch (e) { it.err = e.message; }
+      if (items[cur] !== it) unloadDriveItem(it);
+      if (k % 5 === 4) renderConsistency();
+    }
+    status(`${list.length}장을 분석했습니다.`);
+  } catch (e) { status(e.message, true); }
+  busy = false; updateButtons(); renderConsistency();
+};
+$('#pauseBtn').onclick = () => {
+  if (!batch.running) return;
+  if (batch.paused){
+    if (!tokenValid(5 * 60000)){ status('먼저 "Google 다시 연결"을 눌러 주세요.', true); return; }
+    batch.paused = false; if (batch.wake) batch.wake();
+  } else batch.paused = true;
+  updateButtons();
+};
+$('#selAll').onclick = () => { items.forEach(it => { if (it.state !== 'skipped'){ it.checked = true; if (it.cb) it.cb.checked = true; } }); updateButtons(); };
+$('#selNone').onclick = () => { items.forEach(it => { it.checked = false; if (it.cb) it.cb.checked = false; }); updateButtons(); };
+
+$('#cfgClient').value = cfg.clientId; $('#cfgKey').value = cfg.apiKey; $('#cfgApp').value = cfg.appId;
+$('#cfgSave').onclick = () => {
+  cfg = { clientId: $('#cfgClient').value.trim(), apiKey: $('#cfgKey').value.trim(), appId: $('#cfgApp').value.trim() };
+  store.set('jt_cfg', cfg); tokenClient = null; token = null; everConnected = false;
+  status(cfgReady() ? '설정을 저장했습니다. "Google 연결"을 눌러 주세요.' : '세 가지 값을 모두 넣어 주세요.', !cfgReady());
+  updateConn();
+};
+
+const fileInput = $('#fileInput');
+$('#pickBtn').onclick = $('#addBtn').onclick = () => fileInput.click();
+fileInput.onchange = () => { addFiles(fileInput.files); fileInput.value = ''; };
+let dragDepth = 0;
+addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; document.body.classList.add('dragging'); });
+addEventListener('dragleave', () => { if (--dragDepth <= 0){ dragDepth = 0; document.body.classList.remove('dragging'); } });
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging'); addFiles(e.dataTransfer.files); });
+
+const frame = $('#frame');
+const posFrom = e => { const r = frame.getBoundingClientRect(); setSplit((e.clientX - r.left) / r.width); };
+frame.addEventListener('pointerdown', e => { frame.setPointerCapture(e.pointerId); posFrom(e); });
+frame.addEventListener('pointermove', e => { if (frame.hasPointerCapture(e.pointerId)) posFrom(e); });
+$('#divider').addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') { setSplit(split - 0.05); e.preventDefault(); }
+  if (e.key === 'ArrowRight') { setSplit(split + 0.05); e.preventDefault(); }
+});
+addEventListener('beforeunload', e => { if (batch.running || locks.size){ e.preventDefault(); e.returnValue = ''; } });
+
+if (!cfgReady()) $('#setup').open = true;
+setSplit(0.5); showLastFolder(); renderHistory(); syncSliders(); updateConn();
+setPrinter(store.get('jt_prof', 'builtin'));
+renderJobs(); showRef(); document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', x.dataset.style === style));
+</script>
+</body>
+</html>

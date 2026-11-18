@@ -950,9 +950,9 @@ function ybReport(){const r=S.ybRp,d=ybRpData();
   return `<section class="sec"><div class="seg">${[['day','일간'],['week','주간'],['month','월간']].map(([k,t])=>`<button class="${r.kind===k?'on':''}" data-act="ybrpk" data-v="${k}">${t}</button>`).join('')}</div>
     <div class="row" style="margin-top:10px"><button class="link" data-act="ybrpnav" data-v="-1" aria-label="이전">‹</button><b class="grow" style="text-align:center">${esc(d.label)}</b><button class="link" data-act="ybrpnav" data-v="1" aria-label="다음">›</button><button class="chip" data-act="ybrpnav" data-v="0">오늘</button><button class="chip" data-act="ybrpcopy">글로 복사</button></div></section>
   ${d.sec.map(s=>`<section class="sec">${secH(esc(s.t),s.n,s.total?`<b>${esc(s.total)}</b>`:'')}<div class="box">${s.rows.length?s.rows.map(x=>`<div class="row ybm"><span class="grow title">${esc(x[0])}</span><span class="muted">${esc(x[1])}</span></div>`).join(''):'<p class="muted">기록이 없어요</p>'}${s.note?`<p class="muted" style="margin-top:6px">${esc(s.note)}</p>`:''}</div></section>`).join('')}`}
-// 졸업앨범 디자이너5: 인쇄·파일 저장이 필요해 새 탭으로 엽니다. 웹사이트 버전은 같은 사이트의 designer 폴더, claude.ai 버전은 스튜디오 PC의 프로그램
-const YB_DESIGNER_URL=window.FIREBASE_CONFIG?'designer/index.html':'http://localhost:8795/';
-function ybDesignerLink(){return `<section class="sec"><div class="box"><div class="row"><span class="grow"><b class="title">졸업앨범 디자이너5</b><br><span class="muted">${window.FIREBASE_CONFIG?'앨범 편집기를 새 탭에서 엽니다. 사진은 이 컴퓨터에만 저장되니 작업 후 앨범 파일로 저장해 주세요.':'앨범 편집기를 새 탭에서 엽니다. 스튜디오 PC에서 시작 파일을 먼저 실행해 주세요.'}</span></span><a class="btn" href="${YB_DESIGNER_URL}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;flex:none">열기</a></div></div></section>`}
+// 졸업앨범 디자이너2: 인쇄·파일 저장이 필요해 새 탭으로 엽니다. 웹사이트 버전은 같은 사이트의 designer 폴더, claude.ai 버전은 스튜디오 PC의 프로그램
+const YB_DESIGNER_URL=window.FIREBASE_CONFIG?'designer/index.html':'http://localhost:8775/';
+function ybDesignerLink(){return `<section class="sec"><div class="box"><div class="row"><span class="grow"><b class="title">졸업앨범 디자이너2</b><br><span class="muted">${window.FIREBASE_CONFIG?'앨범 편집기를 새 탭에서 엽니다. 사진은 이 컴퓨터에만 저장되니 작업 후 앨범 파일로 저장해 주세요.':'앨범 편집기를 새 탭에서 엽니다. 스튜디오 PC에서 시작 파일을 먼저 실행해 주세요.'}</span></span><a class="btn" href="${YB_DESIGNER_URL}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;flex:none">열기</a></div></div></section>`}
 function vCust(){
   let h=`<div class="sec">${subs('cust',[['reservations','예약'],['deliveries','사진 출고'],['albums','졸업앨범'],['customers','고객']])}</div>`;
   const g=S.sub.cust,t=today();

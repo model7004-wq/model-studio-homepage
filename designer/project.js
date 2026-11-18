@@ -3,11 +3,12 @@
    ============================================================ */
 const ALBUM_MAGIC = 'GRADALB1';
 const TEMPLATES_KEY = 'gradAlbum.templates';
-const LAYOUT_KEYS = ['theme', 'size', 'bleed', 'soloShape', 'useFlower', 'useStrip', 'useScene', 'useSceneRow', 'useSong', 'useFaculty', 'useVice', 'useInstr', 'msgPages', 'outdoorPer', 'galRows', 'wrapOn', 'wrapSpine', 'wrapFold', 'wrapHinge', 'wrapBoard'];
+const LAYOUT_KEYS = ['theme', 'size', 'bleed', 'soloShape', 'useFlower', 'useStrip', 'useScene', 'useSceneRow', 'useSong', 'useFaculty', 'useVice', 'useInstr', 'msgPages', 'kGroupN', 'kPersonal', 'outdoorPer', 'galRows', 'wrapOn', 'wrapSpine', 'wrapFold', 'wrapHinge', 'wrapBoard', 'schoolTpl'];
 const BUILTIN_TEMPLATES = [
-  { name: '산양중 2025 배치', cfg: { useFlower: true, useStrip: true, useScene: false, useSong: true, useFaculty: false, useVice: false, useInstr: true, msgPages: 3 } },
-  { name: '꽃 프로필 · 작은 사진 포함', cfg: { useFlower: true, useStrip: true, useScene: true, useSceneRow: true, useSong: true, useFaculty: true, useVice: true, outdoorPer: 7, galRows: 5 } },
-  { name: '기본 (증명사진 크게 · 추가 쪽 없음)', cfg: { useFlower: false, useStrip: false, useScene: false, useSceneRow: false, useSong: false, useFaculty: true, useVice: true, outdoorPer: 7, galRows: 4 } },
+  { name: '경북조리과학고 2026 (84쪽 · 신사절)', cfg: { schoolTpl: 'gjcook', size: 'sinsa', bleed: true, wrapOn: false, pad4: false } },     // 시안의 사진 자리 그대로 + 새 디자인 (gjcook.js)
+  { name: '산양중 2025 배치', cfg: { schoolTpl: '', useFlower: true, useStrip: true, useScene: false, useSong: true, useFaculty: false, useVice: false, useInstr: true, msgPages: 3 } },
+  { name: '꽃 프로필 · 작은 사진 포함', cfg: { schoolTpl: '', useFlower: true, useStrip: true, useScene: true, useSceneRow: true, useSong: true, useFaculty: true, useVice: true, outdoorPer: 7, galRows: 5 } },
+  { name: '기본 (증명사진 크게 · 추가 쪽 없음)', cfg: { schoolTpl: '', useFlower: false, useStrip: false, useScene: false, useSceneRow: false, useSong: false, useFaculty: true, useVice: true, outdoorPer: 7, galRows: 4 } },
 ];
 
 /* ---------------- 앨범 목록 ---------------- */
@@ -46,6 +47,7 @@ function deleteAlbum(id) {
   const r = albumRegistry();
   localStorage.removeItem(storeKeyOf(id));
   indexedDB.deleteDatabase(dbNameOf(id));
+  indexedDB.deleteDatabase(dbNameOf(id) + '-pv');      // 편집 화면용 미리보기
   r.ids = r.ids.filter(x => x !== id);
   delete r.saved[id];
   if (!r.ids.length) r.ids = ['default'];
@@ -696,6 +698,7 @@ function bindProjectPanel() {
   // 싸바리 표지
   $('#w-on').checked = S.wrapOn !== false;
   $('#w-on').addEventListener('change', e => { S.wrapOn = e.target.checked; saveState(); render(); });
+  if ($('#w-blend')) { $('#w-blend').checked = S.spineBlend !== false; $('#w-blend').addEventListener('change', e => { S.spineBlend = e.target.checked; saveState(); render(); }); }
   for (const [k, id] of Object.entries({ wrapSpine: '#w-spine', wrapFold: '#w-fold', wrapHinge: '#w-hinge', wrapBoard: '#w-board' })) {
     $(id).value = S[k];
     $(id).addEventListener('change', e => { S[k] = e.target.value; saveState(); render(); });
@@ -711,16 +714,21 @@ function bindProjectPanel() {
   });
 
   // 판 구성
-  const checks = { useFlower: '#l-flower', useStrip: '#l-strip', useScene: '#l-scene', useSceneRow: '#l-scenerow', useSong: '#l-song', useFaculty: '#l-faculty', useVice: '#l-vice', useInstr: '#l-instr' };
+  const checks = { useFlower: '#l-flower', useStrip: '#l-strip', useScene: '#l-scene', useSceneRow: '#l-scenerow', useSong: '#l-song', useFaculty: '#l-faculty', useVice: '#l-vice', useInstr: '#l-instr', kPersonal: '#l-kpersonal' };
   const nums = { outdoorPer: '#l-outdoor', galRows: '#l-galrows', msgPages: '#l-msgpages' };
   const fillLayout = () => {
     for (const [k, id] of Object.entries(checks)) $(id).checked = S[k] !== false;
     for (const [k, id] of Object.entries(nums)) $(id).value = S[k];
   };
-  fillLayout();
-  window.undoFillLayout = fillLayout;
+  // 디자이너2 초안 배치 (기본은 꺼짐)
+  const v2 = $('#l-layoutv2');
+  const fillLayout2 = () => { if (v2) v2.checked = !!S.layoutV2; };
+  v2?.addEventListener('change', e => { S.layoutV2 = e.target.checked; saveState(); render(); });
+  const fillLayoutAll = () => { fillLayout(); fillLayout2(); };
+  fillLayoutAll();
+  window.undoFillLayout = fillLayoutAll;
   for (const [k, id] of Object.entries(checks)) $(id).addEventListener('change', e => { S[k] = e.target.checked; saveState(); render(); });
-  for (const [k, id] of Object.entries(nums)) $(id).addEventListener('change', e => { S[k] = e.target.value; saveState(); render(); });
+  for (const [k, id] of Object.entries(nums)) $(id).addEventListener('change', e => { S[k] = e.target.value; if (k === 'galRows') delete S.galCells; saveState(); render(); });      // 줄 수를 직접 바꾸면 쪽당 칸 수 맞춤(galCells)은 풂
   const fillTemplates = () => { $('#l-tpl').innerHTML = templateOptions(); };
   fillTemplates();
   $('#l-apply').addEventListener('click', () => {
@@ -745,3 +753,77 @@ function bindProjectPanel() {
   });
 }
 bindProjectPanel();
+
+/* 주소로 앨범 파일 열기: http://localhost:8795/?open=_open/파일.album
+   (앨범 폴더 안 _open 폴더에 둔 .album 파일을 받아 새 앨범으로 엶. 다 열면 주소에서 open을 지움) */
+addEventListener('DOMContentLoaded', async () => {
+  const src = new URLSearchParams(location.search).get('open');
+  if (!src || !/^_open\/[^?#]+\.album$/i.test(src)) return;
+  history.replaceState(null, '', location.pathname);
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(30,26,22,.55);color:#fff;font:600 18px/1.6 "Noto Sans KR",sans-serif;text-align:center';
+  const say = t => { box.innerHTML = t; };
+  document.body.appendChild(box);
+  try {
+    say(`앨범 파일을 받는 중…<br><small>${esc(src.slice(6))}</small>`);
+    const res = await fetch(`/${src.split('/').map(encodeURIComponent).join('/')}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`파일을 찾지 못했습니다 (${res.status})`);
+    const total = +res.headers.get('content-length') || 0, rd = res.body.getReader(), parts = [];
+    let got = 0;
+    for (;;) {
+      const { done, value } = await rd.read();
+      if (done) break;
+      parts.push(value); got += value.length;
+      if (total) say(`앨범 파일을 받는 중… ${Math.round(got / total * 100)}%<br><small>${esc(src.slice(6))}</small>`);
+    }
+    const file = new File(parts, src.slice(6), { type: 'application/octet-stream' });
+    flushState();
+    const { id, count } = await loadAlbumFile(file, (i, n) => say(`앨범 여는 중… ${i} / ${n}`));
+    say(`사진 ${count}장을 새 앨범으로 열었습니다.`);
+    switchAlbum(id);
+  } catch (err) { say(`앨범을 열지 못했습니다.<br><small>${esc(err.message || String(err))}</small><br><button style="margin-top:12px;font-size:15px" onclick="this.closest('div').remove()">닫기</button>`); }
+});
+/* 주소로 작업 파일 실행: http://localhost:8795/?run=_open/작업.js (앨범 폴더 안 _open 폴더의 작업만. 한 번 실행하면 주소에서 지움) */
+addEventListener('DOMContentLoaded', () => {
+  const src = new URLSearchParams(location.search).get('run');
+  if (!src || !/^_open\/[\w.-]+\.js$/.test(src)) return;
+  history.replaceState(null, '', location.pathname);
+  setTimeout(() => { const s = document.createElement('script'); s.src = `/${src}?t=${Date.now()}`; document.body.appendChild(s); }, 1500);      // 앨범 · 사진을 다 읽은 뒤
+});
+/* 같은 앨범을 다른 탭(창)에서 고치면 이 탭은 새로 불러옴 → 예전 상태가 남은 탭이 새 변경을 덮어쓰지 않게 */
+addEventListener('storage', e => {
+  if (e.key !== STORE_KEY || e.newValue == null) return;
+  clearTimeout(saveTimer); saveTimer = null;
+  const n = document.createElement('div');
+  n.textContent = '다른 창에서 이 앨범이 바뀌어 새로 불러옵니다…';
+  n.style.cssText = 'position:fixed;left:50%;top:60px;transform:translateX(-50%);z-index:99999;padding:10px 18px;border-radius:8px;background:#333;color:#fff;font:600 14px "Noto Sans KR",sans-serif';
+  document.body.appendChild(n);
+  setTimeout(() => location.reload(), 800);
+});
+/* ⚡ 가볍게: 오래 작업해 느려지면(메모리에 쌓인 사진 · 실행 취소 기록 등) 저장 후 다시 열어 메모리를 비움.
+   미리보기는 보관돼 있어 2~3초면 다시 열리고, 보던 자리 · 확대 배율은 그대로 */
+const FAST_KEY = 'gradAlbum.fastReload';
+async function speedUp() {
+  if (typeof galBulk !== 'undefined' && galBulk) { alert('사진을 넣는 중입니다. 다 들어간 뒤에 눌러 주세요.'); return; }
+  const n = document.createElement('div');
+  n.textContent = '⚡ 저장하고 가볍게 다시 여는 중…';
+  n.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(30,26,22,.45);color:#fff;font:600 18px "Noto Sans KR",sans-serif';
+  document.body.appendChild(n);
+  document.activeElement?.blur?.();       // 쓰던 글자 칸의 내용도 저장되게
+  await new Promise(r => setTimeout(r, 450));      // 사진 위치 저장(0.3초 모아 저장)이 끝나길 기다림
+  flushState();
+  await DB.req('readonly', s => s.count());      // 앞서 보낸 사진 저장이 모두 끝난 뒤에 이어짐
+  try { sessionStorage.setItem(FAST_KEY, JSON.stringify({ x: scrollX, y: scrollY, t: Date.now() })); } catch { /* 자리 기억 못 해도 다시 열기는 함 */ }
+  location.reload();
+}
+window.speedUp = speedUp;
+addEventListener('load', () => {
+  let p = null;
+  try { p = JSON.parse(sessionStorage.getItem(FAST_KEY) || 'null'); sessionStorage.removeItem(FAST_KEY); } catch { /* 없음 */ }
+  if (!p || Date.now() - p.t > 60000) return;
+  let tries = 0;
+  const go = () => { if (!window.__photosLoaded && tries++ < 50) return setTimeout(go, 100); setTimeout(() => scrollTo(p.x, p.y), 150); window.proNote?.('⚡ 가볍게 다시 열었습니다.'); };
+  go();
+});
+/* 저장을 모아서 하므로(0.6초), 그 사이에 창을 닫거나 새로 고쳐도 마지막 변경이 남게 바로 저장 */
+addEventListener('pagehide', () => { if (saveTimer) { try { flushState(); } catch { /* 저장소 사용 불가 */ } } });

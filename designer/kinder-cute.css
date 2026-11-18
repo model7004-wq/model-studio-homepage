@@ -1,0 +1,56 @@
+/* 유치원 템플릿 「귀여운 유치원」 (kinder-cute.js) */
+/* 사진틀: 파스텔 테두리 + 안쪽 점선 */
+.lf.cu-box,.lf.cu-circ{padding:1.25cqw;background:#fff;border:.45cqw solid var(--cu,#E3CBAE);border-radius:2.4cqw;box-shadow:0 .2cqw .6cqw rgba(140,110,80,.12)}
+.lf.cu-box::before,.lf.cu-circ::before{content:'';position:absolute;inset:.45cqw;border:.16cqw dashed var(--cu,#E3CBAE);border-radius:1.9cqw;pointer-events:none;z-index:2}
+.lf.cu-box .photo{border-radius:1.3cqw}
+.lf.cu-circ,.lf.cu-circ::before,.lf.cu-circ .photo{border-radius:50%}
+.lf.cu-kid{padding:.7cqw;border-width:.3cqw;border-radius:1.6cqw}
+.lf.cu-kid::before{inset:.25cqw;border-width:.12cqw;border-radius:1.3cqw}
+.lf.cu-kid .photo{border-radius:.9cqw}
+.lf.cu-note{padding:1.2cqw;background:#fff;box-shadow:0 .3cqw 1cqw rgba(90,110,130,.18)}
+.lf.cu-notch{padding:1.3cqw;background:#fff;border:.22cqw solid var(--cu,#B89A82);border-radius:1.2cqw}
+.lf.cu-notch::before{content:'';position:absolute;inset:-1cqw;border:.12cqw solid var(--cu,#B89A82);border-radius:1.8cqw;opacity:.7;pointer-events:none}
+.lf.cu-notch .photo{border-radius:.6cqw}
+.lf.cu-sh{padding:2.1cqw;background:none}
+.lf.cu-sh .photo{position:relative;z-index:1}
+.cu-line{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:0}
+.cu-line .cu-fill{fill:#fff;stroke:none;filter:drop-shadow(0 .2cqw .4cqw rgba(140,110,80,.12))}
+.cu-line .cu-solid{fill:none;stroke-width:.45cqw;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.cu-line .cu-dash{fill:none;stroke-width:.16cqw;stroke-dasharray:.9cqw .6cqw;vector-effect:non-scaling-stroke}
+.cu-pin{position:absolute;top:-1.6cqw;width:2.6cqw;height:2.6cqw;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FF9C8E,#D9473A 60%);box-shadow:0 .3cqw .4cqw rgba(0,0,0,.2);z-index:4;pointer-events:none}
+.cu-pin::after{content:'';position:absolute;left:50%;top:80%;width:.3cqw;height:1.6cqw;background:#9A9A9A;transform:translateX(-50%) rotate(-12deg);transform-origin:top}
+/* 글자 */
+.cu-rainbow{font-family:'Jua',sans-serif;font-size:6cqw;line-height:1.1;white-space:nowrap;text-shadow:0 .25cqw 0 rgba(255,255,255,.9),0 .35cqw .5cqw rgba(120,90,60,.15)}
+.cu-rainbow-l{font-size:7.4cqw}
+.cu-heart{color:#F08A9A;font-size:.6em;vertical-align:middle}
+.cu-small{font-family:'Jua',sans-serif;font-size:2.4cqw;color:#7A6352}
+.cu-en{font-family:'Jost',sans-serif;font-size:1.9cqw;letter-spacing:.32em;color:#7A6A5A}
+.cu-en-l{font-size:2.3cqw;letter-spacing:.12em}
+.cu-pen{font-family:'Nanum Pen Script',cursive;font-size:3.8cqw;line-height:1.15;color:#6B5A4A}
+.cu-title{font-family:'Jua',sans-serif;font-size:6.6cqw;color:#6B5040}
+.cu-cover-title{font-family:'Jua',sans-serif;font-size:5.4cqw;color:#6B5040}
+.cu-memo{display:flex;align-items:center;gap:2cqw;justify-content:center;font-family:'Gowun Batang',serif;font-size:2.2cqw;color:#6B5A4A}
+.cu-memo::before,.cu-memo::after{content:'';flex:0 0 7cqw;height:.12cqw;background:#BFAE9C}
+.cu-thanks{font-family:'Jost',sans-serif;font-size:2.2cqw;letter-spacing:.35em;color:#6B5A4A}
+.cu-pill{display:inline-block;min-width:70%;padding:.15cqw 1cqw;border-radius:2cqw;background:#ECE4D6;font-family:'Jua',sans-serif;font-size:1.8cqw;color:#6B5A4A;white-space:nowrap}
+.cu-tname{font-family:'Jua',sans-serif;font-weight:400;font-size:2.3cqw;color:#7A5A50}
+.cu-season{font-family:'Jua',sans-serif;font-size:5.2cqw;line-height:1.3;color:#7A9A6A;white-space:pre-line}
+.cu-season::first-letter{font-size:1.35em;color:#F08A9A}
+.cu-s-autumn{color:#7A6352}
+.cu-s-autumn::first-letter{color:#EE8A55}
+.cu-note-t{font-family:'Nanum Pen Script',cursive;font-size:3cqw;line-height:1.35;color:#6B5A4A;white-space:pre-line}
+.cu-note-s{font-size:2.4cqw;text-align:center}
+.cu-sign{font-family:'Nanum Pen Script',cursive;font-size:2.4cqw;line-height:1.25;color:#FFF7EA;white-space:pre-line;transform:rotate(-4deg)}
+.cu-iname{color:#B5743C}
+.cu-year{color:#B5743C}
+.cu-script{color:#A0764E}
+.cu-title-s{font-size:4.6cqw}
+.cu-tpill{display:block;font-size:1.75cqw;line-height:1.15;padding:.25cqw .5cqw;min-width:0;white-space:normal;word-break:keep-all;border-radius:1.2cqw}
+.cu-tpill span{color:#A08670;font-size:.85em}
+.cu-s-group{color:#6E8FB8}
+.cu-s-group::first-letter{color:#F2A23C}
+.cu-group-m{font-size:4.2cqw;text-align:center}
+/* 2쪽 사진틀: 기본 템플릿(k-thin)과 같은 크기 · 여백이라 같은 사진이 똑같이 들어감. 색만 파스텔로 */
+.lf.k-thin.cu-thin{border-color:#F2CF78;box-shadow:0 .25cqw .8cqw rgba(140,110,80,.14)}
+.lf.k-thin.cu-thin::before{content:'';position:absolute;inset:.35cqw;border:.14cqw dashed #F2CF78;pointer-events:none;z-index:2}
+.cu-rainbow-s{font-size:4.8cqw}

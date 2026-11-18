@@ -181,6 +181,8 @@ async function itReplace(key, res) {
     await DB.put(ok, { blob: p.blob, w: p.w, h: p.h, x: p.x, y: p.y, z: p.z });
   } else URL.revokeObjectURL(p.url);
   Object.assign(p, { blob: res.blob, w: res.w, h: res.h, url: URL.createObjectURL(res.blob) });
+  if (photos[`rot0--${key}`]) { delete photos[`rot0--${key}`]; await DB.drop(`rot0--${key}`); }      // 고친 사진을 새 기준으로 (돌린 각도는 이미 들어가 있음)
+  delete p.rot;
   if (res.svg) p.solo = false;     // 벡터는 인물 확인 대상이 아님
   await DB.put(key, recOf(p));
   applyKey(key);

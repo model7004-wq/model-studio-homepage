@@ -1,0 +1,38 @@
+/* 학교 템플릿 「경북조리과학고 2026」 (gjcook.js) */
+.page[data-kind^="k-gj-"]{--photo-empty:#EDE5D6}
+.lf.gj-ph{padding:0;border:0;background:none;overflow:hidden}
+.lf.gj-ph .photo{border-radius:inherit}
+.lf.gj-ph.gj-cut{background:var(--gj-card,#F0E7D6)}
+.lf.gj-ph.gj-cut .photo{background-color:transparent}
+.lf.gj-ph.gj-pol{padding:var(--gj-bw,.8cqw);background:#FFFDF9;box-shadow:0 .25cqw .9cqw rgba(60,45,30,.26);overflow:visible}
+.lf.gj-ph.gj-pol .photo{border-radius:0}
+.lf.gj-ph.gj-soft{box-shadow:0 .2cqw .8cqw rgba(60,45,30,.16)}
+.lf.gj-ph.gj-mat{box-shadow:0 0 0 .32cqw #FFFDF9,0 .3cqw 1cqw rgba(40,50,70,.22)}
+.lf.gj-ph.gj-ondark{box-shadow:0 0 0 .3cqw #FFFDF9,0 .35cqw 1.1cqw rgba(90,65,20,.28)}
+.gj-off,.gj-sh{position:absolute;box-sizing:border-box;pointer-events:none}
+.gj-vec{position:absolute;left:-7cqw;top:-7cqw;width:100cqw;height:100cqh;pointer-events:none;overflow:visible}
+.lt.gj-lt{display:flex;flex-direction:column;overflow:visible;box-sizing:border-box}
+.gj-tx{margin:0;white-space:pre-wrap;overflow-wrap:break-word;word-break:keep-all;font-weight:400}
+.gj-f-sans{font-family:'Noto Sans KR',sans-serif;font-weight:500}
+.gj-f-serif{font-family:'Noto Serif KR','Nanum Myeongjo',serif}
+.gj-f-disp{font-family:'Cormorant Garamond','Noto Serif KR',serif;font-weight:500;line-height:1!important;font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
+.gj-f-cap{font-family:'Jost','Noto Sans KR',sans-serif;font-weight:400}
+.gj-f-hand{font-family:'Nanum Pen Script','Gowun Batang',cursive}
+.gj-up{text-transform:uppercase}
+.gj-r40{font-size:.4em}.gj-r50{font-size:.5em}.gj-r60{font-size:.6em}.gj-r70{font-size:.7em}.gj-r80{font-size:.8em}.gj-r90{font-size:.9em}
+.gj-r110{font-size:1.1em}.gj-r120{font-size:1.2em}.gj-r130{font-size:1.3em}.gj-r140{font-size:1.4em}.gj-r150{font-size:1.5em}.gj-r160{font-size:1.6em}
+.gj-r170{font-size:1.7em}.gj-r180{font-size:1.8em}.gj-r190{font-size:1.9em}.gj-r200{font-size:2em}.gj-r210{font-size:2.1em}.gj-r220{font-size:2.2em}
+/* 쪽 번호 · 머리글 */
+.gj-folio{position:absolute;top:calc(96.4cqh - 7cqw);display:flex;align-items:center;gap:.9cqw;font-family:'Jost','Noto Sans KR',sans-serif;pointer-events:none;white-space:nowrap}
+.gj-folio b{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:2.5cqw;line-height:1;font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
+.gj-folio i{display:block;width:.12cqw;height:2cqw}
+.gj-folio span{font-size:.82cqw;letter-spacing:.2em;opacity:.8}
+.gj-folio.gj-l{left:calc(5cqw - 7cqw)}
+.gj-folio.gj-r{right:calc(5cqw - 7cqw);flex-direction:row-reverse}
+.gj-head{position:absolute;top:calc(2.1cqh - 7cqw);left:calc(5cqw - 7cqw);width:90cqw;display:flex;align-items:center;gap:1cqw;font-family:'Jost','Noto Sans KR',sans-serif;font-size:1cqw;letter-spacing:.24em;pointer-events:none;white-space:nowrap}
+.gj-head i{display:block;width:.9cqw;height:.9cqw;flex:none}
+.gj-head u{display:block;flex:1;height:.1cqw;text-decoration:none}
+.gj-head.gj-r{flex-direction:row-reverse}
+.gj-head.gj-mid{top:calc(4.6cqh - 7cqw);left:calc(10cqw - 7cqw);width:80cqw;font-size:1.15cqw}
+.lf.gj-ph.gj-sheet{background:#FFFDF9;box-shadow:0 0 0 .5cqw #FFFDF9,0 .5cqw 1.8cqw rgba(60,45,30,.24)}
+.lf.gj-ph.gj-sheet .photo{background-color:transparent}

@@ -2,7 +2,7 @@
    썸네일은 페이지를 그대로 복사하지 않고 사진틀 위치와 사진만 작게 그려서 가벼움. */
 let pgSel = null, pgTimer = null;
 const pgData = () => (S.pageEdits ||= { extra: [], hidden: [], next: 1 });
-const pgPages = () => [...document.querySelectorAll('#pages .page')];
+const pgPages = () => [...document.querySelectorAll('#pages .page')].filter(p => !p.dataset.pid.includes('~'));   // 유치원 개인 앨범의 복사본은 빼고 원본만
 const pgNote = t => { const n = document.getElementById('pg-note'); if (n) n.textContent = t || ''; };
 
 function pgThumb(page, no) {
@@ -33,8 +33,9 @@ function pgBuild() {
     const label = idx.length > 1 ? `${idx[0] + 1}-${idx[1] + 1}` : `${idx[0] + 1}`;
     html += `<div class="pg-spread${single ? ' single' : ''}"><div class="pg-pair">${idx.map(i => pgThumb(pages[i], i + 1)).join('')}</div><span>${label}</span></div>`;
   };
-  if (pages.length) row([0], true);
-  for (let i = 1; i < pages.length; i += 2) row(i + 1 < pages.length ? [i, i + 1] : [i], false);
+  const from = G.kPairFirst ? 0 : 1;     // 유치원앨범은 1·2쪽부터 펼침
+  if (pages.length && from) row([0], true);
+  for (let i = from; i < pages.length; i += 2) row(i + 1 < pages.length ? [i, i + 1] : [i], false);
   box.innerHTML = html;
   box.scrollTop = keep;
   document.getElementById('pg-count').textContent = `${spreads} 스프레드의 ${pages.length} 페이지`;
@@ -46,7 +47,8 @@ function pgBuild() {
 }
 function pagePanelSoon() {
   clearTimeout(pgTimer);
-  pgTimer = setTimeout(pgBuild, 350);
+  if (!document.body.classList.contains('pg-open')) return;      // 패널이 닫혀 있으면 열 때 새로 그림
+  pgTimer = setTimeout(pgBuild, 700);      // 여러 번 고치면 한 번에 모아 다시 그림
 }
 function pgSelect(pid, scroll) {
   pgSel = pid;
@@ -96,8 +98,8 @@ function pgRestore() {
   pagePanelSoon();
 }
 function pgNeedPage() {
-  const pid = pgCurrent();
-  if (!pid || !document.querySelector(`#pages .page[data-pid="${CSS.escape(pid)}"]`)) { pgNote('틀을 넣을 쪽을 먼저 누르세요.'); return null; }
+  const pid = framePage || pgCurrent();      // 마지막으로 누른 곳 (표지 전개도의 앞 · 뒤표지 포함)
+  if (!pid || !document.querySelector(`#pages ${PG(CSS.escape(pid))}`)) { pgNote('틀을 넣을 쪽(또는 앞 · 뒤표지)을 먼저 누르세요.'); return null; }
   return pid;
 }
 function pgAddPhotoFrame() {

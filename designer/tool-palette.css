@@ -1,0 +1,93 @@
+/* 도구 팔레트 (tool-palette.js) · 일러스트레이터 도구 패널처럼 다크그레이 2열 */
+#tp{position:fixed;z-index:13;top:54px;left:326px;width:84px;padding:0 0 6px;background:#323232;border:1px solid #1f1f1f;border-radius:5px;box-shadow:0 4px 14px rgba(0,0,0,.35);user-select:none;font:12px system-ui,'Malgun Gothic',sans-serif;color:#d6d6d6}
+#tp.one{width:46px}
+body.lp-closed #tp.dock{left:6px}
+body.pro #tp.dock{top:calc(var(--pt) + 8px);left:calc(var(--pr) + 6px)}
+body.pro.pro-side #tp.dock{left:calc(var(--pr) + var(--pf) + 6px)}
+#tp.dock{transition:left .2s ease}
+.tp-head{display:flex;align-items:center;gap:2px;height:18px;padding:0 3px;background:#272727;border-radius:5px 5px 0 0;cursor:move}
+.tp-grip{flex:1;height:6px;background:repeating-linear-gradient(90deg,#5a5a5a 0 2px,transparent 2px 4px);border-radius:1px;opacity:.8}
+.tp-hb{flex:none;width:16px;height:14px;padding:0;border:0;border-radius:2px;background:transparent;color:#aaa;font:10px/14px system-ui;cursor:pointer}
+.tp-hb:hover{background:#4a4a4a;color:#fff}
+#tp.one .tp-hb[data-h="min"]{display:none}
+.tp-tools{display:grid;grid-template-columns:repeat(2,36px);gap:2px;justify-content:center;padding:6px 0 4px}
+#tp.one .tp-tools{grid-template-columns:36px}
+#tp.min .tp-tools,#tp.min .tp-color{display:none}
+.tp-tool{position:relative;width:36px;height:32px;padding:0;border:0;border-radius:4px;background:transparent;color:#d6d6d6;cursor:default;display:grid;place-items:center}
+.tp-tool svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.tp-tool:hover{background:#474747;color:#fff}
+.tp-tool.on{background:#1d1d1d;color:#fff;box-shadow:inset 0 0 0 1px #5d5d5d}
+.tp-tool.hit{background:#2f7de1;color:#fff}
+.tp-tool.tp-soon{color:#8a8a8a}
+.tp-more{position:absolute;right:3px;bottom:3px;width:0;height:0;border-left:4px solid transparent;border-bottom:4px solid #9a9a9a}
+.tp-color{padding:6px 6px 0;border-top:1px solid #262626;margin:2px 4px 0}
+.tp-sq{position:relative;width:64px;height:52px;margin:0 auto}
+#tp.one .tp-sq{width:34px;height:34px;transform:scale(.62);transform-origin:0 0;margin:0 0 -16px 2px}
+.tp-sw{position:absolute;width:30px;height:30px;padding:0;border:1px solid #111;cursor:pointer;background:transparent}
+.tp-fill{left:6px;top:4px;background:var(--c);box-shadow:0 0 0 1px #888 inset;z-index:2}
+.tp-stroke{left:22px;top:20px;z-index:1;background:transparent;box-shadow:0 0 0 7px var(--c) inset,0 0 0 8px #888 inset}
+.tp-stroke.front{z-index:3}
+.tp-fill.none,.tp-stroke.none{background:#fff linear-gradient(to top right,transparent 46%,#e0302a 47% 53%,transparent 54%)!important;box-shadow:0 0 0 1px #888 inset}
+.tp-stroke.none{box-shadow:0 0 0 7px transparent inset,0 0 0 1px #888 inset}
+.tp-mini{position:absolute;width:14px;height:14px;padding:0;border:0;background:transparent;color:#bbb;font:11px/14px system-ui;cursor:pointer}
+.tp-mini:hover{color:#fff}
+.tp-swap{right:0;top:0}
+.tp-def{left:0;bottom:0}
+.tp-def i{position:absolute;width:7px;height:7px;border:1px solid #bbb}
+.tp-def i:first-child{left:1px;top:1px;background:#fff;z-index:1}
+.tp-def i:last-child{left:5px;top:5px;background:transparent;box-shadow:0 0 0 1.5px #111 inset}
+.tp-modes{display:flex;justify-content:center;gap:3px;margin:5px 0 0}
+#tp.one .tp-modes{flex-direction:column;align-items:center}
+.tp-modes button{width:20px;height:16px;padding:0;border:1px solid #1d1d1d;border-radius:2px;cursor:pointer}
+.tp-modes [data-c="color"]{background:#8a8a8a}
+.tp-modes [data-c="grad"]{background:linear-gradient(90deg,#fff,#111)}
+.tp-modes [data-c="none"]{background:#fff linear-gradient(to top right,transparent 44%,#e0302a 45% 55%,transparent 56%)}
+.tp-modes button:hover{outline:1px solid #6fa3ff}
+
+/* 말풍선 · 세부 도구 · 색 고르기 */
+#tp-tip{position:fixed;z-index:45;max-width:240px;padding:6px 9px;border-radius:4px;background:#1c1c1c;color:#eee;font:12px/1.45 system-ui,'Malgun Gothic',sans-serif;box-shadow:0 3px 10px rgba(0,0,0,.4);pointer-events:none}
+#tp-tip kbd,#tp-sub kbd{display:inline-block;padding:0 4px;border-radius:3px;background:#3a3a3a;color:#ffd38a;font:11px/16px system-ui}
+#tp-tip small{color:#aaa}
+#tp-tip .tp-soon-t{color:#ffb766}
+#tp-sub{position:fixed;z-index:44;min-width:190px;padding:4px;border-radius:5px;background:#2b2b2b;box-shadow:0 6px 18px rgba(0,0,0,.45);font:12.5px system-ui,'Malgun Gothic',sans-serif}
+.tp-sub-t{padding:4px 8px 6px;color:#999;font-size:11px}
+#tp-sub button{display:flex;width:100%;align-items:center;gap:10px;padding:6px 8px;border:0;border-radius:3px;background:transparent;color:#eee;font:inherit;text-align:left;cursor:pointer}
+#tp-sub button span{flex:1}
+#tp-sub button:hover{background:#2f7de1}
+#tp-sub button.on span::before{content:'■ ';color:#6fa3ff}
+#tp-pop{position:fixed;z-index:44;width:236px;padding:8px 10px 10px;border-radius:6px;background:#3a3a3a;color:#e8e8e8;box-shadow:0 8px 24px rgba(0,0,0,.45);font:12px/1.4 system-ui,'Malgun Gothic',sans-serif}
+#tp-sub[hidden],#tp-pop[hidden],#tp-tip[hidden]{display:none}
+.tp-pop-h{display:flex;align-items:center;margin:0 0 8px}
+.tp-pop-h b{flex:1}
+.tp-pop-h button{border:0;background:transparent;color:#ccc;font-size:16px;cursor:pointer}
+.tp-pop-row{display:flex;gap:6px;align-items:center;margin:0 0 6px}
+.tp-pop-row input[type=color]{width:38px;height:28px;padding:0;border:1px solid #222;border-radius:3px;background:#222;cursor:pointer}
+.tp-pop-row input[type=text]{flex:1;min-width:0;height:26px;padding:0 6px;border:1px solid #222;border-radius:3px;background:#262626;color:#fff;font:12px ui-monospace,Consolas,monospace;text-transform:uppercase}
+.tp-pop-row button{width:28px;height:26px;border:0;border-radius:3px;background:#555;color:#fff;cursor:pointer}
+.tp-rgb label{flex:1;display:flex;align-items:center;gap:3px;color:#bbb}
+.tp-rgb input,.tp-pop-line input[type=number]{width:100%;min-width:0;height:24px;padding:0 4px;border:1px solid #222;border-radius:3px;background:#262626;color:#fff;font:12px system-ui}
+.tp-pop-line{display:flex;align-items:center;gap:6px;margin:0 0 6px;color:#ccc}
+.tp-pop-line span{flex:0 0 52px}
+.tp-pop-line input[type=number]{width:60px}
+.tp-pop-line input[type=range]{flex:1;accent-color:#6fa3ff}
+.tp-pop-line b{flex:0 0 36px;font-weight:400;text-align:right}
+.tp-pop-t{display:flex;align-items:center;justify-content:space-between;margin:6px 0 4px;color:#aaa;font-size:11px}
+.tp-pop-t button{border:0;border-radius:3px;background:#555;color:#fff;font:11px system-ui,'Malgun Gothic',sans-serif;padding:2px 6px;cursor:pointer}
+.tp-pal{display:flex;flex-wrap:wrap;gap:3px}
+.tp-pal button{width:20px;height:20px;padding:0;border:1px solid rgba(255,255,255,.25);border-radius:3px;cursor:pointer}
+.tp-pal button:hover{outline:2px solid #6fa3ff;outline-offset:1px}
+.tp-pop-n{margin:6px 0 0;color:#999;font-size:11px}
+
+/* 예전 사진틀 도구 상자는 이 팔레트가 대신함 (기능은 같은 draw-frames.js) */
+body.tp-on #df-toolbox{display:none!important}
+/* 편집 화면이 붙어 있는 팔레트에 가려지지 않게 */
+body.tp-docked:not(.pro) .pages{margin-left:calc(420px / var(--zoom,.6))}
+body.tp-docked.lp-closed:not(.pro) .pages{margin-left:calc(100px / var(--zoom,.6))}
+body.pro.tp-docked .pages{margin-left:calc((var(--pr) + 100px) / var(--zoom,.6))}
+body.pro.pro-side.tp-docked .pages{margin-left:calc((var(--pr) + var(--pf) + 100px) / var(--zoom,.6))}
+/* 손 · 확대 · 자르기 도구 커서 */
+body.tp-hand #pages,body.tp-hand #pages *{cursor:grab!important}
+body.tp-hand.hand-pan #pages,body.tp-hand.hand-pan #pages *{cursor:grabbing!important}
+body.tp-zoom #pages,body.tp-zoom #pages *{cursor:zoom-in!important}
+body.tp-crop #pages .trim .photo.has-img{cursor:move!important}
+@media print{#tp,#tp-tip,#tp-sub,#tp-pop{display:none!important}}

@@ -100,6 +100,9 @@ body.hand-pan,body.hand-pan *{cursor:grabbing!important}
 .photo.has-img .ph-hint{display:none}
 .ph-remove{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:#8a6a55;font-size:13px;line-height:20px;padding:0;cursor:pointer;display:none;box-shadow:0 1px 4px rgba(0,0,0,.15)}
 .photo.has-img:hover .ph-remove{display:block}
+.ph-rot{position:absolute;top:6px;right:30px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:#8a6a55;font-size:13px;line-height:20px;padding:0;cursor:pointer;display:none;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.photo.has-img:hover .ph-rot{display:block}
+.ph-rot:hover,.ph-remove:hover{background:#fff;color:#5a3f2e}
 .badge{position:absolute;left:5px;bottom:5px;background:#C0563F;color:#fff;font:600 9px/1.4 system-ui,sans-serif;padding:2px 6px;border-radius:4px;pointer-events:none}
 
 .arch-frame{position:relative;padding:.7cqw;border:.16cqw solid var(--gold-soft);border-radius:50% 50% .8cqw .8cqw / 40% 40% .8cqw .8cqw}
@@ -163,6 +166,14 @@ body.hand-pan,body.hand-pan *{cursor:grabbing!important}
 /* ---------------- 학생 페이지 ---------------- */
 .stu-head{flex:none;height:13cqw;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .stu-head .rule{margin-top:1.2cqw}
+/* 머리 제목 글자를 지우면 그 자리를 접음 → 아래 사진이 위로 커짐 (gal-fit.js) */
+.stu-head .fr-hidden{display:none}
+.stu-head:has(.fr-hidden){height:auto;padding-top:.6cqw}
+.gal-col .stu-head .rule{margin-top:.6cqw}      /* 갤러리: 글자와 바 사이를 좁게 */
+/* 장식 바: 얇아서 누르기 어려우므로 위아래로 누르는 자리를 넓힘 */
+.trim .rule[data-key]{cursor:move}
+.trim .rule[data-key]::before{content:"";position:absolute;left:0;right:0;top:-.8cqw;bottom:-.8cqw}
+@media print{.trim .rule[data-key]::before{display:none}}
 .stu-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(var(--cols,4),1fr);grid-template-rows:repeat(var(--rows),1fr);column-gap:var(--cg,3.2cqw);row-gap:3cqw}
 .stu{margin:0;display:flex;flex-direction:column;align-items:center;min-width:0}
 .stu .arch-frame{width:var(--pw);height:var(--ph);flex:none;padding:.55cqw}
@@ -195,7 +206,7 @@ body.hand-pan,body.hand-pan *{cursor:grabbing!important}
 @media print{
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{background:none}
-  .panel,.guide,.sheet-label,.ph-hint,.ph-remove,.badge,.gal-add,.pd{display:none!important}
+  .panel,.guide,.sheet-label,.ph-hint,.ph-remove,.ph-rot,.badge,.lnk-badge,.gal-add,.pd{display:none!important}
   .pages{margin:0;padding:0;display:block;zoom:1!important}
   .spread{display:block}
   .sheet{display:block}
@@ -300,6 +311,8 @@ body.hand-pan,body.hand-pan *{cursor:grabbing!important}
 .t-profile{flex:none;display:flex;gap:4.4cqw;align-items:center;padding:0 2cqw}
 .t-profile .arch-frame{flex:none;width:22cqw;height:27.5cqw}
 .tprofile{font-size:1.45cqw;line-height:2;color:var(--ink-soft)}
+/* 급훈 · 교훈 글을 모두 다른 곳으로 옮기면(안에 자리표시 fr-ghost만 남음) 빈 상자 테두리 선도 숨김 */
+.motto-box:not(:has(> :not(.fr-ghost))){border-color:transparent!important;background:none!important}
 .motto-box.class-motto{flex:none;margin:0 4cqw;padding:1.8cqw 4cqw;text-align:center}
 .class-motto .motto-text{font-size:2.3cqw;letter-spacing:.08em;margin-right:-.08em;word-break:keep-all}
 .t-letter{flex:1;min-height:0;padding:3cqw 4.4cqw}
@@ -319,6 +332,9 @@ body.hand-pan,body.hand-pan *{cursor:grabbing!important}
 .fl-frame{position:relative;width:var(--pw);height:var(--ph);flex:none;padding:.6cqw;background:#fff;box-shadow:0 .25cqw 1cqw rgba(110,85,60,.14)}
 .fl-frame .photo{width:100%;height:100%}
 .team-grid .flower figcaption{margin-top:.8cqw}
+.col.prof-fl{gap:1.6cqw}      /* 꽃 프로필 쪽: 제목 아래 간격을 줄여 사진을 위로 (줄인 만큼 사진이 커짐) */
+.col.prof-fl .stu-head{margin-bottom:-.6cqw}
+.col.prof-fl .stu-grid.team-grid{row-gap:1.4cqw}
 .stu-grid.team-grid{display:flex;flex-wrap:wrap;justify-content:center;align-content:space-evenly;row-gap:2.4cqw}
 .team-grid .stu{flex:none;width:calc((100% - (var(--cols) - 1) * var(--cg)) / var(--cols))}
 
@@ -579,6 +595,7 @@ body.fr-marqueeing,body.fr-marqueeing *{user-select:none!important;cursor:crossh
 .ws-text{writing-mode:vertical-rl;display:flex;align-items:center;gap:9mm;color:var(--ink);white-space:nowrap}
 .ws-title{font-family:var(--f-title);font-weight:800;font-size:4.4mm;letter-spacing:.32em}
 .ws-school{font-family:var(--f-title);font-weight:700;font-size:3.6mm;letter-spacing:.3em;color:var(--ink-soft)}
+.ws-nth{font-family:var(--f-title);font-weight:800;font-size:3.8mm;letter-spacing:.2em;color:var(--ink);text-orientation:upright}
 .wrap-face{position:absolute;container-type:size}
 .wf-frame{position:absolute;inset:4cqw;border:.2cqw solid var(--gold)}
 .wf-frame::after{content:"";position:absolute;inset:.9cqw;border:.08cqw solid var(--gold-soft)}
@@ -782,4 +799,170 @@ body.lp-closed .pages{margin-left:calc(40px / var(--zoom,.6))}
 #lp-toggle{position:fixed;top:8px;left:320px;z-index:11;width:22px;height:34px;padding:0;border:1px solid #E9DECD;border-left:0;border-radius:0 6px 6px 0;background:#FFFCF7;color:#8A7766;font:15px/1 system-ui,'Malgun Gothic',sans-serif;cursor:pointer;transition:left .2s ease;box-shadow:2px 1px 4px rgba(80,60,40,.12)}
 #lp-toggle:hover{background:#F3EBDD}
 body.lp-closed #lp-toggle{left:0}
-@media print{#lp-toggle{display:none!important}body.lp-closed .pages,.pages{margin-left:0!important}}
+@media print{#lp-toggle{display:none!important}body.lp-closed .pages,.pages{margin-left:0!important}}body.tx-dragging,body.tx-dragging *{user-select:none!important;cursor:move!important}
+.k-pname{font-family:'Gowun Batang',serif;font-weight:700;font-size:4.6cqw;color:#4A3F36;white-space:nowrap}
+.spread.k-copy .page{pointer-events:none}
+.spread.k-copy .lf:has(.photo[data-photo^="kp-"]){pointer-events:auto}
+/* 잠근 틀: 손잡이 대신 자물쇠 표시 */
+#fr-sel .fr-box.is-locked{border-style:dashed}
+#fr-sel .fr-box.is-locked .fr-h,#fr-sel .fr-box.is-locked .fr-edge,#fr-sel .fr-box.is-locked .fr-grip{display:none}
+#fr-sel .fr-box.is-locked::after{content:'🔒';position:absolute;right:-10px;top:-12px;font-size:14px;background:#fff;border-radius:50%;padding:1px 3px;box-shadow:0 1px 3px rgba(0,0,0,.25);pointer-events:none}
+.k-tname{font-family:'Gowun Batang',serif;font-weight:700;font-size:2.6cqw;color:#5A4A3C;white-space:nowrap}
+/* 마우스 오른쪽 버튼 메뉴 */
+#ctx-menu{position:fixed;z-index:100000;min-width:190px;padding:4px;background:#fff;border:1px solid #ddd2c4;border-radius:8px;box-shadow:0 6px 20px rgba(60,40,20,.18);font:13px/1.2 'Noto Sans KR',sans-serif}
+#ctx-menu button{display:flex;justify-content:space-between;gap:16px;width:100%;padding:7px 10px;border:0;background:none;border-radius:5px;text-align:left;color:#4a3f36;cursor:pointer}
+#ctx-menu button:hover{background:#f6eee4}
+#ctx-menu small{color:#a39486;font-size:11px}
+#ctx-menu hr{border:0;border-top:1px solid #eee5da;margin:3px 2px}
+.lf.k-thin{padding:1cqw;background:#fff;border:.22cqw solid #DDBDB9}
+/* 유치원 쪽 아래 작은 이름 · 쪽 번호 */
+.k-folio{position:absolute;bottom:2.4cqw;display:flex;align-items:baseline;gap:1.2cqw;z-index:60;pointer-events:none;font-family:'Gowun Batang',serif;color:#8E7D6E;font-size:1.5cqw;letter-spacing:.05em}
+.k-folio.is-left{left:4cqw}
+.k-folio.is-right{right:4cqw}
+.k-folio-no{font-family:'Cormorant Garamond',serif;font-size:1.9cqw;font-weight:500;color:#A0826E}
+.k-folio-name:empty{display:none}
+.k-cover-class{font-family:'Gowun Batang',serif;font-weight:700;font-size:3cqw;color:#6A4A30;letter-spacing:.08em}
+.k-cname{margin-left:.6em}
+/* 개인 앨범 복사본은 글자를 고칠 수 없게 만들어 둔 것이라, 원본(고칠 수 있는 글자)과 똑같이 줄이 바뀌도록 */
+.spread.k-copy .trim [data-key]{white-space:pre-wrap!important;overflow-wrap:break-word}
+/* Ctrl+E 내보내기 고르기 */
+.ex-pick{display:grid;gap:8px;min-width:320px}
+.ex-opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #e3d8cc;border-radius:8px;background:#fff;text-align:left;cursor:pointer;font:inherit;color:#4a3f36}
+.ex-opt:hover,.ex-opt:focus{border-color:#c9a98e;background:#fbf6f0;outline:none}
+.ex-opt.on{border-color:#b98a5e;box-shadow:0 0 0 2px rgba(185,138,94,.18)}
+.ex-opt b{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#f2e7da;color:#8a6a4e;font-size:13px;flex:none}
+.ex-opt span{display:flex;flex-direction:column;gap:2px;font-size:14px}
+.ex-opt small{color:#9a8a7c;font-size:12px}
+/* 쪽 아래 이름 · 번호: 늘 맨 위(사진틀 · 글자틀을 앞으로 보내도 가려지지 않게) + 뒤에 작은 구름 · 나뭇잎을 깔아 사진 위에서도 잘 보이게 */
+.k-folio{z-index:9000;bottom:1.5cqw;padding:.95cqw 2.8cqw 1.05cqw 3.6cqw;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40' preserveAspectRatio='none'%3E%3Cpath d='M14 34 C4 34 2 22 11 19 C9 9 22 5 29 11 C33 2 50 1 55 9 C61 1 79 2 82 11 C90 5 104 8 104 18 C116 18 118 33 106 34 Z' fill='%23FFFDF8' fill-opacity='.94' stroke='%23E2D2C0' stroke-width='1.2'/%3E%3C/svg%3E") center/100% 100% no-repeat}
+.k-folio::before{content:'';width:1.8cqw;height:1.8cqw;flex:none;align-self:center;margin-right:-.3cqw;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M3 17 Q4 6 17 3 Q15 15 3 17Z' fill='%239DBE8C'/%3E%3Cpath d='M3 17 Q9 11 15 5' stroke='%23779A68' stroke-width='1' fill='none'/%3E%3C/svg%3E") center/contain no-repeat}
+.k-folio.is-right{flex-direction:row}
+/* 도산유치원 템플릿 */
+@font-face{font-family:'NanumSquareDS';src:url('tpl/dosan/NanumSquareR.ttf') format('truetype');font-display:swap}
+.k-dsbg{overflow:hidden}
+.k-dsbg img{position:absolute;max-width:none;display:block;pointer-events:none;user-select:none}
+.lf.k-ds{padding:0;border:0;background:none;overflow:hidden}
+.lf.k-ds .photo{border-radius:inherit}
+.k-ovl{position:absolute;z-index:8000;pointer-events:none;max-width:none;display:block}
+.ds-empty{position:absolute;background:#fff}
+.ds-name{font-family:'NanumSquareDS','Noto Sans KR',sans-serif;font-size:1.45cqw;color:#2F2A28;white-space:nowrap;letter-spacing:.02em}
+.ds-head{font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:3.35cqw;color:#4E3B36;letter-spacing:-.045em;white-space:nowrap;transform:scaleX(.88);transform-origin:left center}
+@font-face{font-family:'TmonDS';src:url('tpl/dosan/TMONBlack.ttf') format('truetype');font-display:swap}
+.ds-eng{font-family:'TmonDS','Noto Sans KR',sans-serif;font-size:2.75cqw;color:#1E1A19;letter-spacing:.01em;white-space:nowrap}
+.ds-head{font-family:'TmonDS','Noto Sans KR',sans-serif;font-weight:400;transform:none;letter-spacing:-.02em;font-size:3.1cqw}
+.ds-memo{font-family:'TmonDS','Noto Sans KR',sans-serif;font-size:4.2cqw;color:#4E3B36;letter-spacing:.04em;white-space:nowrap}
+.ds-who{font-family:'TmonDS','Noto Sans KR',sans-serif;font-size:2.9cqw;color:#6A5048;letter-spacing:.06em;white-space:nowrap}
+.ds-who .k-cname{margin-left:.5em}
+/* 압축앨범(유치원): 펼침면 가운데(제본 쪽) 도련을 숨겨 두 쪽이 재단선에서 바로 이어지게 */
+body.k-layflat .spread{gap:0}
+body.k-layflat .spread > .sheet:first-child:not(:only-child) .page{clip-path:inset(0 var(--b) 0 0);margin-right:calc(-1 * var(--b))}
+body.k-layflat .spread > .sheet:last-child:not(:only-child) .page{clip-path:inset(0 0 0 var(--b));margin-left:calc(-1 * var(--b))}
+/* 도산 2쪽 아래 글자 */
+.ds-eng{font-size:2.55cqw;letter-spacing:.06em;line-height:1}
+.ds-who{display:flex;align-items:center;justify-content:center;gap:1cqw;font-size:2.15cqw;letter-spacing:.14em;color:#6A5048;line-height:1}
+.ds-who .k-cname{margin-left:0}
+.ds-dot{width:.55cqw;height:.55cqw;border-radius:50%;background:#D7A9A2;flex:none}
+/* 도산 5쪽 위 제목 */
+.ds-head2{display:flex;align-items:center;gap:1.1cqw;height:100%;font-family:'TmonDS','Noto Sans KR',sans-serif;color:#4E3B36;white-space:nowrap}
+.ds-sprout{width:3.6cqw;height:3.6cqw;flex:none}
+.ds-h-year{font-size:2.3cqw;color:#9A7F6E;letter-spacing:.02em}
+.ds-h-class{font-size:3.6cqw;letter-spacing:.01em}
+.ds-h-badge{font-size:2.1cqw;color:#fff;background:#E6B67E;border-radius:99px;padding:.55cqw 1.6cqw .5cqw;letter-spacing:.12em;box-shadow:0 .2cqw .5cqw rgba(160,110,60,.18)}
+.ds-h-line{flex:1;height:.25cqw;min-width:4cqw;border-radius:2px;background:linear-gradient(90deg,#EBC08A,rgba(235,192,138,0))}
+/* 도산 6쪽 위 영어 */
+.ds-quote{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.75cqw;line-height:1.35;color:#A1938A;white-space:pre-line}
+.ds-quote{text-align:right}
+/* 도산 5 · 6쪽 원아 사진: 흰 테두리 · 옅은 그림자 · 둥근 모서리, 이름은 연한 살구색 이름표 */
+.lf.k-ds.ds-kid{padding:.5cqw;background:#fff;box-shadow:0 0 0 .12cqw #EADBC9,0 .35cqw .9cqw rgba(140,100,60,.16)}
+.lf.k-ds.ds-kid .photo{border-radius:.7cqw}
+.ds-name{display:inline-block;padding:.32cqw 1.3cqw .28cqw;border-radius:99px;background:#F8EEE2;color:#5A4434;font-size:1.38cqw;letter-spacing:.08em;box-shadow:inset 0 0 0 .1cqw #EDD9C2}
+.ds-eng{font-size:2.1cqw;letter-spacing:.08em}.ds-who{font-size:1.9cqw}
+.lf.k-ds.ds-bord{border:.34cqw solid #CC9B81;box-shadow:0 .25cqw .7cqw rgba(140,100,70,.14)}.lf.k-ds.ds-bord .photo{border-radius:1.55cqw}
+/* 도산 3 · 4쪽 큰 사진: 흰 여백 + 가는 살구빛 테두리 + 옅은 그림자 (작은 사진 테두리 색과 같은 계열) */
+.lf.k-ds.ds-mat{padding:.65cqw;background:#fff;border:.2cqw solid #D7AE97;box-shadow:0 .45cqw 1.3cqw rgba(140,100,70,.15)}
+.lf.k-ds.ds-mat .photo{border-radius:1.9cqw}
+.lf.k-ds.ds-bord{padding:.35cqw;background:#fff;border-width:.22cqw;border-color:#D7AE97}
+.lf.k-ds.ds-bord .photo{border-radius:1.4cqw}
+
+/* 자동 백업 표시 */
+.bk-row{display:flex;align-items:center;gap:6px;margin:4px 0}
+.bk-row #bk-status{flex:1;margin:0}
+.bk-row .bk-now{flex:0 0 auto;padding:3px 8px;font-size:12px;width:auto}
+
+/* PDF 저장 완료 글자: 누르면 저장 폴더가 열림 */
+.pdf-done-link { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.pdf-done-link:hover { color: #6aa9ff; }
+
+/* 표지 전개도 앞 · 뒤표지: 틀을 옮길 수 있게 쪽처럼 .trim 을 둠 (재단 여백 없음) */
+.wrap-face > .wf-trim{inset:0}
+/* 사진틀 그리기 (draw-frames.js) */
+.x-ellipse,.x-ellipse .photo{border-radius:50%}
+.x-ellipse{overflow:hidden}
+body.draw-on #pages .trim,body.draw-on #pages .trim *{cursor:crosshair!important}
+.df-ghost{position:absolute;z-index:50;border:1.5px dashed #3b82f6;background:rgba(59,130,246,.08);pointer-events:none}
+.df-ghost.df-ellipse{border-radius:50%}
+.df-btn.on{background:#3b82f6!important;color:#fff!important;border-color:#3b82f6!important}
+/* 왼쪽 세로 도구 상자 (인디자인 도구 패널처럼) */
+#df-toolbox{position:fixed;top:56px;left:326px;z-index:9;display:flex;flex-direction:column;gap:2px;padding:4px;background:#535353;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:left .2s ease}
+body.lp-closed #df-toolbox{left:6px;top:48px}
+#df-toolbox .df-btn{width:32px;height:32px;padding:5px;border:0;border-radius:4px;background:transparent;color:#e8e8e8;cursor:pointer}
+#df-toolbox .df-btn:hover{background:#6a6a6a}
+#df-toolbox svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+#df-toolbox [data-tool="select"] svg{fill:currentColor;stroke:none}
+.pages{margin-left:calc(372px / var(--zoom,.6))}
+body.lp-closed .pages{margin-left:calc(56px / var(--zoom,.6))}
+@media print{#df-toolbox{display:none!important}body.lp-closed .pages,.pages{margin-left:0!important}}
+/* 표지 시안 (album.js wrapSheetHTML) */
+.cov-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+.cov-bar select,.cov-bar button{font:inherit;font-size:12px;padding:3px 8px;border:1px solid #D9C9B2;border-radius:6px;background:#FFFCF7;color:#5a4636;cursor:pointer}
+.cov-bar button:hover{background:#F3E7D6}
+.wcf{position:absolute;inset:7cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1.2cqw}
+.wcf .eyebrow{margin:0 0 1cqw}
+.wc-photo{position:relative;flex:none;background:#fff;padding:1cqw;box-shadow:0 .3cqw 1.2cqw rgba(110,85,60,.16)}
+.wc-photo .photo{width:100%;height:100%}
+.wc-big{width:100%;height:58cqh;margin-bottom:2cqw}
+.wc-band{position:absolute;left:0;top:0;width:100%;height:58%;padding:0;box-shadow:none}
+.wcf-band{inset:60% 7cqw 5cqw;gap:.6cqw}
+.wcf-band .wf-year{margin-top:1.2cqw}
+.wc-emb-s{width:10cqw;height:10cqw;margin-bottom:.5cqw}
+.wc-arch{width:62cqw;height:56cqh;padding:0;border-radius:31cqw 31cqw 0 0;overflow:hidden;margin-bottom:3cqw;box-shadow:0 0 0 .25cqw var(--gold-soft)}
+.wc-arch .photo{border-radius:inherit}
+.wcf-min{justify-content:center;gap:1.6cqw}
+.wc-emb-m{width:20cqw;height:20cqw;margin-bottom:5cqw}
+.wc-title-l{font-size:min(13cqw,9cqh)!important;margin:2cqw 0}
+.wc-rule{width:30cqw;height:0;border-top:.2cqw solid var(--gold);margin:2cqw 0 1cqw}
+@media print{body.print-wrap .wrap-block{break-after:page}body.print-wrap .cov-bar{display:none!important}}
+/* 책등 배경 그라데이션 (S.spineBlend, 기본 켜짐): 책등 테두리 선 없이 옆면과 이어지게 */
+.wrap-spine-bg{position:absolute;top:0;bottom:0;pointer-events:none}
+.wrap-sheet.spine-blend .wrap-spine{background:transparent;border-color:transparent}
+/* 책등 접힘 표시: 화면 전용 점선 · 이름표(.guide), 인쇄되는 짧은 접지 표시(접혀 들어가는 위 · 아래 여백) */
+.wrap-fold{position:absolute;top:0;bottom:0;width:0;border-left:.3mm dashed #2F7DE1;z-index:6}
+.wrap-fold-t{position:absolute;transform:translateX(-50%);padding:.3mm 1.2mm;border-radius:1mm;background:rgba(47,125,225,.12);color:#2F6FC8;font:600 2.4mm/1.3 system-ui,'Malgun Gothic',sans-serif;white-space:nowrap;z-index:6}
+.wrap-tick{position:absolute;width:0;border-left:.2mm solid #4A4A4A;z-index:6;pointer-events:none}
+.wrap-tick.h{height:0;border-left:0;border-top:.2mm solid #4A4A4A}
+.wrap-sheet.spine-blend .wrap-spine{background:transparent;border-color:transparent}
+/* 내지 머리글 장식선: 왼쪽 쪽은 글자 아래에서 가운데(제본선)까지, 오른쪽 쪽은 가운데에서 글자 아래까지 → 펼치면 한 줄로 이어짐 */
+.run-l,.run-r{--run-c:var(--gold)}
+.run-l::after,.run-r::after{content:"";position:absolute;top:calc(100% + 1cqw);height:0;border-top:.25mm solid var(--run-c);opacity:.75;pointer-events:none}
+.run-l::after{left:1.2cqw;right:calc(-7cqw - var(--b) - 1px);-webkit-mask:linear-gradient(90deg,transparent,#000 10%);mask:linear-gradient(90deg,transparent,#000 10%)}
+.run-r::after{right:1.2cqw;left:calc(-7cqw - var(--b) - 1px);-webkit-mask:linear-gradient(270deg,transparent,#000 10%);mask:linear-gradient(270deg,transparent,#000 10%)}
+.run-l::before,.run-r::before{content:"";position:absolute;top:calc(100% + 1cqw - .55cqw);width:.8cqw;height:.8cqw;border:.25mm solid var(--run-c);background:var(--paper);transform:rotate(45deg);opacity:.85;pointer-events:none}
+.run-l::before{left:0}
+.run-r::before{right:0}
+/* 사진 돌리기 핸들 (photo-rotate.js): 고른 사진틀 위 가운데 */
+#ph-rot-h{position:fixed;z-index:60;width:0;height:0;pointer-events:none}
+#ph-rot-h[hidden]{display:none}
+#ph-rot-h .prh-line{position:absolute;left:0;top:0;width:12px;height:1px;background:#2F7BEA;transform:rotate(45deg);transform-origin:0 0}
+#ph-rot-h .prh-knob{position:absolute;left:6px;top:6px;width:22px;height:22px;border-radius:50%;background:#fff;border:1.5px solid #2F7BEA;color:#2F7BEA;font:700 13px/19px sans-serif;text-align:center;cursor:grab;pointer-events:auto;box-shadow:0 1px 4px rgba(0,0,0,.25);user-select:none;touch-action:none}
+#ph-rot-h .prh-knob:hover{background:#2F7BEA;color:#fff}
+#ph-rot-h.on .prh-knob{cursor:grabbing;background:#2F7BEA;color:#fff}
+#ph-rot-h .prh-deg{position:absolute;left:32px;top:9px;padding:1px 6px;border-radius:9px;background:rgba(30,30,30,.78);color:#fff;font:600 11px/16px sans-serif;white-space:nowrap}
+#ph-rot-h .prh-deg:empty{display:none}
+.photo .ph-rprev{position:absolute;inset:0;background-repeat:no-repeat;pointer-events:none;z-index:1;transform-origin:50% 50%}
+@media print{#ph-rot-h{display:none!important}}
+
+/* 화면 밖의 쪽은 그리지 않음 (사진 디코딩 · 그리기를 건너뛰어 스크롤 · 확대가 가벼움). 인쇄 · 내보내기 때는 모두 그림 */
+.pages .page{content-visibility:auto}
+@media print{.pages .page{content-visibility:visible}}

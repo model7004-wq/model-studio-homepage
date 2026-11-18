@@ -46,7 +46,7 @@ self.onmessage=e=>{const{w,h,cmyk,q}=e.data;
 };`;
 let ppWorkerUrl = null;
 function ppEncode(w, h, cmyk, onProgress) {
-  ppWorkerUrl ||= URL.createObjectURL(new Blob([PP_WORKER], { type: 'text/javascript' }));
+  ppWorkerUrl ||= 'data:text/javascript;charset=utf-8,' + encodeURIComponent(PP_WORKER);   // Blob 주소 대신 data 주소 (Blob 저장 공간이 차 있어도 동작)
   const wk = new Worker(ppWorkerUrl);
   return new Promise((res, rej) => {
     wk.onmessage = e => { if (e.data.done) { wk.terminate(); res(e.data.jpeg); } else onProgress?.(e.data.progress); };
@@ -88,13 +88,22 @@ async function ppToCmyk(cv, onProgress) {
 }
 
 /* ---------- PDF 조립 ---------- */
+/* 조각은 Uint8Array로 들고 있다가 쪽마다 sink(서버)로 흘려 보냄. 브라우저 창은 사진이 많으면 Blob 저장 공간이 차서 큰 Blob을 못 만듦 */
 class PPWriter {
-  constructor() { this.parts = []; this.pos = 0; this.xref = [0]; this.enc = new TextEncoder(); this.add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n', true); }
+  constructor(sink) { this.sink = sink; this.parts = []; this.size = 0; this.pos = 0; this.xref = [0]; this.enc = new TextEncoder(); this.add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n', true); }
   add(x, latin) {
     let b = x;
     if (typeof x === 'string') b = latin ? Uint8Array.from(x, c => c.charCodeAt(0)) : this.enc.encode(x);
-    this.parts.push(b instanceof Blob ? b : new Blob([b]));
-    this.pos += b.size ?? b.length;
+    this.parts.push(b); this.size += b.length;
+    this.pos += b.length;
+  }
+  async flush() {
+    if (!this.sink || !this.parts.length) return;
+    const all = new Uint8Array(this.size);
+    let o = 0;
+    for (const p of this.parts) { all.set(p, o); o += p.length; }
+    this.parts = []; this.size = 0;
+    await this.sink(all);
   }
   reserve() { this.xref.push(null); return this.xref.length - 1; }
   obj(id, body) { this.xref[id] = this.pos; this.add(`${id} 0 obj\n${body}\nendobj\n`); }
@@ -111,8 +120,8 @@ class PPWriter {
     for (let i = 1; i < n; i++) t += `${String(this.xref[i]).padStart(10, '0')} 00000 n \n`;
     t += `trailer\n<< /Size ${n} /Root ${rootId} 0 R /Info ${infoId} 0 R >>\nstartxref\n${start}\n%%EOF\n`;
     this.add(t);
-    return new Blob(this.parts, { type: 'application/pdf' });
   }
+  toBlob() { return new Blob(this.parts, { type: 'application/pdf' }); }
 }
 const ppN = v => (+v.toFixed(3)).toString();
 const ppHexStr = s => { let h = 'FEFF'; for (const c of s) { const u = c.codePointAt(0); if (u < 0x10000) h += u.toString(16).padStart(4, '0').toUpperCase(); } return `<${h}>`; };
@@ -133,10 +142,10 @@ async function ppInfoImage(text) {     // 페이지 정보: 한글이 있어 작
   g2.fillText(text, k, c.height / 2);
   const d = g2.getImageData(0, 0, c.width, c.height).data, gray = new Uint8Array(c.width * c.height);
   for (let i = 0; i < gray.length; i++) gray[i] = d[i * 4];
-  const z = new Blob([gray]).stream().pipeThrough(new CompressionStream('deflate'));
+  const z = new ReadableStream({ start(ct) { ct.enqueue(gray); ct.close(); } }).pipeThrough(new CompressionStream('deflate'));
   return { w: c.width, h: c.height, data: new Uint8Array(await new Response(z).arrayBuffer()), pw: c.width / k, ph: c.height / k };
 }
-async function buildPrintPdf(o, onProgress) {
+async function buildPrintPdf(o, onProgress, sink) {
   ppCancel = false;
   await ppInitColor();
   await pdfLoadLib('htmlToImage');
@@ -147,7 +156,7 @@ async function buildPrintPdf(o, onProgress) {
     const all = [...document.querySelectorAll('#pages .page')];
     const list = o.range ? all.filter((_, i) => o.range.has(i + 1)) : all;
     const fontCSS = await pdfFontCSS();
-    const w = new PPWriter(), rootId = w.reserve(), pagesId = w.reserve(), infoId = w.reserve(), kids = [];
+    const w = new PPWriter(sink), rootId = w.reserve(), pagesId = w.reserve(), infoId = w.reserve(), kids = [];
     const W = sz.w * PP_MM, H = sz.h * PP_MM, M = PP_MARGIN, mb = `[0 0 ${ppN(W + 2 * M)} ${ppN(H + 2 * M)}]`;
     const stamp = new Date().toLocaleString('ko-KR');
     for (let i = 0; i < list.length; i++) {
@@ -171,12 +180,15 @@ async function buildPrintPdf(o, onProgress) {
       w.stream(cId, '', new TextEncoder().encode(c));
       w.obj(pId, `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox ${mb} /CropBox ${mb} /BleedBox [${ppN(bx)} ${ppN(by)} ${ppN(bx + bw)} ${ppN(by + bh)}] /TrimBox [${ppN(M)} ${ppN(M)} ${ppN(M + W)} ${ppN(M + H)}] /Resources << /XObject << /Im0 ${imgId} 0 R /Im1 ${infoImg} 0 R >> >> /Contents ${cId} 0 R >>`);
       kids.push(pId);
+      await w.flush();
       await new Promise(r => setTimeout(r));
     }
     w.obj(pagesId, `<< /Type /Pages /Count ${kids.length} /Kids [${kids.map(k => `${k} 0 R`).join(' ')}] >>`);
     w.obj(rootId, `<< /Type /Catalog /Pages ${pagesId} 0 R >>`);
     w.obj(infoId, `<< /Title ${ppHexStr(o.title)} /Producer (Graduation Album Designer 5) >>`);
-    return w.finish(rootId, infoId);
+    w.finish(rootId, infoId);
+    if (sink) { await w.flush(); return { size: w.pos }; }
+    return w.toBlob();
   } finally {
     if (!keepBleed) { S.bleed = keepBleed; render(); }
   }
@@ -236,14 +248,38 @@ function bindPrintPdf() {
     const total = document.querySelectorAll('#pages .page').length, txt = d.querySelector('#pp-range').value.trim();
     const range = txt ? pdfParseRange(txt, total) : null;
     if (txt && !range) { status.textContent = '쪽 범위를 확인해 주세요. 예: 1-3, 8'; return; }
+    pdfLinkify(status);
     busy = true; go.disabled = true; bar.hidden = false; bar.value = 0; cancel.textContent = '취소';
     const t0 = Date.now();
     try {
       const title = `${S.school || '졸업앨범'}_${S.year || ''}`.replace(/[\\/:*?"<>|]/g, '_');
-      const blob = await buildPrintPdf({ range, ppi: +d.querySelector('#pp-ppi').value, title }, (t, p) => { status.textContent = t; bar.value = p; });
+      const fname = `${title}_인쇄용${txt ? `_${txt.replace(/\s/g, '')}쪽` : ''}.pdf`;
+      const opts = { range, ppi: +d.querySelector('#pp-ppi').value, title }, prog = (t, p) => { status.textContent = t; bar.value = p; };
+      // 우리 서버가 있으면 쪽마다 디스크에 바로 씀 (브라우저 메모리에 PDF 전체를 들고 있지 않음)
+      const srv = await fetch('/__pdf/ping', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null);
+      if (srv?.ok) {
+        const call = async (op, body) => {
+          const r = await fetch(`/__pdf?op=${op}&name=${encodeURIComponent(fname)}`, { method: 'POST', body });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok || !j.ok) throw new Error(`PDF 파일을 쓰지 못했습니다 (${j.error || r.status})`);
+          return j;
+        };
+        await call('start');
+        try {
+          const res = await buildPrintPdf(opts, prog, bytes => call('append', bytes));
+          const j = await call('done');
+          bar.value = 1;
+          status.textContent = `저장했습니다: ${(res.size / 1048576).toFixed(0)}MB · ${Math.round((Date.now() - t0) / 1000)}초 → ${j.path}`;
+          pdfShowInFolder(j.path);     // 탐색기 새 창으로 저장 폴더 열기
+          pdfLinkify(status, j.path);  // 완료 글자를 누르면 다시 열림
+        } catch (e) { call('abort').catch(() => {}); throw e; }
+        busy = false; go.disabled = !ppProfile; cancel.textContent = '닫기';
+        return;
+      }
+      const blob = await buildPrintPdf(opts, prog);
       bar.value = 1;
       status.textContent = `완성: ${(blob.size / 1048576).toFixed(0)}MB · ${Math.round((Date.now() - t0) / 1000)}초. 저장할 곳을 고르세요.`;
-      const ok = await ppSave(blob, `${title}_인쇄용${txt ? `_${txt.replace(/\s/g, '')}쪽` : ''}.pdf`);
+      const ok = await ppSave(blob, fname);
       status.textContent = ok ? `저장했습니다: ${(blob.size / 1048576).toFixed(0)}MB` : '저장을 취소했습니다.';
     } catch (e) { console.warn(e); status.textContent = e.message || '저장하지 못했습니다.'; }
     busy = false; go.disabled = !ppProfile; cancel.textContent = '닫기';

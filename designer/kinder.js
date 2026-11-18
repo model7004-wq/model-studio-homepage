@@ -126,17 +126,48 @@ function kCapLaurel(x, y, r, c = '#4A3A33') {
 }
 
 /* ---------- 쪽 배경 ---------- */
+/** 1 · 2쪽 색 (연한 살구 원 · 장미색 선 · 학사모) */
+const K12 = { c1: '#F4E7DE', c2: '#FAF2EC', band: '#FBF7F1', line: '#C99C9A', dot: '#D4AAA7', cap: '#9C6F6E', tassel: '#D0846B', rule: '#CBA9A6' };
 function kinderBg(kind, tone, seed) {
-  const { W, H } = G, rng = rngOf(seed), idx = Math.round((seed - 1009) / 97), left = idx % 2 === 1;
+  const ds = /^k-ds(\d+)$/.exec(kind);
+  if (ds) return dosanBg(+ds[1]);      // 도산유치원 템플릿: 원본 그림 배경
+  if (kind.startsWith('k-gj-') && window.gjBg) return gjBg(kind);      // 학교 템플릿: 경북조리과학고 2026
+  if (kind.startsWith('k-cu-') && window.cuteBg) return cuteBg(kind);      // 귀여운 유치원 템플릿
+  if (kind.startsWith('k-sm-') && window.simpleBg) return simpleBg(kind);      // 심플한 스타일 (모전) 템플릿
+  const { W, H } = G, rng = rngOf(seed), idx = Math.round((seed - 1009) / 97), left = (idx % 2 === 1) !== !!G.kPairFirst;     // 첫 쪽부터 펼침이면 짝수 번째가 왼쪽
   const X = v => (left ? v : 1 - v) * W, Y = v => v * H, R = v => v * W, sw = Math.max(1.6, W / 800);
   let s = '', paper = '#FBF8F1';
   switch (kind) {
-    case 'k-cover':
+    case 'k-blank': {    // 1쪽: 연한 원 · 가는 장미색 세로선 (글자 · 사진 없음). 오른쪽 위 원은 2쪽으로 이어짐
       paper = '#FFFFFF';
-      s += `<defs><radialGradient id="kcv" cx=".75" cy=".6" r=".8"><stop offset="0" stop-color="#FBE6EA"/><stop offset=".6" stop-color="#FDF3F2"/><stop offset="1" stop-color="#FFFFFF"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#kcv)"/>`;
-      for (let i = 0; i < 26; i++) s += `<circle cx="${f(W * (.3 + rng() * .7))}" cy="${f(H * rng())}" r="${f(R(.004 + rng() * .01))}" fill="#FFFFFF" fill-opacity="${f(.5 + rng() * .5)}"/>`;
-      s += kConfetti(W * .05, H * .02, W * .98, H * .14, 26, rng) + kPopper(W * .08, H * .16, R(.13));
+      const ln = `stroke="${K12.line}" stroke-width="${f(W * .0016)}" stroke-linecap="round"`;
+      s += `<circle cx="${f(W * 1.016)}" cy="${f(-H * .05)}" r="${f(W * .2)}" fill="${K12.c2}"/>
+        <circle cx="${f(W * .787)}" cy="${f(H * .038)}" r="${f(W * .197)}" fill="${K12.c1}"/>
+        <circle cx="${f(W * .768)}" cy="${f(H * .957)}" r="${f(W * .162)}" fill="${K12.c1}"/>
+        <path d="M${f(W * .829)},0 V${f(H * .618)}" ${ln}/>
+        <path d="M${f(W * .846)},${f(H * .355)} V${f(H * .871)}" ${ln}/>
+        <circle cx="${f(W * .846)}" cy="${f(H * .871)}" r="${f(W * .014)}" fill="${K12.dot}"/>`;
       break;
+    }
+    case 'k-cover': {    // 2쪽: 위아래 연한 띠 · 오른쪽 가장자리 원 · 세로선 · 학사모 · 아래 구분선
+      paper = '#FFFFFF';
+      const ln = `stroke="${K12.line}" stroke-width="${f(W * .0016)}" stroke-linecap="round"`, lx = W * .966, cx = W * .634, cy = H * .1, c = W * .05;     // 학사모 · 구분선은 사진틀 가운데(63.4%)
+      s += `<circle cx="${f(W * .016)}" cy="${f(-H * .05)}" r="${f(W * .2)}" fill="${K12.c2}"/>
+        <rect x="${f(W * .217)}" y="0" width="${f(W * .668)}" height="${f(H * .032)}" fill="${K12.band}"/>
+        <rect x="${f(W * .217)}" y="${f(H * .968)}" width="${f(W * .668)}" height="${f(H * .032)}" fill="${K12.band}"/>
+        <circle cx="${f(W * .998)}" cy="${f(H * .39)}" r="${f(W * .077)}" fill="${K12.c1}"/>
+        <circle cx="${f(W * .998)}" cy="${f(H * .87)}" r="${f(W * .136)}" fill="${K12.c1}"/>
+        <path d="M${f(lx)},0 V${f(H * .306)}" ${ln}/>
+        <path d="M${f(lx - W * .009)},${f(-H * .004)} L${f(lx)},${f(H * .008)} L${f(lx + W * .009)},${f(-H * .004)}" ${ln} fill="none"/>
+        <circle cx="${f(lx)}" cy="${f(H * .306)}" r="${f(W * .009)}" fill="${K12.dot}"/>
+        <path d="M${f(cx - c)},${f(cy - c * .12)} L${f(cx)},${f(cy - c * .55)} L${f(cx + c)},${f(cy - c * .12)} L${f(cx)},${f(cy + c * .3)}Z" fill="${K12.cap}"/>
+        <path d="M${f(cx - c * .58)},${f(cy + c * .08)} V${f(cy + c * .55)} Q${f(cx)},${f(cy + c * .8)} ${f(cx + c * .58)},${f(cy + c * .55)} V${f(cy + c * .08)} L${f(cx)},${f(cy + c * .3)}Z" fill="${K12.cap}" fill-opacity=".85"/>
+        <path d="M${f(cx + c * .78)},${f(cy - c * .05)} V${f(cy + c * .78)}" stroke="${K12.tassel}" stroke-width="${f(W * .0022)}"/>
+        <path d="M${f(cx + c * .7)},${f(cy + c * .72)} L${f(cx + c * .86)},${f(cy + c * .72)} L${f(cx + c * .82)},${f(cy + c * 1.08)} L${f(cx + c * .74)},${f(cy + c * 1.08)}Z" fill="${K12.tassel}"/>
+        <path d="M${f(W * .544)},${f(H * .952)} H${f(W * .622)} M${f(W * .646)},${f(H * .952)} H${f(W * .724)}" stroke="${K12.rule}" stroke-width="${f(W * .0014)}"/>
+        <circle cx="${f(W * .634)}" cy="${f(H * .952)}" r="${f(W * .0045)}" fill="${K12.rule}"/>`;
+      break;
+    }
     case 'k-intro':
       s += washes([{ x: left ? .05 : .95, y: .05, r: .3, c: '#E9DCC8', a: .8 }, { x: left ? .02 : .98, y: .92, r: .28, c: '#E9DCC8', a: .7 }], W, H, rng);
       s += kVine(X(.0), Y(.0), R(.3), left ? 40 : 140, KC.sage, rng, 8, sw * 1.4, .22, [KC.pink, '#E9C2A6']) + kVine(X(.0), Y(.08), R(.2), left ? 10 : 170, KC.leaf2, rng, 6, sw * 1.2, .22);
@@ -260,123 +291,152 @@ function kOrn(kind, corners = ['tl', 'br'], size = 11) {
 const kCircle = (cx, cy, w) => { const h = w / G.aspect; return [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2]; };
 const kTag = (box, key, text, col) => LT(box, `<span class="k-heart">♥</span>${E(key, text, 'k-tag-t')}<span class="k-heart">♥</span>`, `k-tag k-${col}`);
 
+/* ---------- 원아 사진 (6쪽): 주어진 칸(위 top부터 높이 H %)을 원아 수만큼의 사진틀이 꽉 채우도록, 인원이 적으면 크게 · 많으면 작게 ----------
+   이름은 각 사진 바로 밑에 따라가고 글자 크기는 그대로. 6쪽 첫 장은 아래에 단체 02가 있어 위쪽 칸만 씀 */
+const K_PER_PAGE = 30, K_NAME_H = 3.2, K_FILL = 77;
+function kKidGrid(n, top = 12, H = K_FILL) {
+  if (!n) return [];
+  const left = 5, right = 95, W = right - left, gx = 2.2, gy = 1.4, TALL = 1.4;     // 틀은 정사각형 ~ 세로 1.4배까지 늘려 빈 곳을 채움
+  let best = null;
+  for (let cols = 1; cols <= n; cols++) {
+    const rows = Math.ceil(n / cols);
+    const cellH = (H - gy * (rows - 1)) / rows - K_NAME_H;      // 이름을 뺀 사진 높이(쪽 높이 %)
+    if (cellH <= 0) continue;
+    const s = Math.min((W - gx * (cols - 1)) / cols, cellH * G.aspect, 40);      // 폭(쪽 폭 %) — 적어도 정사각형이 들어가게
+    const ch = Math.min(cellH, s * TALL / G.aspect);
+    const area = s * ch;
+    if (s > 0 && (!best || area > best.area + .01)) best = { cols, rows, s, ch, area };
+  }
+  const { cols, rows, s, ch } = best, rowH = ch + K_NAME_H;
+  const usedH = rows * rowH + (rows - 1) * gy, y0 = top + (H - usedH) / 2;
+  return Array.from({ length: n }, (_, k) => {
+    const row = Math.floor(k / cols), inRow = row === rows - 1 ? n - row * cols : cols;     // 마지막 줄은 가운데로
+    const x0 = 50 - (inRow * s + (inRow - 1) * gx) / 2;
+    return [x0 + (k % cols) * (s + gx), y0 + row * (rowH + gy), s, ch];
+  });
+}
+
+
+/* 개인 앨범 사진 키: 2쪽 · 3쪽 개인 학사모 · 4쪽 개인 프로필. 이름 기준이라 명단 순서가 바뀌어도 사진이 따라감 */
+/** 유치원 명단: '이채연 선생님'처럼 선생님 · 교사 · 원장 · 원감이 붙은 줄은 원아가 아니라 담임으로 */
+const K_TEACHER_RX = /\s*(선생님|선생|교사|담임|원장|원감)$/;
+function kClasses() {
+  return parseRoster(S.roster).map(c => {
+    const students = [];
+    let teacher = c.teacher;
+    c.students.forEach((s, idx) => { if (K_TEACHER_RX.test(s.name)) teacher ||= s.name.replace(K_TEACHER_RX, ''); else students.push({ ...s, idx }); });
+    return { ...c, teacher, students };
+  });
+}
+const kpKey = (kind, name) => `kp-${kind}|${name}`;
 /* ---------- 쪽 구성 ---------- */
 function kinderPages(classes) {
+  if (S.kTemplate === 'dosan') return dosanPages(classes);      // 도산유치원 10×11 템플릿 (dosan.js)
+  if (S.kTemplate === 'cute' && window.cutePages) return cutePages(classes);      // 귀여운 유치원 템플릿 (kinder-cute.js)
+  if (S.kTemplate === 'simple' && window.simplePages) return simplePages(classes);      // 심플한 스타일 (모전) 템플릿 (kinder-simple.js)
   kinderStyle();
+  const kidNames = classes.flatMap(c => c.students).map(s => s.name).filter(Boolean);
+  const pk = (kind, def) => (S.kPersonal && kidNames[0] ? kpKey(kind, kidNames[0]) : def);     // 개인 앨범이면 2·3·4쪽 사진은 원아마다 따로
+  const ev = key => pk(`ev-${key}`, key);     // 7~14쪽 행사 사진도 개인 앨범이면 원아마다 따로
   const kp = (kind, label, html) => layPage(kind, label, [kind, ['butter', 'peach', 'sage']], html, { run: false, folio: false });
   const pages = [];
   const year = esc(S.year), school = esc(S.school);
-  // 1쪽 표지
-  pages.push(kp('k-cover', '표지', `
-    ${LT([8, 6.5, 92, 14], E('k-cover-title', `${S.year} 소중한 추억들`, 'k-cover-title'), 'lcenter')}
-    ${LF('k-cover', [16, 16, 84, 78], 'k-torn')}
-    ${LT([6, 79, 38, 96], `<svg viewBox="0 0 100 70" class="k-emb k-emb-s">${kCapLaurel(50, 34, 26, '#2F4A5C')}${kFlower(30, 52, 5, KC.pink)}${kFlower(70, 52, 5, KC.yellow)}</svg><div class="k-emb-y">${year} 학년도</div>`, 'lcenter')}
-    ${LT([38, 82, 94, 90], `<div class="k-cover-school">${school}</div>`, 'lcenter')}`));
-  // 2~3쪽 펼침 소개
-  pages.push(kp('k-intro', '소개 (왼쪽)', `
+  // 1쪽 백지(왼쪽) + 2쪽 '소중한 추억들'(오른쪽)로 첫 펼침면. 책 표지는 따로 만들지 않음
+  pages.push({ ...kp('k-blank', '백지', ''), pairFirst: true });
+  // 2쪽: 오른쪽에 가는 테두리 세로 사진틀, 위에 제목, 왼쪽 아래 학사모 장식 · 학년도, 사진 밑에 유치원 이름 (작은 학사모 · 구분선은 배경)
+  pages.push(kp('k-cover', '소중한 추억들', `
+    ${LT([33, 14, 93.8, 21.5], E('k-cover-title', `${S.year} 소중한 추억들`, 'k-cover-title'), 'lcenter')}
+    ${LF(pk('cover', 'k-cover'), [37.1, 23.9, 89.7, 83.1], 'k-thin')}
+    ${LT([3, 62, 35, 82], `<svg viewBox="0 0 100 70" class="k-emb k-emb-s">${kCapLaurel(50, 34, 26, '#2F4A5C')}${kFlower(30, 52, 5, KC.pink)}${kFlower(70, 52, 5, KC.yellow)}</svg><div class="k-emb-y">${year} 학년도</div>`, 'lcenter')}
+    ${LT([33, 84, 93.8, 89.5], `<div class="k-cover-school">${school}</div>`, 'lcenter')}
+    ${LT([33, 89.6, 93.8, 93.6], `<div class="k-cover-class">${esc(classes[0]?.name || '')}${S.kPersonal && kidNames[0] ? ` <span class="k-cname">${esc(kidNames[0])}</span>` : ''}</div>`, 'lcenter')}`));     // 제목 · 유치원 이름 · 반 이름은 사진틀(37.1~89.7)과 같은 가운데(63.4)
+  // 소개 펼침면 (반 단체 · 원아 쪽 뒤에 넣음)
+  const intro = [];
+  intro.push(kp('k-intro', '소개 (왼쪽)', `
     ${LT([4, 13, 33, 20], E('k-en', 'KINDERGARTEN', 'k-en'), 'lcenter')}
     ${LT([6, 24, 31, 37], `<svg viewBox="0 0 100 70" class="k-emb">${kCapLaurel(50, 36, 28)}</svg>`, 'lcenter')}
-    ${LT([3, 39, 34, 52], `<div class="k-year">${year}학년도</div><div class="k-name">${school}</div><div class="k-rule"></div>`, 'lcenter')}
+    ${LT([3, 39, 34, 52], `<div class="k-year">${year}학년도</div><div class="k-name" style="white-space:pre-line">${school.replace(/(.)(병설유치원)$/, '$1\n$2')}</div><div class="k-rule"></div>`, 'lcenter')}
     ${LT([4, 58, 34, 70, -10], `${E('k-intro-script', 'Always\nbe happy', 'k-script')}<div class="k-heart-big">♡</div>`, 'lcenter')}
-    ${LF('ki-0', [37, 8, 94, 92], 'k-sk', '', '', kSketchLine() + kOrn('vine', ['tl', 'tr', 'bl', 'br'], 9))}`));
-  pages.push(kp('k-intro', '소개 (오른쪽)', `
-    ${LF('ki-1', [6, 8, 63, 92], 'k-sk', '', '', kSketchLine() + kOrn('vine', ['tl', 'tr', 'bl', 'br'], 9))}
+    ${LF(pk('cap', 'ki-0'), [37, 8, 94, 92], 'k-sk', '', '', kSketchLine() + kOrn('vine', ['tl', 'tr', 'bl', 'br'], 9))}`));
+  intro.push(kp('k-intro', '소개 (오른쪽)', `
+    ${LF(pk('prof', 'ki-1'), [6, 8, 63, 92], 'k-sk', '', '', kSketchLine() + kOrn('vine', ['tl', 'tr', 'bl', 'br'], 9))}
     ${LT([66, 24, 96, 38], E('k-intro-1', '꿈을 향해\n한 걸음 더', 'k-pen-big'), 'lcenter')}
     ${LT([68, 40, 94, 42], '<div class="k-rule"></div>', 'lcenter')}
     ${LT([66, 44, 96, 60], E('k-intro-2', '지금 이 순간,\n너희는\n참 예쁘다.', 'k-msg'), 'lcenter')}
-    ${LT([66, 63, 96, 69], E('k-en', 'KINDERGARTEN', 'k-en'), 'lcenter')}`));
+    ${LT([66, 63, 96, 69], E('k-en', 'KINDERGARTEN', 'k-en'), 'lcenter')}
+    ${S.kPersonal ? LT([64, 73, 98, 84], `<div class="k-pname" contenteditable="false">${esc(kidNames[0] || '이름')}</div>`, 'lcenter') : ''}`));
   // 반마다: 왼쪽 단체사진 두 장, 오른쪽 원아 사진 (한 쪽에 최대 25명)
   classes.forEach((c, ci) => {
-    const name = esc(c.name);
+    const name = esc(c.name), tName = (ci === 0 && S.homeTeacher) || c.teacher || '';
+    // 5쪽: 위에 담임 선생님 사진 → 단체 03 · 04 (세로), 아래에 단체 01 (가로로 길게)
     pages.push(kp('k-class', `${c.name} 단체`, `
       ${LT([10, 6, 56, 18.5], `<div class="k-year-s">${year}학년도</div><div class="k-class-name">${school} ${name}</div><div class="k-en k-en-s">${E(`k-class-en-${ci}`, 'GRADUATION ALBUM', '')}</div>`)}
       ${LT([62, 5, 92, 17, -6], E(`k-class-pen-${ci}`, '행복한 꿈을\n함께 키워가는\n우리 ♥', 'k-pen'), 'lcenter')}
-      ${LF(`c${ci}-g0`, [8, 22, 92, 56.5], 'k-ticket')}
-      ${LF(`c${ci}-g1`, [8, 59.5, 92, 94], 'k-ticket')}`));
-    const kids = c.students.map((s, i) => ({ s, i }));
-    for (let p = 0; p < Math.max(1, Math.ceil(kids.length / 25)); p++) {
-      const chunk = kids.slice(p * 25, p * 25 + 25), rows = Math.max(1, Math.ceil(chunk.length / 5));
-      const gx = 2.6, nameH = 3.2, gy = 1.6, top = 14.5, avail = 86 - top;
-      const cw = Math.min(14.6, (avail / rows - nameH - gy) * G.aspect), ch = cw / G.aspect, x0 = 50 - (cw * 5 + gx * 4) / 2;
+      ${LF(`c${ci}-tch`, [6, 21, 33.3, 54.5], 'k-ticket')}
+      ${LT([3, 55.2, 36.3, 59.6], `<div class="k-tname">담임 ${esc(tName || '○○○')} 선생님</div>`, 'lcenter')}
+      ${LF(`c${ci}-g2`, [36.4, 21, 63.6, 59.6], 'k-ticket')}
+      ${LF(`c${ci}-g3`, [66.7, 21, 94, 59.6], 'k-ticket')}
+      ${LF(`c${ci}-g0`, [6, 62.5, 94, 94], 'k-ticket')}`));
+    // 6쪽: 위에 원아 수만큼 사진틀(빈 곳을 채우도록), 아래에 단체 02 (가로로 길게). 원아가 많아 넘치면 다음 쪽은 원아 사진만
+    const kids = c.students.map(s => ({ s, i: s.idx }));     // 원래 명단 자리 번호로 사진 키를 써서, 선생님 줄을 빼도 사진이 밀리지 않음
+    for (let p = 0; p < Math.max(1, Math.ceil(kids.length / K_PER_PAGE)); p++) {
+      const chunk = kids.slice(p * K_PER_PAGE, p * K_PER_PAGE + K_PER_PAGE), first = p === 0;
       let grid = '';
-      chunk.forEach(({ s, i }, n) => {
-        const col = n % 5, row = Math.floor(n / 5), x = x0 + col * (cw + gx), y = top + row * (ch + nameH + gy);
-        grid += LF(`c${ci}-s${i}`, [x, y, x + cw, y + ch], 'k-round k-sq') + LT([x - 1, y + ch + .4, x + cw + 1, y + ch + nameH], `<div class="k-sname">${esc(s.name)}</div>`, 'lcenter');
+      kKidGrid(chunk.length, 12.5, first ? 47.5 : K_FILL).forEach(([x, y, s, ch], n) => {
+        const { s: st, i } = chunk[n], nw = Math.max(s + 2, 12);
+        grid += LF(`c${ci}-s${i}`, [x, y, x + s, y + ch], 'k-round k-sq') + LT([x + s / 2 - nw / 2, y + ch + .4, x + s / 2 + nw / 2, y + ch + K_NAME_H], `<div class="k-sname">${esc(st.name)}</div>`, 'lcenter');
       });
       pages.push(kp('k-class', `${c.name} 원아${p ? ` ${p + 1}` : ''}`, `
         ${LT([8, 6.5, 50, 10.5], '<div class="k-en k-en-l">A Graduation Album</div>')}
         ${LT([56, 5.5, 92, 11], E(`k-class-cong-${ci}`, '진심으로 축하해요 ♥', 'k-pen'), 'lright')}
         ${grid}
-        ${LT([52, 89, 92, 93], '<div class="k-en k-thanks">THANK YOU</div>', 'lcenter')}`));
+        ${first ? LF(`c${ci}-g1`, [6, 63, 94, 94], 'k-ticket') : LT([52, 89, 92, 93], '<div class="k-en k-thanks">THANK YOU</div>', 'lcenter')}`));
     }
   });
-  // 봄 — 꽃 이름표
-  pages.push(kp('k-spring', '봄 · 꽃 이름표 (왼쪽)', `
-    ${LF('ks-a0', [8, 10, 46, 40], 'k-round k-l-beige', '', '', kOrn('gyp', ['bl'], 12))}
-    ${kTag([12, 37, 36, 42.5, -4], 'k-tag-0', '벚꽃처럼 예쁜 우리', 'sage')}
-    ${LF('ks-a1', [53, 11, 92, 41], 'k-round k-l-slate', '', '', kOrn('forsythia', ['tr', 'bl'], 13))}
-    ${kTag([68, 37, 92, 43, -8], 'k-tag-1', '개나리처럼 밝은 우리', 'tan')}
-    ${LF('ks-a2', kCircle(28, 67, 38), 'k-ci k-l-beige', '', '', kOrn('tulip', ['bl'], 14))}
-    ${kTag([25, 79, 49, 85, -5], 'k-tag-2', '튤립처럼 사랑스러운 우리', 'beige')}
-    ${LF('ks-a3', [55, 52, 91, 82], 'k-round k-l-slate', '', '', kTape() + kOrn('sprig', ['br'], 12))}
-    ${kTag([56, 78, 76, 84, -3], 'k-tag-3', '들꽃처럼 소중한 우리', 'gray')}`));
-  pages.push(kp('k-spring', '봄 · 꽃 이름표 (오른쪽)', `
-    ${LF('ks-a4', [5, 12, 46, 42], 'k-blob', '', '', kOutline('blob', '#A9B8A0', false) + kOrn('daisy', ['tl', 'br'], 13))}
-    ${kTag([24, 38, 44, 44, -6], 'k-tag-4', '데이지처럼 밝은 우리', 'sage')}
-    ${LF('ks-a5', [53, 11, 95, 44], 'k-ci k-oval k-l-beige', '', '', kOrn('tulip', ['tr'], 12))}
-    ${kTag([75, 39, 96, 45, -10], 'k-tag-5', '꽃처럼 예쁜 우리', 'peach')}
-    ${LF('ks-a6', [7, 52, 48, 83], 'k-cloud', '', '', kOutline('cloud', '#CDBBA8', false) + kOrn('sprig', ['tl', 'br'], 12))}
-    ${kTag([22, 79, 46, 85, -6], 'k-tag-6', '꽃향기처럼 사랑스러운 우리', 'peach')}
-    ${LF('ks-a7', [56, 52, 93, 82], 'k-round k-l-sage', '', '', kTape('rgba(196,204,198,.8)'))}
-    ${kTag([73, 77, 95, 83, -10], 'k-tag-7', '봄처럼 행복한 우리', 'yellow')}
-    ${LT([22, 86, 62, 92, -4], E('k-spring-script', 'Spring is here', 'k-script k-script-s'), 'lcenter')}`));
+  pages.push(...intro);     // 소개 펼침면은 반 단체(3쪽) · 원아(4쪽) 다음 → 5 · 6쪽
   // 봄 — 동물 친구
   pages.push(kp('k-meadow', '봄 · 동물 친구 (왼쪽)', `
-    ${LF('ks-b0', [6, 12, 39, 61], 'k-sk', '', '', kSketchLine('#7C7066') + kOrn('blossom', ['tl'], 13) + kOrn('tulip', ['bl', 'br'], 12))}
-    ${LF('ks-b1', [45, 14, 92, 46], 'k-sk', '', '', kSketchLine('#7C7066') + kOrn('blossom', ['tr', 'bl'], 11))}
-    ${LF('ks-b2', [45, 50, 92, 82], 'k-sk', '', '', kSketchLine('#7C7066') + kOrn('blossom', ['tr'], 11) + kOrn('tulip', ['br'], 11))}`));
+    ${LF(ev('ks-b0'), [6, 12, 39, 61], 'k-sk', '', '', kSketchLine('#7C7066') + kOrn('blossom', ['tl'], 13) + kOrn('tulip', ['bl', 'br'], 12))}
+    ${LF(ev('ks-b1'), [45, 14, 92, 46], 'k-sk', '', '', kSketchLine('#7C7066') + kOrn('blossom', ['tr', 'bl'], 11))}
+    ${LF(ev('ks-b2'), [45, 50, 92, 82], 'k-sk', '', '', kSketchLine('#7C7066') + kOrn('blossom', ['tr'], 11) + kOrn('tulip', ['br'], 11))}`));
   pages.push(kp('k-meadow', '봄 · 동물 친구 (오른쪽)', `
-    ${LF('ks-b3', [6, 13, 91, 73], 'k-sk', '', '', kSketchLine('#7C7066') + kOrn('blossom', ['tr', 'bl'], 15))}`));
+    ${LF(ev('ks-b3'), [6, 13, 91, 73], 'k-sk', '', '', kSketchLine('#7C7066') + kOrn('blossom', ['tr', 'bl'], 15))}`));
   // 여름
   pages.push(kp('k-summer', '여름 (왼쪽)', `
-    ${LF('ku-0', [14, 9, 90, 47], 'k-sk', '', '', kSketchLine('#6C8A8A') + kOrn('tropic', ['tl', 'tr', 'bl', 'br'], 13))}
-    ${LF('ku-1', [8, 55, 54, 83], 'k-sk', '', '', kSketchLine('#6C8A8A') + kOrn('wreath', ['tl', 'tr'], 10))}
-    ${LF('ku-2', kCircle(76, 70, 32), 'k-ci k-l-white', '', '', kOrn('wreath', ['tl', 'br'], 10))}`));
+    ${LF(ev('ku-0'), [14, 9, 90, 47], 'k-sk', '', '', kSketchLine('#6C8A8A') + kOrn('tropic', ['tl', 'tr', 'bl', 'br'], 13))}
+    ${LF(ev('ku-1'), [8, 55, 54, 83], 'k-sk', '', '', kSketchLine('#6C8A8A') + kOrn('wreath', ['tl', 'tr'], 10))}
+    ${LF(ev('ku-2'), kCircle(76, 70, 32), 'k-ci k-l-white', '', '', kOrn('wreath', ['tl', 'br'], 10))}`));
   pages.push(kp('k-summer', '여름 (오른쪽)', `
-    ${LF('ku-3', kCircle(28, 25, 36), 'k-ci k-l-white', '', '', kOrn('wreath', ['tl', 'br'], 11))}
-    ${LF('ku-4', kCircle(72, 28, 36), 'k-ci k-l-white', '', '', kOrn('wreath', ['tr', 'bl'], 11))}
-    ${LF('ku-5', [9, 46, 58, 88], 'k-sk', '', '', kSketchLine('#6C8A8A') + kOrn('wreath', ['tl', 'tr'], 10))}
-    ${LF('ku-6', [63, 54, 92, 80], 'k-sk', '', '', kSketchLine('#6C8A8A') + kOrn('wreath', ['tr'], 9))}`));
+    ${LF(ev('ku-3'), kCircle(28, 25, 36), 'k-ci k-l-white', '', '', kOrn('wreath', ['tl', 'br'], 11))}
+    ${LF(ev('ku-4'), kCircle(72, 28, 36), 'k-ci k-l-white', '', '', kOrn('wreath', ['tr', 'bl'], 11))}
+    ${LF(ev('ku-5'), [9, 46, 58, 88], 'k-sk', '', '', kSketchLine('#6C8A8A') + kOrn('wreath', ['tl', 'tr'], 10))}
+    ${LF(ev('ku-6'), [63, 54, 92, 80], 'k-sk', '', '', kSketchLine('#6C8A8A') + kOrn('wreath', ['tr'], 9))}`));
   // 가을
   pages.push(kp('k-autumn', '가을 (왼쪽)', `
-    ${LF('ka-0', [6, 8, 90, 44], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tl', 'br'], 12))}
-    ${LF('ka-1', [6, 48, 46, 82], 'k-sk', '', '', kSketchLine('#8A7262'))}
-    ${LF('ka-2', [51, 48, 90, 82], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tr', 'bl'], 11))}`));
+    ${LF(ev('ka-0'), [6, 8, 90, 44], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tl', 'br'], 12))}
+    ${LF(ev('ka-1'), [6, 48, 46, 82], 'k-sk', '', '', kSketchLine('#8A7262'))}
+    ${LF(ev('ka-2'), [51, 48, 90, 82], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tr', 'bl'], 11))}`));
   pages.push(kp('k-autumn', '가을 (오른쪽)', `
-    ${LF('ka-3', [8, 8, 43, 46], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tl', 'br'], 11))}
-    ${LF('ka-4', [8, 50, 43, 88], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tr', 'bl'], 10))}
-    ${LF('ka-5', [50, 27, 92, 61], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tr', 'br'], 11))}
-    ${LF('ka-6', [50, 65, 92, 82], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tr'], 10))}`));
+    ${LF(ev('ka-3'), [8, 8, 43, 46], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tl', 'br'], 11))}
+    ${LF(ev('ka-4'), [8, 50, 43, 88], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tr', 'bl'], 10))}
+    ${LF(ev('ka-5'), [50, 27, 92, 61], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tr', 'br'], 11))}
+    ${LF(ev('ka-6'), [50, 65, 92, 82], 'k-sk', '', '', kSketchLine('#8A7262') + kOrn('leaf', ['tr'], 10))}`));
   // 겨울
   pages.push(kp('k-winter', '겨울 (왼쪽)', `
-    ${LF('kw-0', [12, 11, 80, 47], 'k-round k-l-ice', '', '', kOrn('snow', ['tl', 'tr', 'br'], 12))}
-    ${LF('kw-1', [14, 54, 52, 80], 'k-round k-l-ice', '', '', kTape('rgba(200,200,200,.75)', 35) + kOrn('snow', ['br'], 10))}
-    ${LF('kw-2', kCircle(72, 65, 30), 'k-ci k-l-ice')}`));
+    ${LF(ev('kw-0'), [12, 11, 80, 47], 'k-round k-l-ice', '', '', kOrn('snow', ['tl', 'tr', 'br'], 12))}
+    ${LF(ev('kw-1'), [14, 54, 52, 80], 'k-round k-l-ice', '', '', kTape('rgba(200,200,200,.75)', 35) + kOrn('snow', ['br'], 10))}
+    ${LF(ev('kw-2'), kCircle(72, 65, 30), 'k-ci k-l-ice')}`));
   pages.push(kp('k-winter', '겨울 (오른쪽)', `
-    ${LF('kw-3', [6, 10, 42, 34], 'k-round k-l-ice', '', '', kTape('rgba(200,200,200,.75)', 45) + kOrn('snow', ['br'], 10))}
-    ${LF('kw-4', kCircle(70, 22, 30), 'k-ci k-l-ice', '', '', kTape('rgba(200,200,200,.75)', 40, 0))}
-    ${LF('kw-5', [10, 38, 84, 60], 'k-round k-l-ice', '', '', kOrn('snow', ['tr', 'bl'], 11))}
-    ${LF('kw-6', [6, 65, 50, 90], 'k-cloud', '', '', kOutline('cloud', '#C4D2E0'))}
-    ${LF('kw-7', [57, 63, 89, 87], 'k-round k-l-ice', '', '', kTape('rgba(200,200,200,.75)', 50, 1) + kOrn('snow', ['br'], 11))}`));
-  // 마지막 쪽
-  pages.push(kp('k-end', '마지막 쪽', `
-    ${LT([10, 9, 90, 17], E('k-end-title', '졸업을 축하해요!', 'k-cover-title k-end-title'), 'lcenter')}
-    ${LF('k-end', [9, 20, 91, 68], 'k-round k-l-beige', '', '', kOrn('blossom', ['tl', 'br'], 14))}
-    ${LT([12, 72, 88, 86], E('k-end-msg', '함께 웃고, 함께 자란 소중한 시간\n언제나 너희를 응원할게!', 'k-msg'), 'lcenter')}
-    ${LT([12, 87, 70, 91], `<div class="k-en">${school}</div>`, 'lcenter')}`));
+    ${LF(ev('kw-3'), [6, 10, 42, 34], 'k-round k-l-ice', '', '', kTape('rgba(200,200,200,.75)', 45) + kOrn('snow', ['br'], 10))}
+    ${LF(ev('kw-4'), kCircle(70, 22, 30), 'k-ci k-l-ice', '', '', kTape('rgba(200,200,200,.75)', 40, 0))}
+    ${LF(ev('kw-5'), [10, 38, 84, 60], 'k-round k-l-ice', '', '', kOrn('snow', ['tr', 'bl'], 11))}
+    ${LF(ev('kw-6'), [6, 65, 50, 90], 'k-cloud', '', '', kOutline('cloud', '#C4D2E0'))}
+    ${LF(ev('kw-7'), [57, 63, 89, 87], 'k-round k-l-ice', '', '', kTape('rgba(200,200,200,.75)', 50, 1) + kOrn('snow', ['br'], 11))}`));
   return pages;
 }
 
+/* 유치원 템플릿 목록 (도산유치원은 10×11 판형 고정) */
+const K_TEMPLATE_OPTS = '<option value="basic">기본 (수채화 사계절)</option><option value="dosan">도산유치원 10×11inch</option><option value="cute">귀여운 유치원 (사계절 캐릭터)</option><option value="simple">심플한 스타일 (모전)</option>';
 /* ---------- 메뉴: 유치원앨범 만들기 ---------- */
 function kinderAlbumDialog() {
   const sizeOpts = KINDER_SIZES.map(k => `<option value="${k}">${esc(SIZES[k].name)}</option>`).join('');
@@ -384,12 +444,13 @@ function kinderAlbumDialog() {
     <div class="pd-grid prj-grid">
       <span>유치원 이름:</span><input type="text" id="ka-school" placeholder="예: ○○유치원">
       <span>학년도:</span><input type="text" id="ka-year" value="${esc(S.year)}">
+      <span>템플릿:</span><select id="ka-tpl">${K_TEMPLATE_OPTS}</select>
       <span>판형:</span><select id="ka-size">${sizeOpts}</select>
       <span>반 이름:</span><input type="text" id="ka-class" placeholder="예: 햇살반">
       <span>담임 선생님:</span><input type="text" id="ka-teacher">
       <span>원아 이름:</span><textarea id="ka-kids" rows="6" placeholder="한 줄에 한 명씩&#10;반이 여러 개면 '# 반 이름' 줄로 나눔"></textarea>
     </div>
-    <p class="pd-note">표지 · 소개 · 반 단체/원아 사진 · 봄 · 여름 · 가을 · 겨울 · 마지막 쪽이 만들어집니다. 지금 앨범은 그대로 남습니다.</p>
+    <p class="pd-note">백지 · 소중한 추억들 · 소개 · 반 단체/원아 사진 · 봄 · 여름 · 가을 · 겨울 쪽이 만들어집니다. 지금 앨범은 그대로 남습니다.</p>
     <div id="ka-msg" class="prj-msg"></div>`, [
     { text: '만들기', main: true, on: () => {
       const school = $('#ka-school').value.trim();
@@ -398,10 +459,287 @@ function kinderAlbumDialog() {
       const cls = $('#ka-class').value.trim() || '햇살반', teacher = $('#ka-teacher').value.trim();
       const roster = kids[0]?.startsWith('#') ? kids.join('\n') : [`# ${cls}${teacher ? ` | ${teacher}` : ''}`, ...kids].join('\n');
       flushState();
-      const id = createAlbum({ ...DEFAULTS, albumType: 'kinder', theme: 'classic', size: $('#ka-size').value, school, year: $('#ka-year').value.trim(), nth: '', principal: '', vice: '', teachers: '', roster, pad4: false, zoom: S.zoom });
+      const tpl = $('#ka-tpl').value;
+      const id = createAlbum({ ...DEFAULTS, albumType: 'kinder', kTemplate: tpl, theme: 'classic', size: tpl === 'dosan' ? 'in1011' : $('#ka-size').value, school, year: $('#ka-year').value.trim(), nth: '', principal: '', vice: '', teachers: '', roster, pad4: false, zoom: S.zoom });
       switchAlbum(id);
     } },
     { text: '취소', on: closePrj },
   ]);
 }
 document.getElementById('p-kinder')?.addEventListener('click', kinderAlbumDialog);
+/* ---------- 원아별 개인 앨범: 원아 수만큼 앨범 전체를 반복하고, 각 앨범 4쪽에 그 원아 이름 ----------
+   첫 앨범(첫 원아)이 원본이라 거기서 고친 틀 · 글자 · 사진이 나머지 앨범에 그대로 복사됨. 나머지 앨범은 보기 · 인쇄용 */
+function kPersonalCopies() {
+  const names = kClasses().flatMap(c => c.students).map(s => s.name).filter(Boolean);
+  const box = document.getElementById('pages');
+  const master = [...box.querySelectorAll(':scope > .spread')];
+  if (!master.length || names.length < 2) return 1;
+  const label = (sheet, name) => { const l = sheet.querySelector('.sheet-label'); if (l) l.textContent = `${name} · ${l.textContent.replace(/^.*? · (?=P\.)/, '')}`; };
+  master.forEach(sp => sp.querySelectorAll('.sheet').forEach(s => label(s, names[0])));
+  const frag = document.createDocumentFragment();
+  names.slice(1).forEach((name, k) => {
+    master.forEach(sp => {
+      const c = sp.cloneNode(true);
+      c.classList.add('k-copy');
+      c.querySelectorAll('.page').forEach(p => { p.dataset.pid = `${p.dataset.pid}~${k + 1}`; });
+      c.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+      c.querySelectorAll('.photo:not([data-photo^="kp-"]) .ph-remove, .k-shared .ph-remove, .photo:not([data-photo^="kp-"]) .ph-rot, .k-shared .ph-rot').forEach(el => el.remove());
+      c.querySelectorAll('.k-pname, .k-folio-name, .k-cname').forEach(el => { el.textContent = name; });     // 2쪽 · 6쪽 이름 · 쪽 아래 이름
+      c.querySelectorAll('.sheet').forEach(s => label(s, name));
+      c.querySelectorAll('.photo[data-photo^="kp-"]:not(.k-shared .photo)').forEach(el => { el.dataset.photo = kpKey(el.dataset.photo.slice(3, el.dataset.photo.indexOf('|')), name); });   // 2·3·4쪽은 이 원아의 사진
+      frag.appendChild(c);
+    });
+  });
+  box.appendChild(frag);
+  box.querySelectorAll('.spread.k-copy .photo[data-photo^="kp-"]').forEach(applyPhoto);
+  return names.length;
+}
+/* ---------- 마스터 쪽 (개인 앨범의 3 · 4쪽: 선생님 명렬 · 원아 명단) ----------
+   - 어느 원아 앨범의 3 · 4쪽에서 틀을 옮기거나 크기 · 모양을 바꿔도 모든 원아 앨범의 3 · 4쪽이 똑같이 바뀜
+     (사본 쪽에서 고친 기록은 첫 앨범 쪽 기록으로 옮기고, 사본 쪽은 첫 앨범 쪽을 다시 복사)
+   - 다른 쪽은 원아마다 따로: 사본 쪽에서 고친 틀은 그 원아 앨범에만 적용되고 다시 열어도 남음 */
+const K_MASTER_IDX = [2, 3];      // 3쪽 · 4쪽 (심플 템플릿은 2쪽 표지 + 선생님 · 원아 · 조 단체사진인 5~8쪽. 2쪽 사진 · 이름은 원아마다 바뀜)
+const kMasterIdx = () => (S.kTemplate === 'simple' ? [1, 4, 5, 6, 7] : K_MASTER_IDX);
+const kMasterPids = () => [...document.querySelectorAll('#pages > .spread:not(.k-copy) .page')].filter((p, i) => kMasterIdx().includes(i)).map(p => p.dataset.pid);
+const kMasterSig = {};
+const kHash = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
+function kCopyPage(master, k, name) {
+  const c = master.cloneNode(true);
+  c.dataset.pid = `${master.dataset.pid}~${k}`;
+  c.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+  c.querySelectorAll('.photo:not([data-photo^="kp-"]) .ph-remove, .k-shared .ph-remove, .photo:not([data-photo^="kp-"]) .ph-rot, .k-shared .ph-rot').forEach(el => el.remove());
+  c.querySelectorAll('.k-pname, .k-folio-name, .k-cname').forEach(el => { el.textContent = name; });
+  c.querySelectorAll('.fr-sel-on, .pg-flash').forEach(el => el.classList.remove('fr-sel-on', 'pg-flash'));
+  c.querySelectorAll('.photo[data-photo^="kp-"]:not(.k-shared .photo)').forEach(el => { el.dataset.photo = kpKey(el.dataset.photo.slice(3, el.dataset.photo.indexOf('|')), name); });
+  return c;
+}
+function kRefreshCopies(force = false) {      // force: render 직후처럼 사본이 마스터 쪽 고친 모양 없이 복사됐을 때 다시 복사
+  const names = kClasses().flatMap(c => c.students).map(s => s.name).filter(Boolean);
+  let n = 0;
+  const masters = kMasterPids();
+  document.querySelectorAll('#pages > .spread:not(.k-copy) .page').forEach(m => {
+    if (!masters.includes(m.dataset.pid)) return;
+    const pid = m.dataset.pid, sig = kHash(m.innerHTML);
+    if (kMasterSig[pid] === sig) return;
+    const first = kMasterSig[pid] === undefined;
+    kMasterSig[pid] = sig;
+    if (first && !force) return;      // 처음 그릴 때는 render가 이미 복사함
+    document.querySelectorAll(`#pages .page[data-pid^="${CSS.escape(pid)}~"]`).forEach(old => {
+      const k = +old.dataset.pid.split('~').pop(), c = kCopyPage(m, k, names[k] || '');
+      old.replaceWith(c);
+      c.querySelectorAll('.photo[data-photo]').forEach(applyPhoto);
+      n++;
+    });
+  });
+  return n;
+}
+/** 사본 쪽에서 고친 틀 기록(쪽 번호표에 ~가 붙은 것)을 마스터 쪽 기록으로 옮김. 옮긴 게 있으면 true */
+function kMoveCopyEdits() {
+  const d = S.frameEdits;
+  if (!d) return false;
+  const first = kClasses().flatMap(c => c.students).map(s => s.name).filter(Boolean)[0] || '';
+  const toMaster = (pid, key) => [pid.replace(/~\d+$/, ''), key.startsWith('kp-') ? kpKey(key.slice(3, key.indexOf('|')), first) : key];
+  const masters = new Set(kMasterPids()), isMasterCopy = pid => !!pid && pid.includes('~') && masters.has(pid.replace(/~\d+$/, ''));
+  let moved = false;
+  for (const map of [d.over, d.text]) {
+    if (!map) continue;
+    for (const id of Object.keys(map)) {
+      const cut = id.indexOf('|'), pid = id.slice(0, cut);
+      if (!isMasterCopy(pid)) continue;
+      const [mp, mk] = toMaster(pid, id.slice(cut + 1));
+      map[`${mp}|${mk}`] = { ...(map[`${mp}|${mk}`] || {}), ...map[id] };
+      delete map[id];
+      moved = true;
+    }
+  }
+  for (const x of d.extra || []) if (isMasterCopy(x.pid)) { x.pid = x.pid.replace(/~\d+$/, ''); moved = true; }
+  for (const x of d.xtext || []) if (isMasterCopy(x.pid)) { x.pid = x.pid.replace(/~\d+$/, ''); moved = true; }
+  return moved;
+}
+addEventListener('DOMContentLoaded', () => {
+  const save = window.saveState;
+  if (typeof save !== 'function') return;
+  let t = 0, busy = false;
+  const sync = () => {
+    if (busy || S.albumType !== 'kinder' || !S.kPersonal) return;
+    busy = true;
+    try {
+      if (kMoveCopyEdits()) {
+        const sel = frameSel && { ...frameSel };
+        save(); render();
+        if (sel) { frameSel = sel; syncFrameSel(); }
+        window.pgNote?.('사본 쪽에서 고친 틀을 마스터 쪽에 옮겨, 모든 원아 앨범에 똑같이 적용했습니다.');
+      } else kRefreshCopies();
+    } finally { busy = false; }
+  };
+  window.saveState = function (...a) { const r = save.apply(this, a); clearTimeout(t); t = setTimeout(sync, 300); return r; };
+  const rd = window.render;     // 새로 그리면 사본도 새로 복사되므로 마스터 모양을 다시 기억
+  if (typeof rd === 'function') window.render = function (...a) {
+    const r = rd.apply(this, a);
+    for (const k of Object.keys(kMasterSig)) delete kMasterSig[k];
+    if (S.albumType === 'kinder' && S.kPersonal) {
+      // 사본은 render 끝에 복사되므로, 원아 앨범마다 따로 고친 틀(번호표에 ~)은 복사한 뒤 다시 입힘
+      if (Object.keys(S.frameEdits?.over || {}).some(id => id.includes('~')) || (S.frameEdits?.extra || []).some(x => x.pid?.includes('~'))) { applyFrames(); applyTextFrames(); }
+      const mp = kMasterPids(), edited = id => mp.includes(id.slice(0, id.indexOf("|")));     // 마스터 쪽에 고친 틀 · 글자가 있으면 그 모양대로 사본을 다시 복사
+      const force = Object.keys(S.frameEdits?.over || {}).some(edited) || Object.keys(S.frameEdits?.text || {}).some(edited) || (S.frameEdits?.extra || []).some(x => mp.includes(x.pid)) || (S.frameEdits?.xtext || []).some(x => mp.includes(x.pid));
+      if (force) { applyFrames(); applyTextFrames(); }      // 마스터 쪽 고친 모양을 먼저 입힌 뒤 복사
+      kRefreshCopies(force);
+    }
+    return r;
+  };
+});
+// 원본 앨범에서 글자를 고치면 나머지 개인 앨범에도 바로 반영
+document.getElementById('pages')?.addEventListener('input', e => {
+  if (!S.kPersonal) return;
+  const el = e.target.closest?.('[data-key]'), page = el?.closest('.page');
+  if (!el || !page || page.dataset.pid.includes('~')) return;
+  document.querySelectorAll(`#pages .page[data-pid^="${CSS.escape(page.dataset.pid)}~"] [data-key="${CSS.escape(el.dataset.key)}"]`).forEach(c => { c.innerHTML = el.innerHTML; });
+});
+
+/* ---------- 행사 사진 → 7~14쪽 사진틀에 번호순으로 ----------
+   폴더 · 파일 이름의 번호순(01, 02 … 10)으로 정렬해 7쪽 첫 틀부터 14쪽 마지막 틀까지 차례로 채움 */
+const K_EVENT_SLOTS = ['ks-b0', 'ks-b1', 'ks-b2', 'ks-b3', 'ku-0', 'ku-1', 'ku-2', 'ku-3', 'ku-4', 'ku-5', 'ku-6', 'ka-0', 'ka-1', 'ka-2', 'ka-3', 'ka-4', 'ka-5', 'ka-6', 'kw-0', 'kw-1', 'kw-2', 'kw-3', 'kw-4', 'kw-5', 'kw-6', 'kw-7'];
+/** 7~14쪽 사진 키 목록. 개인 앨범이면 원아마다 따로 (name 없으면 공통) */
+const kEventSlotList = () => (S.kTemplate === 'dosan' ? DOSAN_EVENT_KEYS : S.kTemplate === 'cute' && window.CUTE_EVENT_SLOTS ? CUTE_EVENT_SLOTS : S.kTemplate === 'simple' && window.SM_EVENT_SLOTS ? SM_EVENT_SLOTS : K_EVENT_SLOTS);
+const kEventKeys = name => kEventSlotList().map(k => (name ? kpKey(`ev-${k}`, name) : k));
+/** replace: 7~14쪽에 있던 사진을 비우고 처음부터 / 아니면 빈 틀에만 이어서.
+    개인 앨범이면 폴더 · 파일 이름의 원아 이름(예: '01 김다정/김다정 (1).jpg')으로 그 원아 앨범에 넣음 */
+async function kEventFill(fileList, info, replace) {
+  const path = x => x.webkitRelativePath || x.name;
+  const files = [...fileList].filter(x => x.type.startsWith('image/')).sort((a, b) => path(a).localeCompare(path(b), 'ko', { numeric: true }));
+  if (!files.length) { info.textContent = '사진이 없습니다.'; return; }
+  const groups = new Map(), noName = [];
+  if (S.kPersonal) {
+    const kids = kClasses().flatMap(c => c.students);
+    for (const file of files) {
+      const p = path(file), kid = kFindKid(p, kids) || p.split('/').slice(0, -1).reverse().map(d => kFindKid(d, kids)).find(Boolean);
+      if (!kid) { noName.push(file); continue; }
+      if (!groups.has(kid.name)) groups.set(kid.name, []);
+      groups.get(kid.name).push(file);
+    }
+  } else groups.set('', files);
+  if (!groups.size) { info.textContent = `개인 앨범에서는 폴더나 파일 이름에 원아 이름이 있어야 합니다(예: '01 김다정' 폴더). 이름을 찾지 못한 사진 ${noName.length}장은 넣지 않았습니다.`; return; }
+  const oldN = [...groups.keys()].reduce((n, name) => n + kEventKeys(name).filter(k => photos[k]).length, 0);
+  if (replace && oldN && !confirm(`7~14쪽에 있는 행사 사진 ${oldN}장을 비우고 새 사진을 번호순으로 넣을까요?`)) return;
+  const done = [];
+  let over = 0;
+  for (const [name, list] of groups) {
+    const keys = kEventKeys(name);
+    if (replace) for (const k of keys) if (photos[k]) await removePhoto(k);
+    const free = keys.filter(k => !photos[k]), n = Math.min(free.length, list.length);
+    for (let i = 0; i < n; i++) { info.textContent = `${name ? `${name} ` : ''}행사 사진 넣는 중 ${i + 1}/${n}…`; await setPhoto(free[i], list[i]); }
+    over += list.length - n;
+    done.push(`${name ? `${name} ` : ''}${n}장`);
+  }
+  info.textContent = `${S.kTemplate === "dosan" ? "7~12쪽" : S.kTemplate === "simple" ? "9~16쪽" : "7~14쪽"}에 번호순으로 넣었습니다: ${done.join(' · ')}.` +
+    (over ? ` 사진틀이 모자라 ${over}장은 넣지 못했습니다(틀 ${kEventSlotList().length}개).` : '') +
+    (noName.length ? ` 원아 이름을 찾지 못한 사진 ${noName.length}장은 넣지 않았습니다.` : '');
+}
+// 유치원앨범에서는 '행사 사진' 단추가 7~14쪽 채우기로 동작 (전체 불러오기는 새로, 하나 추가 · 한꺼번에 넣기는 이어서)
+for (const [id, replace] of [['f-gal-dir', true], ['f-gal-add', false], ['f-bulk-g', false]]) {
+  document.getElementById(id)?.addEventListener('change', async e => {
+    if (S.albumType !== 'kinder') return;
+    e.stopImmediatePropagation();
+    const input = e.target;
+    await kEventFill(input.files, document.getElementById('g-info'), replace);
+    input.value = '';
+  });
+}
+
+/* ---------- 유치원 사진 폴더 한 번에: 폴더 · 파일 이름을 보고 자리를 정함 ----------
+   표지 폴더 단체사진 → 2쪽 · 학사모(크게) → 3쪽 · 학사모 작게 → 원아 사진 쪽 · 프로필 → 4쪽 (파일 이름 속 원아 이름으로 짝지음)
+   단체 → 반 단체사진 · 나머지(행사) → 7~14쪽 번호순. 표지 폴더의 교표 · 드론 사진 등은 넣지 않음 */
+function kFindKid(path, kids) {
+  const base = path.split('/').pop();
+  let best = null;
+  for (const k of kids) if (k.name && base.includes(k.name) && (!best || k.name.length > best.name.length)) best = k;     // 긴 이름 먼저 (하나 ↔ 황하나)
+  return best;
+}
+async function kFolderImport(fileList, info) {
+  const files = [...fileList].filter(x => x.type.startsWith('image/'));
+  if (!files.length) { info.textContent = '선택한 폴더에 사진이 없습니다.'; return; }
+  const classes = kClasses(), kids = classes.flatMap((c, ci) => c.students.map(s => ({ name: s.name, key: `c${ci}-s${s.idx}`, ci })));
+  const path = x => x.webkitRelativePath || x.name;
+  const byPath = (a, b) => path(a).localeCompare(path(b), 'ko', { numeric: true });
+  const big = {}, small = {}, prof = {}, groups = [], events = [], skipped = [], noName = [];
+  let cover = null, teacher = null;
+  const tName = S.homeTeacher || classes[0]?.teacher || '';
+  for (const file of files.sort(byPath)) {
+    const p = path(file), dir = p.split('/').slice(0, -1).join('/');
+    const kid = kFindKid(p, kids), cap = /학사모/.test(p), pro = /프로필/.test(p);
+    const base = p.split('/').pop();
+    if (!kid && !/단체/.test(base) && ((tName && base.includes(tName)) || /선생님|담임/.test(base))) { teacher ||= file; continue; }     // 담임 선생님 사진 → 5쪽
+    if (kid && (cap || pro)) {          // '학사모작게 반단체사진' 폴더처럼 섞여 있어도 원아 이름이 있으면 개인 사진
+      const slot = pro ? prof : /작게|작은/.test(dir) ? small : big;
+      slot[kid.name] ||= file;
+      continue;
+    }
+    if (/표지/.test(dir) && /단체/.test(p.split('/').pop()) && !cover) { cover = file; continue; }     // 표지 폴더의 단체사진 → 2쪽
+    if (/단체/.test(p.split('/').pop()) || (/단체/.test(dir) && !cap && !pro)) { groups.push(file); continue; }
+    if (/표지/.test(dir)) { skipped.push(file); continue; }
+    if (cap || pro) { noName.push(file); continue; }
+    events.push(file);
+  }
+  const jobs = [];
+  for (const kid of kids) {
+    const b = big[kid.name] || small[kid.name], s = small[kid.name] || big[kid.name];
+    if (b) { jobs.push([kpKey('cap', kid.name), b]); jobs.push([kpKey('cover', kid.name), b]); }     // 학사모(학사복) → 2쪽 · 3쪽
+    if (s) jobs.push([kid.key, s]);     // 원아 사진 쪽은 작은 학사모
+    if (prof[kid.name]) jobs.push([kpKey('prof', kid.name), prof[kid.name]]);
+  }
+  const g = groups.slice(0, 4);     // 단체 01 → 5쪽 아래 · 02 → 6쪽 아래 · 03 · 04 → 5쪽 위
+  g.forEach((file, i) => jobs.push([`c0-g${i}`, file]));
+  if (teacher) jobs.push(['c0-tch', teacher]);
+  if (cover) jobs.push(['k-cover', cover]);
+  const personal = jobs.some(([k]) => k.startsWith('kp-'));
+  if (personal && !S.kPersonal) { S.kPersonal = true; const cb = document.getElementById('l-kpersonal'); if (cb) cb.checked = true; }
+  saveState(); render();
+  for (let i = 0; i < jobs.length; i++) { info.textContent = `원아 · 단체 사진 넣는 중 ${i + 1}/${jobs.length}…`; await setPhoto(jobs[i][0], jobs[i][1]); }
+  const evInfo = { textContent: '' };
+  if (events.length) await kEventFill(events, evInfo, true);
+  const missing = kids.filter(k => !big[k.name] && !small[k.name] && !prof[k.name]).map(k => k.name);
+  info.textContent = [
+    `원아 ${kids.length - missing.length}명의 학사모 · 프로필 사진을 넣었습니다.`,
+    g.length ? `단체사진 ${g.length}장${groups.length > 4 ? `(${groups.length}장 중 앞 4장)` : ''}.` : '',
+    evInfo.textContent ? `행사: ${evInfo.textContent}` : '',
+    missing.length ? `사진을 찾지 못한 원아: ${missing.join(', ')}.` : '',
+    (() => { const n = kids.filter(k => !missing.includes(k.name) && !prof[k.name]).map(k => k.name); return n.length ? `프로필 사진이 없는 원아: ${n.join(', ')}.` : ''; })(),
+    noName.length ? `파일 이름에서 원아 이름을 못 찾은 사진 ${noName.length}장은 넣지 않았습니다.` : '',
+    skipped.length ? `표지 폴더 사진 ${skipped.length}장은 넣지 않았습니다.` : '',
+  ].filter(Boolean).join(' ');
+}
+document.getElementById('p-dir')?.addEventListener('change', async e => {
+  if (S.albumType !== 'kinder') return;      // 학교 앨범은 예전처럼 새 앨범 만들기
+  e.stopImmediatePropagation();
+  const input = e.target;
+  await kFolderImport(input.files, document.getElementById('p-info'));
+  input.value = '';
+});
+
+/* ---------- 쪽 아래 작은 원아 이름 · 쪽 번호: 3쪽이 1쪽. 왼쪽 쪽은 왼쪽 아래, 오른쪽 쪽은 오른쪽 아래 ----------
+   개인 앨범이면 각 앨범의 원아 이름 (복사본은 kPersonalCopies에서 이름만 바꿈) */
+const K_FOLIO_FROM = 2;      // 0부터 세어 세 번째 쪽(3쪽)부터
+function kFolios() {
+  const name = S.kPersonal ? kClasses().flatMap(c => c.students)[0]?.name || '' : '';
+  const pages = [...document.querySelectorAll('#pages > .spread .page')].filter(p => !p.dataset.pid.includes('~'));
+  pages.forEach((p, i) => {
+    if (i < K_FOLIO_FROM) return;
+    const left = (i % 2 === 1) !== !!G.kPairFirst, no = i - K_FOLIO_FROM + 1;
+    const nm = `<span class="k-folio-name">${esc(name)}</span>`, num = `<span class="k-folio-no">${no}</span>`;
+    p.querySelector('.trim')?.insertAdjacentHTML('beforeend', `<div class="k-folio ${left ? 'is-left' : 'is-right'}" contenteditable="false">${left ? num + nm : nm + num}</div>`);
+  });
+}
+// 판 구성: 지금 유치원앨범의 템플릿 바꾸기 (사진 · 글자는 그대로, 쪽 구성만 바뀜)
+addEventListener('DOMContentLoaded', () => {      // album.js(S)가 읽힌 뒤에
+  const sel = document.getElementById('l-ktpl');
+  if (!sel) return;
+  sel.innerHTML = K_TEMPLATE_OPTS;
+  sel.value = S.kTemplate || 'basic';
+  sel.addEventListener('change', () => {
+    if (S.albumType !== 'kinder') { sel.value = 'basic'; return; }
+    S.kTemplate = sel.value;
+    if (S.kTemplate === 'dosan') { S.size = 'in1011'; const fs = document.getElementById('f-size'); if (fs) fs.value = 'in1011'; }
+    saveState();
+    render();
+  });
+});
